@@ -3,15 +3,21 @@ import { supabase } from '@/api/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Wallet, Loader2, AlertCircle, CheckCircle2, ShieldCheck, TrendingDown, Target } from 'lucide-react';
+import { Wallet, Loader2, AlertCircle, CheckCircle2, TrendingDown, Target, PieChart, ShieldCheck } from 'lucide-react';
+
+const features = [
+  { icon: TrendingDown, label: 'Track every expense', desc: 'Log and categorize spending in seconds.' },
+  { icon: Target,      label: 'Hit your goals',      desc: 'Set budgets and stay on track month to month.' },
+  { icon: PieChart,    label: 'Visual insights',      desc: 'Charts that make your money story clear.' },
+];
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState(null);
+  const [message, setMessage]   = useState(null);
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
@@ -48,44 +54,91 @@ export default function Login() {
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
-      setError('Enter your email address first.');
-      return;
-    }
+    if (!email) { setError('Enter your email address first.'); return; }
     await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
     setMessage('Password reset email sent. Check your inbox.');
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-indigo-50/40 to-violet-50/40 p-4 relative overflow-hidden">
-      {/* Decorative blobs */}
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-200/30 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-violet-200/30 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen flex">
+      {/* ── Left panel ── */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 flex-col justify-between p-12 relative overflow-hidden">
+        {/* Background circles */}
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/5 rounded-full" />
+        <div className="absolute -bottom-32 -right-16 w-[480px] h-[480px] bg-white/5 rounded-full" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/5 rounded-full" />
 
-      <div className="w-full max-w-md relative">
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 ring-1 ring-slate-200/60 overflow-hidden">
-          {/* Top accent bar */}
-          <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500" />
+        {/* Logo */}
+        <div className="relative flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <Wallet className="h-5 w-5 text-white" />
+          </div>
+          <span className="text-white font-bold text-xl tracking-tight">BudgetMate</span>
+        </div>
 
-          <div className="px-8 pt-8 pb-10">
-            {/* Logo + heading */}
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-200">
-                <Wallet className="h-8 w-8 text-white" />
+        {/* Hero text */}
+        <div className="relative space-y-8">
+          <div>
+            <h2 className="text-4xl font-bold text-white leading-tight">
+              Take control of<br />your finances.
+            </h2>
+            <p className="mt-4 text-indigo-200 text-lg leading-relaxed max-w-sm">
+              The smart way to track spending, set budgets, and reach your financial goals.
+            </p>
+          </div>
+
+          <div className="space-y-5">
+            {features.map(({ icon: Icon, label, desc }) => (
+              <div key={label} className="flex items-start gap-4">
+                <div className="w-9 h-9 bg-white/15 rounded-lg flex items-center justify-center shrink-0 backdrop-blur-sm">
+                  <Icon className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-sm">{label}</p>
+                  <p className="text-indigo-200 text-sm mt-0.5">{desc}</p>
+                </div>
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">BudgetMate</h1>
-              <p className="text-slate-500 text-sm mt-1.5">
-                {isSignUp ? 'Create your free account' : 'Welcome back — sign in to continue'}
-              </p>
-            </div>
+            ))}
+          </div>
+        </div>
 
-            {/* Google button */}
+        {/* Footer note */}
+        <div className="relative flex items-center gap-2 text-indigo-200 text-sm">
+          <ShieldCheck className="h-4 w-4" />
+          <span>Your data is encrypted and private.</span>
+        </div>
+      </div>
+
+      {/* ── Right panel ── */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+        <div className="w-full max-w-sm space-y-8">
+          {/* Mobile logo */}
+          <div className="flex lg:hidden items-center gap-2.5 justify-center">
+            <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
+              <Wallet className="h-4.5 w-4.5 text-white" />
+            </div>
+            <span className="text-slate-900 font-bold text-lg">BudgetMate</span>
+          </div>
+
+          {/* Heading */}
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              {isSignUp ? 'Create an account' : 'Welcome back'}
+            </h1>
+            <p className="text-slate-500 text-sm mt-1">
+              {isSignUp
+                ? 'Sign up to start tracking your finances.'
+                : 'Sign in to your account to continue.'}
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {/* Google */}
             <button
               type="button"
               onClick={handleGoogleLogin}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-3 h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all text-sm font-medium text-slate-700 shadow-sm disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-3 h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700 disabled:opacity-60"
             >
               <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -97,7 +150,7 @@ export default function Login() {
             </button>
 
             {/* Divider */}
-            <div className="relative my-6">
+            <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-slate-100" />
               </div>
@@ -106,8 +159,8 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Email/password form */}
-            <form onSubmit={handleEmailAuth} className="space-y-5">
+            {/* Form */}
+            <form onSubmit={handleEmailAuth} className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="email" className="text-sm font-medium text-slate-700">Email</Label>
                 <Input
@@ -117,7 +170,7 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="h-11 rounded-xl border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                  className="h-11 rounded-xl border-slate-200 focus-visible:ring-indigo-400"
                 />
               </div>
 
@@ -128,7 +181,7 @@ export default function Login() {
                     <button
                       type="button"
                       onClick={handleForgotPassword}
-                      className="text-xs text-indigo-600 hover:text-indigo-700 hover:underline font-medium"
+                      className="text-xs text-indigo-600 hover:underline font-medium"
                     >
                       Forgot password?
                     </button>
@@ -142,7 +195,7 @@ export default function Login() {
                   placeholder={isSignUp ? 'At least 6 characters' : 'Your password'}
                   required
                   minLength={6}
-                  className="h-11 rounded-xl border-slate-200 focus:border-indigo-400 focus:ring-indigo-400/20"
+                  className="h-11 rounded-xl border-slate-200 focus-visible:ring-indigo-400"
                 />
               </div>
 
@@ -162,43 +215,25 @@ export default function Login() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-semibold text-sm shadow-sm shadow-indigo-200 transition-all"
+                className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-semibold text-sm transition-colors"
               >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : null}
+                {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {isSignUp ? 'Create Account' : 'Sign In'}
               </Button>
             </form>
-
-            {/* Toggle sign-in / sign-up */}
-            <p className="text-center text-sm text-slate-500 mt-6">
-              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-              <button
-                type="button"
-                onClick={() => { setIsSignUp(!isSignUp); setError(null); setMessage(null); }}
-                className="text-indigo-600 hover:text-indigo-700 hover:underline font-semibold"
-              >
-                {isSignUp ? 'Sign In' : 'Sign Up'}
-              </button>
-            </p>
           </div>
-        </div>
 
-        {/* Trust signals below card */}
-        <div className="flex items-center justify-center gap-6 mt-6 text-xs text-slate-400">
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
-            Secure & private
-          </span>
-          <span className="flex items-center gap-1.5">
-            <TrendingDown className="h-3.5 w-3.5 text-slate-400" />
-            Track spending
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Target className="h-3.5 w-3.5 text-slate-400" />
-            Hit your goals
-          </span>
+          {/* Toggle */}
+          <p className="text-center text-sm text-slate-500">
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <button
+              type="button"
+              onClick={() => { setIsSignUp(!isSignUp); setError(null); setMessage(null); }}
+              className="text-indigo-600 hover:underline font-semibold"
+            >
+              {isSignUp ? 'Sign In' : 'Sign Up'}
+            </button>
+          </p>
         </div>
       </div>
     </div>
