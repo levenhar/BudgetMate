@@ -304,7 +304,10 @@ function LayoutInner({ children, currentPageName }) {
                     <Wallet className="h-5 w-5 text-white" />
                   </div>
                 )}
-                <span className="text-xl font-bold text-slate-900">{user?.full_name || ''}</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-base font-bold text-slate-900 truncate">{user?.full_name || 'BudgetMate'}</span>
+                  {user?.email && <span className="text-xs text-slate-400 truncate mt-0.5">{user.email}</span>}
+                </div>
               </>
             ) : (
               <Menu className="h-6 w-6 text-slate-900 mx-auto" />
@@ -317,24 +320,30 @@ function LayoutInner({ children, currentPageName }) {
               const isActive = currentPageName === item.page;
               const showBadge = item.page === 'Expenses' && pendingCount > 0;
               return (
-                <Link
-                  key={item.page}
-                  to={createPageUrl(item.page)}
-                  title={!sidebarOpen ? t[item.key] : undefined}
-                  className={`relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    isActive ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                  } ${!sidebarOpen ? 'justify-center' : ''}`}
-                >
-                  <span className="relative">
-                    <item.icon className="h-5 w-5" />
-                    {showBadge && (
-                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                        {pendingCount > 99 ? '99+' : pendingCount}
-                      </span>
-                    )}
-                  </span>
-                  {sidebarOpen && t[item.key]}
-                </Link>
+                <React.Fragment key={item.page}>
+                  {item.page === 'Profile' && (
+                    <div className="my-2 border-t border-slate-100" />
+                  )}
+                  <Link
+                    to={createPageUrl(item.page)}
+                    title={!sidebarOpen ? t[item.key] : undefined}
+                    className={`relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
+                        : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-700'
+                    } ${!sidebarOpen ? 'justify-center' : ''}`}
+                  >
+                    <span className="relative">
+                      <item.icon className="h-5 w-5" />
+                      {showBadge && (
+                        <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                          {pendingCount > 99 ? '99+' : pendingCount}
+                        </span>
+                      )}
+                    </span>
+                    {sidebarOpen && t[item.key]}
+                  </Link>
+                </React.Fragment>
               );
             })}
           </nav>
@@ -363,7 +372,7 @@ function LayoutInner({ children, currentPageName }) {
                     </span>
                   )}
                 </span>
-                <span className="text-[10px] font-medium">{t[item.key]}</span>
+                <span className="text-[11px] font-medium">{t[item.key]}</span>
               </Link>
             );
           })}
@@ -402,7 +411,7 @@ function LayoutInner({ children, currentPageName }) {
                     to={createPageUrl(item.page)}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-5 py-3.5 transition-colors ${
-                      isActive ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'
+                      isActive ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'
                     }`}
                   >
                     <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -427,9 +436,9 @@ function LayoutInner({ children, currentPageName }) {
               else setAddExpenseTab('expense');
               setShowAddExpense(true);
             }}
-            className="bg-slate-900 hover:bg-slate-800 h-9 px-4 text-sm"
+            className="bg-indigo-600 hover:bg-indigo-700 h-9 px-4 text-sm gap-1.5"
           >
-            <Plus className="h-4 w-4 ms-1.5" />
+            <Plus className="h-4 w-4" />
             {t.add_expense}
           </Button>
         </header>
