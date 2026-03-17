@@ -9,9 +9,9 @@ export default function AuthCallback() {
     supabase.auth.exchangeCodeForSession(window.location.href).then(({ error }) => {
       if (error) {
         console.error('Auth callback error:', error);
-        navigate('/login');
+        window.location.href = '/login';
       } else {
-        navigate('/');
+        window.location.href = '/';
       }
     });
   }, [navigate]);
