@@ -5,9 +5,11 @@ import { Loader2, TrendingUp, TrendingDown, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { useLanguage } from '@/components/i18n/LanguageContext';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 export default function Debts() {
   const { t, dir } = useLanguage();
+  const { currencySymbol } = useCurrency();
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: () => base44.auth.me(),
@@ -66,7 +68,7 @@ export default function Debts() {
             <div className="text-center">
               <div className="text-sm text-slate-500 mb-2">{t.net_balance}</div>
               <div className={`text-4xl font-bold ${netBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                ₪{Math.abs(netBalance).toFixed(2)}
+                {currencySymbol}{Math.abs(netBalance).toFixed(2)}
               </div>
               <div className="text-sm text-slate-500 mt-2">
                 {netBalance >= 0 ? t.positive_balance : t.negative_balance}
@@ -103,14 +105,14 @@ export default function Debts() {
                       <div className="text-sm text-slate-500">{t.owes_you}</div>
                     </div>
                     <div className="text-xl font-bold text-green-600">
-                      ₪{debt.amount.toFixed(2)}
+                      {currencySymbol}{debt.amount.toFixed(2)}
                     </div>
                   </div>
                 ))}
                 <div className="flex items-center justify-between pt-4 border-t border-slate-200">
                   <span className="font-semibold text-slate-700">{t.total}</span>
                   <span className="text-xl font-bold text-green-600">
-                    ₪{totalOwedToMe.toFixed(2)}
+                    {currencySymbol}{totalOwedToMe.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -146,14 +148,14 @@ export default function Debts() {
                       <div className="text-sm text-slate-500">{t.you_owe}</div>
                     </div>
                     <div className="text-xl font-bold text-red-600">
-                      ₪{debt.amount.toFixed(2)}
+                      {currencySymbol}{debt.amount.toFixed(2)}
                     </div>
                   </div>
                 ))}
                 <div className="flex items-center justify-between pt-4 border-t border-slate-200">
                   <span className="font-semibold text-slate-700">{t.total}</span>
                   <span className="text-xl font-bold text-red-600">
-                    ₪{totalIOwe.toFixed(2)}
+                    {currencySymbol}{totalIOwe.toFixed(2)}
                   </span>
                 </div>
               </div>

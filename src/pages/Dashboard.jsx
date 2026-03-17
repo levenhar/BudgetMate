@@ -3,12 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/components/i18n/LanguageContext';
+import { useCurrency } from '@/lib/CurrencyContext';
 import { TrendingUp, TrendingDown, Receipt, Target } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Dashboard() {
   const { t } = useLanguage();
+  const { fmt } = useCurrency();
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -91,8 +93,6 @@ export default function Dashboard() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
-  const currency = settings?.currency || 'USD';
-  const fmt = (n) => new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(n);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">

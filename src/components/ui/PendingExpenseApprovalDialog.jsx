@@ -6,8 +6,10 @@ import { Check, X, CheckCheck, Loader2, User, Receipt, Calendar, Clock } from 'l
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 export default function PendingExpenseApprovalDialog({ expense, user, open, onOpenChange }) {
+  const { currencySymbol } = useCurrency();
   const [sharedExpense, setSharedExpense] = useState(null);
   const [userSplit, setUserSplit] = useState(null);
   const [allSplits, setAllSplits] = useState([]);
@@ -390,11 +392,11 @@ export default function PendingExpenseApprovalDialog({ expense, user, open, onOp
               </div>
               <div className="border-t border-amber-200 pt-3 flex items-center justify-between">
                 <span className="text-sm text-slate-600">סכום כולל</span>
-                <span className="font-semibold text-slate-900">₪{sharedExpense?.total_amount?.toFixed(2) || '—'}</span>
+                <span className="font-semibold text-slate-900">{currencySymbol}{sharedExpense?.total_amount?.toFixed(2) || '—'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-slate-800">החלק שלך</span>
-                <span className="text-xl font-bold text-amber-700">₪{expense.amount?.toFixed(2)}</span>
+                <span className="text-xl font-bold text-amber-700">{currencySymbol}{expense.amount?.toFixed(2)}</span>
               </div>
             </div>
 

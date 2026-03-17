@@ -12,9 +12,11 @@ import StatCard from '@/components/stats/StatCard';
 import CategoryBreakdown from '@/components/stats/CategoryBreakdown';
 
 import { useLanguage } from '@/components/i18n/LanguageContext';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 export default function Statistics() {
   const { t, dir } = useLanguage();
+  const { currencySymbol } = useCurrency();
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [monthsRange, setMonthsRange] = useState('12');
 
@@ -312,19 +314,19 @@ export default function Statistics() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             title={t.total_expenses}
-            value={`₪${summaryStats.totalSpending.toFixed(2)}`}
+            value={`${currencySymbol}${summaryStats.totalSpending.toFixed(2)}`}
             subtitle={t.incl_recurring}
             icon={DollarSign}
           />
           <StatCard
             title={t.monthly_average}
-            value={`₪${summaryStats.avgMonthly.toFixed(2)}`}
+            value={`${currencySymbol}${summaryStats.avgMonthly.toFixed(2)}`}
             subtitle={t.per_month_no_recurring}
             icon={BarChart3}
           />
           <StatCard
             title={t.highest_month}
-            value={`₪${summaryStats.highestMonth.total.toFixed(2)}`}
+            value={`${currencySymbol}${summaryStats.highestMonth.total.toFixed(2)}`}
             subtitle={summaryStats.highestMonth.fullMonth}
             icon={TrendingUp}
           />
@@ -391,7 +393,7 @@ export default function Statistics() {
               <div>
                 <CardTitle className="text-lg">{t.expenses_by_category_title}</CardTitle>
                 <p className="text-sm text-slate-500 mt-1">
-                  {monthOptions.find(m => m.value === selectedMonth)?.label} · ₪{selectedMonthData.total.toFixed(2)} סה"כ
+                  {monthOptions.find(m => m.value === selectedMonth)?.label} · {currencySymbol}{selectedMonthData.total.toFixed(2)} סה"כ
                 </p>
               </div>
             </div>
@@ -412,7 +414,7 @@ export default function Statistics() {
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-slate-900">{t.recurring_expenses_info}</span>
                       <span className="text-lg font-bold text-slate-700">
-                        ₪{selectedMonthData.recurringInfo.total.toFixed(2)}
+                        {currencySymbol}{selectedMonthData.recurringInfo.total.toFixed(2)}
                       </span>
                     </div>
                     <p className="text-xs text-slate-600">

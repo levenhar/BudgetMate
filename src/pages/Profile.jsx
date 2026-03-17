@@ -5,11 +5,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/components/i18n/LanguageContext';
+import { useCurrency } from '@/lib/CurrencyContext';
 import { toast } from 'sonner';
 import { Pencil, Check, X, LogOut, Target, TrendingUp, Wallet } from 'lucide-react';
 
 export default function Profile() {
   const { t, dir, lang, setLang } = useLanguage();
+  const { fmt } = useCurrency();
   const queryClient = useQueryClient();
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -97,13 +99,6 @@ export default function Profile() {
   const totalBudget = budgets.reduce((s, b) => s + (b.amount || b.total_budget || 0), 0);
   const budgetUsedPct = totalBudget > 0 ? Math.round((thisMonthTotal / totalBudget) * 100) : null;
 
-  const currency = settings?.currency || 'ILS';
-  const fmt = (n) =>
-    new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 0,
-    }).format(n);
 
   // Avatar initials
   const displayName = user?.full_name || user?.email || '';

@@ -33,3 +33,5 @@ dist-ssr
 
 supabase/*
 test*
+base_data/*
+scripts/*

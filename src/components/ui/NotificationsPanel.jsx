@@ -4,8 +4,10 @@ import { base44 } from '@/api/base44Client';
 import { Bell, Check, X, Loader2, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 export default function NotificationsPanel({ user }) {
+  const { currencySymbol } = useCurrency();
   const [expanded, setExpanded] = useState(false);
   const queryClient = useQueryClient();
 
@@ -291,7 +293,7 @@ export default function NotificationsPanel({ user }) {
                         {notif.description || 'הוצאה משותפת'} · {notif.category_name}
                       </p>
                       <p className="text-sm font-bold text-slate-900 mt-1">
-                        סה"כ: ₪{notif.total_amount?.toFixed(2)} · החלק שלך: ₪{notif.user_share_amount?.toFixed(2)}
+                        סה"כ: {currencySymbol}{notif.total_amount?.toFixed(2)} · החלק שלך: {currencySymbol}{notif.user_share_amount?.toFixed(2)}
                       </p>
                       {notif.action_taken === 'approved' && notif.pending_with_users?.length > 0 && (
                         <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">

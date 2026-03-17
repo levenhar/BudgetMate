@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { Pencil, Trash2, CreditCard, Banknote, Building2, ArrowRightLeft, Users, Clock, Send } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useLanguage } from '@/components/i18n/LanguageContext';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 const paymentIcons = {
   cash: Banknote,
@@ -14,6 +15,7 @@ const paymentIcons = {
 
 export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, onApprovePending, currentUserEmail, sharedExpensePendingUsers }) {
   const { t } = useLanguage();
+  const { currencySymbol } = useCurrency();
   const PaymentIcon = paymentIcons[expense.payment_method] || null;
   
   const isCreator = expense.is_shared && expense.created_by === currentUserEmail;
@@ -52,7 +54,7 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
         </div>
         <div className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
           <span className="font-semibold text-slate-900 whitespace-nowrap">
-            ₪{expense.amount.toFixed(2)}
+            {currencySymbol}{expense.amount.toFixed(2)}
           </span>
           {expense.is_shared && (
             <>

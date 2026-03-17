@@ -11,16 +11,18 @@ import { CalendarIcon, Loader2, X, UserPlus, Search } from "lucide-react";
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { useCurrency } from '@/lib/CurrencyContext';
 
-export default function EditSharedExpenseDialog({ 
-  open, 
-  onOpenChange, 
+export default function EditSharedExpenseDialog({
+  open,
+  onOpenChange,
   sharedExpense,
   splits,
   categories,
   onSave,
   isLoading = false
 }) {
+  const { currencySymbol } = useCurrency();
   const [form, setForm] = useState({
     amount: '',
     date: new Date(),
@@ -422,7 +424,7 @@ export default function EditSharedExpenseDialog({
                     <tr>
                       <th className="text-right p-2 text-sm font-medium">משתתף</th>
                       <th className="text-right p-2 text-sm font-medium">
-                        {form.splitMethod === 'custom_percent' ? 'אחוז (%)' : 'סכום (₪)'}
+                        {form.splitMethod === 'custom_percent' ? 'אחוז (%)' : `סכום (${currencySymbol})`}
                       </th>
                       <th className="w-10"></th>
                     </tr>
@@ -433,7 +435,7 @@ export default function EditSharedExpenseDialog({
                         <td className="p-2">{split.userName}</td>
                         <td className="p-2">
                           {form.splitMethod === 'equal' ? (
-                            <span className="font-semibold">₪{split.shareAmount.toFixed(2)}</span>
+                            <span className="font-semibold">{currencySymbol}{split.shareAmount.toFixed(2)}</span>
                           ) : (
                             <Input
                               type="number"

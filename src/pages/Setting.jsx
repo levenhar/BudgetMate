@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { User, Users, LogOut, Loader2, Globe } from 'lucide-react';
+import { User, Users, LogOut, Loader2, Globe, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -14,6 +14,7 @@ import CategoryManager from '@/components/ui/CategoryManager';
 import AlwaysApprovedList from '@/components/ui/AlwaysApprovedList';
 import { useLanguage } from '@/components/i18n/LanguageContext';
 import { supportedLanguages, getTranslations } from '@/components/i18n/translations';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 const getDefaultCategories = (t) => [
   { name: t.category_supermarket, color: '#22c55e', icon: 'ShoppingCart' },
@@ -53,6 +54,7 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const { lang, setLang, t } = useLanguage();
+  const { currencyCode, setCurrencyCode } = useCurrency();
 
   // Fetch user
   const { data: user } = useQuery({
@@ -303,6 +305,29 @@ export default function Settings() {
                   {supportedLanguages.map(l => (
                     <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {/* Currency */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                {t.currency}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-500 mb-3">{t.currency_description}</p>
+              <Select value={currencyCode} onValueChange={setCurrencyCode}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ILS">{t.currency_ils}</SelectItem>
+                  <SelectItem value="USD">{t.currency_usd}</SelectItem>
+                  <SelectItem value="EUR">{t.currency_eur}</SelectItem>
                 </SelectContent>
               </Select>
             </CardContent>

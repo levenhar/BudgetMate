@@ -18,9 +18,11 @@ import NotificationsPanel from '@/components/ui/NotificationsPanel';
 import PendingExpenseApprovalDialog from '@/components/ui/PendingExpenseApprovalDialog';
 
 import { useLanguage } from '@/components/i18n/LanguageContext';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 export default function Expenses() {
   const { t, dir } = useLanguage();
+  const { currencySymbol } = useCurrency();
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [editingSharedExpense, setEditingSharedExpense] = useState(null);
@@ -866,8 +868,8 @@ export default function Expenses() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900">{t.all_expenses}</h1>
             <p className="text-slate-500 mt-1">
-              {filteredExpenses.length} {t.expenses} · ₪{totalFiltered.toFixed(2)} {t.total}
-              {recurringTotal > 0 && <span className="ms-1">· {t.recurring_active}: ₪{recurringTotal.toFixed(2)}</span>}
+              {filteredExpenses.length} {t.expenses} · {currencySymbol}{totalFiltered.toFixed(2)} {t.total}
+              {recurringTotal > 0 && <span className="ms-1">· {t.recurring_active}: {currencySymbol}{recurringTotal.toFixed(2)}</span>}
             </p>
           </div>
 
@@ -903,7 +905,7 @@ export default function Expenses() {
                 <span className="text-sm text-slate-500">({activeRecurring.length})</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-lg font-bold text-slate-900">₪{recurringTotal.toFixed(2)}</span>
+                <span className="text-lg font-bold text-slate-900">{currencySymbol}{recurringTotal.toFixed(2)}</span>
                 {recurringExpanded ? (
                   <ChevronDown className="h-5 w-5 text-slate-400" />
                 ) : (
@@ -932,7 +934,7 @@ export default function Expenses() {
                           />
                         </div>
                         <div className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
-                          <span className="font-semibold text-slate-900 whitespace-nowrap">₪{rec.amount.toFixed(2)}</span>
+                          <span className="font-semibold text-slate-900 whitespace-nowrap">{currencySymbol}{rec.amount.toFixed(2)}</span>
                           <span className="text-slate-300">|</span>
                           <span className="text-slate-600 truncate">{rec.name}</span>
                           <span className="text-slate-300">|</span>

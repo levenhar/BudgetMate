@@ -1,7 +1,9 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 export default function CategoryPieChart({ data }) {
+  const { currencySymbol } = useCurrency();
   if (!data || data.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-slate-400">
@@ -26,7 +28,7 @@ export default function CategoryPieChart({ data }) {
             <span className="font-medium text-slate-900">{item.name}</span>
           </div>
           <div className="text-sm text-slate-600">
-            ₪{item.value.toFixed(2)} ({percentage}%)
+            {currencySymbol}{item.value.toFixed(2)} ({percentage}%)
           </div>
         </div>
       );

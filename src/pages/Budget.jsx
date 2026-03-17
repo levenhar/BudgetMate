@@ -17,9 +17,11 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { toast } from 'sonner';
 
 import { useLanguage } from '@/components/i18n/LanguageContext';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 export default function Budget() {
   const { t, dir } = useLanguage();
+  const { currencySymbol } = useCurrency();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM-01'));
@@ -517,7 +519,7 @@ export default function Budget() {
                     <DollarSign className="h-4 w-4" />
                     <span className="text-sm">{t.total_budget}</span>
                   </div>
-                  <p className="text-2xl font-bold text-slate-900">₪{totalBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="text-2xl font-bold text-slate-900">{currencySymbol}{totalBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
 
                 <div className="bg-slate-50 rounded-xl p-4">
@@ -525,7 +527,7 @@ export default function Budget() {
                     <TrendingDown className="h-4 w-4" />
                     <span className="text-sm">{t.spent}</span>
                   </div>
-                  <p className="text-2xl font-bold text-slate-900">₪{totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="text-2xl font-bold text-slate-900">{currencySymbol}{totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
 
                 <div className={`bg-slate-50 rounded-xl p-4 ${remainingBudget < 0 ? 'border-2 border-red-300' : ''}`}>
@@ -538,7 +540,7 @@ export default function Budget() {
                     <span className="text-sm">{t.remaining}</span>
                   </div>
                   <p className={`text-2xl font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    ₪{remainingBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {currencySymbol}{remainingBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>
@@ -606,10 +608,10 @@ export default function Budget() {
                         </div>
                         <div className="text-left">
                           <p className="text-sm text-slate-600">
-                            ₪{spent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / ₪{categoryBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {currencySymbol}{spent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / {currencySymbol}{categoryBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
                           <p className={`text-sm font-medium ${remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {t.remaining_short}: ₪{remaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {t.remaining_short}: {currencySymbol}{remaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
                         </div>
                       </div>
@@ -676,7 +678,7 @@ export default function Budget() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="amount">{t.absolute_amount}</SelectItem>
+                  <SelectItem value="amount">{t.absolute_amount.replace('{symbol}', currencySymbol)}</SelectItem>
                   <SelectItem value="percentage">{t.percentage}</SelectItem>
                 </SelectContent>
               </Select>
@@ -745,7 +747,7 @@ export default function Budget() {
                   </>
                 ) : (
                   <p className="text-sm text-slate-600">
-                    סה"כ תקציב: ₪
+                    סה"כ תקציב: {currencySymbol}
                     {Object.values(categoryInputs)
                       .reduce((sum, v) => sum + (parseFloat(v) || 0), 0)
                       .toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -800,7 +802,7 @@ export default function Budget() {
                 {quickEditMode === 'percentage' ? (
                   <>
                     <p className="text-slate-600">אחוז נוכחי: {quickEditCategory.percentage?.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</p>
-                    <p className="text-slate-600">תקציב כולל: ₪{quickEditCategory.total_budget?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</p>
+                    <p className="text-slate-600">תקציב כולל: {currencySymbol}{quickEditCategory.total_budget?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</p>
                     <p className={`font-medium ${availablePercentage > 0 ? 'text-green-600' : 'text-amber-600'}`}>
                       {availablePercentage > 0 
                         ? `נותרו ${availablePercentage.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% פנויים`
@@ -808,7 +810,7 @@ export default function Budget() {
                     </p>
                   </>
                 ) : (
-                  <p className="text-slate-600">תקציב נוכחי: ₪{quickEditCategory.amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</p>
+                  <p className="text-slate-600">תקציב נוכחי: {currencySymbol}{quickEditCategory.amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</p>
                 )}
               </div>
             )}

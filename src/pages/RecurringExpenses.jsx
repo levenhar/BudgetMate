@@ -15,9 +15,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import UnifiedExpenseDialog from '@/components/ui/UnifiedExpenseDialog';
 
 import { useLanguage } from '@/components/i18n/LanguageContext';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 export default function RecurringExpenses() {
   const { t, dir } = useLanguage();
+  const { currencySymbol } = useCurrency();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
@@ -373,7 +375,7 @@ export default function RecurringExpenses() {
               <h2 className="text-xl font-bold text-slate-900">{t.future_payments}</h2>
               <div className="text-left">
                 <div className="text-2xl font-bold text-slate-900">
-                  ₪{installmentGroups.reduce((sum, g) => sum + g.installmentAmount, 0).toFixed(2)}
+                  {currencySymbol}{installmentGroups.reduce((sum, g) => sum + g.installmentAmount, 0).toFixed(2)}
                 </div>
                 <div className="text-sm text-slate-500">{t.per_month}</div>
               </div>
@@ -400,14 +402,14 @@ export default function RecurringExpenses() {
                           </span>
                         </div>
                         <div className="text-sm text-slate-500 mt-0.5">
-                          {group.category_name} · ₪{group.installmentAmount.toFixed(2)} לחודש · סה״כ ₪{group.totalAmount.toFixed(2)}
+                          {group.category_name} · {currencySymbol}{group.installmentAmount.toFixed(2)} לחודש · סה״כ {currencySymbol}{group.totalAmount.toFixed(2)}
                         </div>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold text-slate-900">
-                        ₪{(group.installmentAmount * group.futureCount).toFixed(2)}
+                        {currencySymbol}{(group.installmentAmount * group.futureCount).toFixed(2)}
                       </span>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
@@ -452,7 +454,7 @@ export default function RecurringExpenses() {
             <h2 className="text-xl font-bold text-slate-900">{t.active_recurring}</h2>
             <div className="text-left">
               <div className="text-2xl font-bold text-slate-900">
-                ₪{activeRecurring.filter(r => r.is_active).reduce((sum, r) => sum + r.amount, 0).toFixed(2)}
+                {currencySymbol}{activeRecurring.filter(r => r.is_active).reduce((sum, r) => sum + r.amount, 0).toFixed(2)}
               </div>
               <div className="text-sm text-slate-500">לחודש</div>
             </div>
@@ -500,7 +502,7 @@ export default function RecurringExpenses() {
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-slate-900">₪{expense.amount.toFixed(2)}</span>
+                    <span className="text-lg font-bold text-slate-900">{currencySymbol}{expense.amount.toFixed(2)}</span>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
                         variant="ghost"
@@ -576,7 +578,7 @@ export default function RecurringExpenses() {
                         </div>
                         
                         <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold text-slate-700">₪{expense.amount.toFixed(2)}</span>
+                          <span className="text-lg font-bold text-slate-700">{currencySymbol}{expense.amount.toFixed(2)}</span>
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button
                               variant="ghost"
@@ -660,7 +662,7 @@ export default function RecurringExpenses() {
                 />
                 {installmentFormData.totalAmount && editingInstallmentGroup && (
                   <p className="text-xs text-slate-500">
-                    {editingInstallmentGroup.totalInstallments} תשלומים של ₪{(parseFloat(installmentFormData.totalAmount) / editingInstallmentGroup.totalInstallments).toFixed(2)} כל אחד
+                    {editingInstallmentGroup.totalInstallments} תשלומים של {currencySymbol}{(parseFloat(installmentFormData.totalAmount) / editingInstallmentGroup.totalInstallments).toFixed(2)} כל אחד
                   </p>
                 )}
               </div>

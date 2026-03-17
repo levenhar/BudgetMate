@@ -1,8 +1,10 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, parseISO } from 'date-fns';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 export default function MonthlyBarChart({ data }) {
+  const { currencySymbol } = useCurrency();
   if (!data || data.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-slate-400">
@@ -17,7 +19,7 @@ export default function MonthlyBarChart({ data }) {
         <div className="bg-white px-4 py-3 rounded-xl shadow-lg border border-slate-100">
           <div className="font-medium text-slate-900 mb-1">{label}</div>
           <div className="text-lg font-semibold text-indigo-600">
-            ₪{payload[0].value.toFixed(2)}
+            {currencySymbol}{payload[0].value.toFixed(2)}
           </div>
         </div>
       );
@@ -40,7 +42,7 @@ export default function MonthlyBarChart({ data }) {
             axisLine={false}
             tickLine={false}
             tick={{ fill: '#64748b', fontSize: 12 }}
-            tickFormatter={(value) => `₪${value}`}
+            tickFormatter={(value) => `${currencySymbol}${value}`}
           />
           <Tooltip content={<CustomTooltip />} />
           <Bar 

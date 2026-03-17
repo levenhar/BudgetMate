@@ -13,6 +13,7 @@ import { CalendarIcon, Plus, Loader2, Users, X } from "lucide-react";
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/components/i18n/LanguageContext';
+import { useCurrency } from '@/lib/CurrencyContext';
 
 export default function UnifiedExpenseDialog({ 
   open, 
@@ -30,6 +31,7 @@ export default function UnifiedExpenseDialog({
   householdId
 }) {
   const { t } = useLanguage();
+  const { currencySymbol } = useCurrency();
   const [activeTab, setActiveTab] = useState(defaultTab);
 
   useEffect(() => {
@@ -480,7 +482,7 @@ export default function UnifiedExpenseDialog({
                     />
                     {expenseForm.installments > 1 && expenseForm.amount && (
                      <p className="text-xs text-slate-500 text-right">
-                        {t.installments_breakdown.replace('{count}', expenseForm.installments).replace('{amount}', (parseFloat(expenseForm.amount) / expenseForm.installments).toFixed(2))}
+                        {t.installments_breakdown.replace('{count}', expenseForm.installments).replace('{symbol}', currencySymbol).replace('{amount}', (parseFloat(expenseForm.amount) / expenseForm.installments).toFixed(2))}
                       </p>
                     )}
                   </div>
@@ -846,7 +848,7 @@ export default function UnifiedExpenseDialog({
                       <tr>
                         <th className="text-right p-2 text-sm font-medium">{t.split_table_participant}</th>
                         <th className="text-right p-2 text-sm font-medium">
-                          {sharedForm.splitMethod === 'custom_percent' ? t.split_table_percent : t.split_table_amount}
+                          {sharedForm.splitMethod === 'custom_percent' ? t.split_table_percent : t.split_table_amount.replace('{symbol}', currencySymbol)}
                         </th>
                       </tr>
                     </thead>
@@ -856,7 +858,7 @@ export default function UnifiedExpenseDialog({
                           <td className="p-2">{split.userName}</td>
                           <td className="p-2">
                             {sharedForm.splitMethod === 'equal' ? (
-                              <span className="font-semibold">₪{split.shareAmount.toFixed(2)}</span>
+                              <span className="font-semibold">{currencySymbol}{split.shareAmount.toFixed(2)}</span>
                             ) : (
                               <Input
                                 type="number"

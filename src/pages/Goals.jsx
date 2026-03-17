@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useLanguage } from '@/components/i18n/LanguageContext';
+import { useCurrency } from '@/lib/CurrencyContext';
 import { toast } from 'sonner';
 import { Plus, MoreVertical, Edit2, Trash2, Target, PiggyBank } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -62,6 +63,7 @@ const DEFAULT_FORM = {
 
 export default function Goals() {
   const { t, dir } = useLanguage();
+  const { fmt } = useCurrency();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editGoal, setEditGoal] = useState(null);
@@ -188,13 +190,6 @@ export default function Goals() {
     return Math.ceil((new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24));
   };
 
-  const currency = settings?.currency || 'ILS';
-  const fmt = (n) =>
-    new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 0,
-    }).format(n);
 
   const totalSaved = goals.reduce((s, g) => s + (g.current_amount || 0), 0);
   const totalTarget = goals.reduce((s, g) => s + (g.target_amount || 0), 0);

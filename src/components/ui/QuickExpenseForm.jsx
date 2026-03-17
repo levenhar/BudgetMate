@@ -7,8 +7,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { CalendarIcon, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCurrency } from '@/lib/CurrencyContext';
 
 export default function QuickExpenseForm({ categories, onSubmit, isSubmitting }) {
+  const { currencySymbol } = useCurrency();
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date());
   const [categoryId, setCategoryId] = useState('');
@@ -148,7 +150,7 @@ export default function QuickExpenseForm({ categories, onSubmit, isSubmitting })
             />
             {installments > 1 && amount && (
               <p className="text-xs text-slate-500">
-                {installments} תשלומים של ₪{(parseFloat(amount) / installments).toFixed(2)} כל אחד
+                {installments} תשלומים של {currencySymbol}{(parseFloat(amount) / installments).toFixed(2)} כל אחד
               </p>
             )}
           </div>
