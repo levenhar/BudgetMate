@@ -5,20 +5,13 @@ export default function AuthCallback() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get('code');
-
-    if (!code) {
-      setError('No code parameter found in URL: ' + window.location.href);
-      return;
-    }
-
-    supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
+    supabase.auth.getSession().then(({ data, error }) => {
       if (error) {
-        setError(`Exchange failed: ${error.message} (status: ${error.status})`);
+        setError(`Session error: ${error.message}`);
       } else if (data?.session) {
         window.location.href = '/';
       } else {
-        setError('Exchange returned no session and no error.');
+        setError('No session found after OAuth callback. URL: ' + window.location.href);
       }
     });
   }, []);
