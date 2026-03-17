@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "WebSearch",
+      "Bash(playwright:*)",
+      "Bash(python scrape_base44.py)",
+      "Bash(npm install:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git reset:*)",
+      "Bash(git clean:*)",
+      "Bash(git branch -D:*)",
+      "Bash(rm:*)",
+      "Bash(rmdir:*)",
+      "Bash(del:*)",
+      "Bash(rd:*)",
+      "Bash(mv:*)",
+      "Bash(powershell:*)",
+      "Bash(cmd:*)",
+      "Edit(**/.claude/**)",
+      "Write(**/.claude/**)"
+    ]
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "name": "SharedExpense",
+  "type": "object",
+  "properties": {
+    "created_by_user_id": {
+      "type": "string",
+      "description": "User who created the shared expense"
+    },
+    "total_amount": {
+      "type": "number",
+      "description": "Total expense amount"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expense date"
+    },
+    "category_id": {
+      "type": "string",
+      "description": "Category ID"
+    },
+    "category_name": {
+      "type": "string",
+      "description": "Category name (denormalized)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Expense description"
+    },
+    "paid_by_user_id": {
+      "type": "string",
+      "description": "User who paid the expense"
+    },
+    "split_method": {
+      "type": "string",
+      "enum": [
+        "equal",
+        "custom_amount",
+        "custom_percent"
+      ],
+      "default": "equal",
+      "description": "How the expense is split"
+    },
+    "household_id": {
+      "type": "string",
+      "description": "Associated household ID (null for personal)"
+    },
+    "is_pending": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this shared expense is pending approval"
+    },
+    "pending_with_users": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of user emails waiting to approve"
+    }
+  },
+  "required": [
+    "created_by_user_id",
+    "total_amount",
+    "date",
+    "category_id",
+    "paid_by_user_id",
+    "split_method"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": true
+  }
+}

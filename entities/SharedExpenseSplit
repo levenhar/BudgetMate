@@ -1,0 +1,37 @@
+{
+  "name": "SharedExpenseSplit",
+  "type": "object",
+  "properties": {
+    "shared_expense_id": {
+      "type": "string",
+      "description": "Reference to shared expense"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "Participant user email"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Participant name (denormalized)"
+    },
+    "share_amount": {
+      "type": "number",
+      "description": "User's share of the expense"
+    },
+    "share_percent": {
+      "type": "number",
+      "description": "User's share percentage (if applicable)"
+    }
+  },
+  "required": [
+    "shared_expense_id",
+    "user_id",
+    "share_amount"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": true
+  }
+}

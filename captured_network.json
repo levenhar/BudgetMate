@@ -1,0 +1,591 @@
+{
+  "https://google.com/.well-known/web-identity": {
+    "provider_urls": [
+      "https://accounts.google.com/gsi/fedcm.json"
+    ],
+    "accounts_endpoint": "https://accounts.google.com/gsi/fedcm/listaccounts",
+    "login_url": "https://accounts.google.com/gsi/fedcm/signin"
+  },
+  "https://accounts.google.com/gsi/fedcm.json": {
+    "idtoken_endpoint": "https://accounts.google.com/gsi/fedcm/issue",
+    "id_token_endpoint": "https://accounts.google.com/gsi/fedcm/issue",
+    "id_assertion_endpoint": "https://accounts.google.com/o/fedcm/authorization",
+    "metrics_endpoint": "https://accounts.google.com/gsi/fedcm/metrics",
+    "accounts_endpoint": "https://accounts.google.com/gsi/fedcm/listaccounts",
+    "client_metadata_endpoint": "https://accounts.google.com/gsi/fedcm/clientmetadata",
+    "client_id_metadata_endpoint": "https://accounts.google.com/gsi/fedcm/clientmetadata",
+    "signin_url": "https://accounts.google.com/gsi/fedcm/signin",
+    "login_url": "https://accounts.google.com/gsi/fedcm/signin",
+    "revocation_endpoint": "https://accounts.google.com/gsi/fedcm/revoke",
+    "disconnect_endpoint": "https://accounts.google.com/gsi/fedcm/revoke",
+    "supports_add_account": true,
+    "supports_use_other_account": true,
+    "modes": {
+      "button": {
+        "supports_use_other_account": true
+      },
+      "widget": {
+        "supports_use_other_account": false
+      },
+      "active": {
+        "supports_use_other_account": true
+      },
+      "passive": {
+        "supports_use_other_account": false
+      }
+    },
+    "branding": {
+      "background_color": "#1a73e8",
+      "color": "#fff",
+      "icons": [
+        {
+          "url": "https://accounts.google.com/gsi-static/google-logo.png",
+          "size": 32
+        },
+        {
+          "url": "https://accounts.google.com/gsi-static/google-logo_40.png",
+          "size": 40
+        }
+      ]
+    }
+  },
+  "https://accounts.google.com/gsi/fedcm/listaccounts": {
+    "accounts": []
+  },
+  "https://app.base44.com/api/billing/tiers": {
+    "tiers": [
+      {
+        "name": "free",
+        "display_name": "Free",
+        "version": "v1",
+        "rank": 0,
+        "promo_eligible_yearly": false,
+        "limits": {
+          "monthly_message_credits": 25,
+          "monthly_integration_credits": 100,
+          "daily_message_limit": 5,
+          "daily_support_conversation_limit": 2,
+          "max_apps": 5
+        },
+        "features": [],
+        "who_is_it_for": "",
+        "pricing": {
+          "monthly_usd": null,
+          "monthly_ils": null,
+          "monthly_jpy": null,
+          "yearly_usd": null,
+          "yearly_ils": null,
+          "yearly_jpy": null
+        },
+        "price_ids": {
+          "monthly_usd": null,
+          "monthly_ils": null,
+          "monthly_jpy": null,
+          "yearly_usd": null,
+          "yearly_ils": null,
+          "yearly_jpy": null
+        }
+      },
+      {
+        "name": "starter",
+        "display_name": "Starter",
+        "version": "v1",
+        "rank": 1,
+        "promo_eligible_yearly": false,
+        "limits": {
+          "monthly_message_credits": 100,
+          "monthly_integration_credits": 2000,
+          "daily_message_limit": null,
+          "daily_support_conversation_limit": 5,
+          "max_apps": null
+        },
+        "features": [
+          "Unlimited number of apps",
+          "In-app code edits"
+        ],
+        "who_is_it_for": "Ideal for hobbyists and users who are looking to explore the platform",
+        "pricing": {
+          "monthly_usd": 2500,
+          "monthly_ils": 8900,
+          "monthly_jpy": 4000,
+          "yearly_usd": 24000,
+          "yearly_ils": 82800,
+          "yearly_jpy": 38400
+        },
+        "price_ids": {
+          "monthly_usd": "price_1SfN3OD5KgnLQ3DaqRfYAJPz",
+          "monthly_ils": "price_1SfN3PD5KgnLQ3Das68YNnLU",
+          "monthly_jpy": "price_1TBG2nD5KgnLQ3DaTRwzLn25",
+          "yearly_usd": "price_1SfN3OD5KgnLQ3DaqsFf53Hl",
+          "yearly_ils": "price_1SfN3QD5KgnLQ3DaJZY6HwXf",
+          "yearly_jpy": "price_1TBG2zD5KgnLQ3DaSNgkiu9V"
+        }
+      },
+      {
+        "name": "builder",
+        "display_name": "Builder",
+        "version": "v1",
+        "rank": 2,
+        "promo_eligible_yearly": true,
+        "limits": {
+          "monthly_message_credits": 250,
+          "monthly_integration_credits": 10000,
+          "daily_message_limit": null,
+          "daily_support_conversation_limit": 10,
+          "max_apps": null
+        },
+        "features": [
+          "Backend Functions",
+          "Connect a domain",
+          "Github integration"
+        ],
+        "who_is_it_for": "Designed for professionals who need higher limits and access to advanced features",
+        "pricing": {
+          "monthly_usd": 5000,
+          "monthly_ils": 16900,
+          "monthly_jpy": 7800,
+          "yearly_usd": 48000,
+          "yearly_ils": 162000,
+          "yearly_jpy": 74400
+        },
+        "price_ids": {
+          "monthly_usd": "price_1QZ62cD5KgnLQ3Da0Zmdsc53",
+          "monthly_ils": "price_1SVAiLD5KgnLQ3Da3DWTzj3M",
+          "monthly_jpy": "price_1TBG2oD5KgnLQ3DaiyRF1jmX",
+          "yearly_usd": "price_1RoOOnD5KgnLQ3DafXAYNhvF",
+          "yearly_ils": "price_1SVAjFD5KgnLQ3DaCxRoZMIv",
+          "yearly_jpy": "price_1TBG30D5KgnLQ3DaRmx3Q2oZ"
+        }
+      },
+      {
+        "name": "pro",
+        "display_name": "Pro",
+        "version": "v1",
+        "rank": 3,
+        "promo_eligible_yearly": true,
+        "limits": {
+          "monthly_message_credits": 500,
+          "monthly_integration_credits": 20000,
+          "daily_message_limit": null,
+          "daily_support_conversation_limit": 20,
+          "max_apps": null
+        },
+        "features": [
+          "Early access to beta features"
+        ],
+        "who_is_it_for": "Perfect for heavy users and for building complex production grade apps that might need premium support",
+        "pricing": {
+          "monthly_usd": 10000,
+          "monthly_ils": 32900,
+          "monthly_jpy": 15500,
+          "yearly_usd": 96000,
+          "yearly_ils": 310800,
+          "yearly_jpy": 148800
+        },
+        "price_ids": {
+          "monthly_usd": "price_1QZ62cD5KgnLQ3Daz4gKqnxq",
+          "monthly_ils": "price_1SVYtFD5KgnLQ3Dab54FRa0B",
+          "monthly_jpy": "price_1TBG2pD5KgnLQ3DaiCfyIi3D",
+          "yearly_usd": "price_1RoOQFD5KgnLQ3Da1lfbSFTH",
+          "yearly_ils": "price_1SVAjGD5KgnLQ3DaYC09xkeA",
+          "yearly_jpy": "price_1TBG31D5KgnLQ3DaVgAttVS7"
+        }
+      },
+      {
+        "name": "elite",
+        "display_name": "Elite",
+        "version": "v1",
+        "rank": 4,
+        "promo_eligible_yearly": true,
+        "limits": {
+          "monthly_message_credits": 1200,
+          "monthly_integration_credits": 50000,
+          "daily_message_limit": null,
+          "daily_support_conversation_limit": 100,
+          "max_apps": null
+        },
+        "features": [
+          "Premium support"
+        ],
+        "who_is_it_for": "Professionals and businesses building commercial products",
+        "pricing": {
+          "monthly_usd": 20000,
+          "monthly_ils": 65900,
+          "monthly_jpy": 31200,
+          "yearly_usd": 192000,
+          "yearly_ils": 630000,
+          "yearly_jpy": 300000
+        },
+        "price_ids": {
+          "monthly_usd": "price_1R3mGxD5KgnLQ3DazqO9ZfVK",
+          "monthly_ils": "price_1SVAiSD5KgnLQ3DaQ0hWDot3",
+          "monthly_jpy": "price_1TBG2qD5KgnLQ3DaYF2cuU7E",
+          "yearly_usd": "price_1RoOTWD5KgnLQ3Da7SIZ4ZF7",
+          "yearly_ils": "price_1SVAjHD5KgnLQ3DaKlYODJpb",
+          "yearly_jpy": "price_1TBG32D5KgnLQ3Da51TxDkdK"
+        }
+      },
+      {
+        "name": "elite_2",
+        "display_name": "Elite 2",
+        "version": "v1",
+        "rank": 5,
+        "promo_eligible_yearly": false,
+        "limits": {
+          "monthly_message_credits": 1900,
+          "monthly_integration_credits": 75000,
+          "daily_message_limit": null,
+          "daily_support_conversation_limit": 100,
+          "max_apps": null
+        },
+        "features": [
+          "Premium Support"
+        ],
+        "who_is_it_for": "Professionals and businesses building commercial products",
+        "pricing": {
+          "monthly_usd": 30000,
+          "monthly_ils": 99000,
+          "monthly_jpy": 47500,
+          "yearly_usd": 288000,
+          "yearly_ils": 954000,
+          "yearly_jpy": 456000
+        },
+        "price_ids": {
+          "monthly_usd": "price_1RAoXQD5KgnLQ3Davb6WqsUg",
+          "monthly_ils": "price_1SVAiSD5KgnLQ3DaE6sXXC1e",
+          "monthly_jpy": "price_1TBG2rD5KgnLQ3DaumkLkVEH",
+          "yearly_usd": "price_1RoOWpD5KgnLQ3DasfM8i32b",
+          "yearly_ils": "price_1SVAjID5KgnLQ3DaSWqbhiiM",
+          "yearly_jpy": "price_1TBG33D5KgnLQ3DaA008YnUd"
+        }
+      },
+      {
+        "name": "elite_3",
+        "display_name": "Elite 3",
+        "version": "v1",
+        "rank": 6,
+        "promo_eligible_yearly": false,
+        "limits": {
+          "monthly_message_credits": 2600,
+          "monthly_integration_credits": 100000,
+          "daily_message_limit": null,
+          "daily_support_conversation_limit": 100,
+          "max_apps": null
+        },
+        "features": [],
+        "who_is_it_for": "Professionals and businesses building commercial products",
+        "pricing": {
+          "monthly_usd": 40000,
+          "monthly_ils": 132000,
+          "monthly_jpy": 62500,
+          "yearly_usd": 384000,
+          "yearly_ils": 1266000,
+          "yearly_jpy": 600000
+        },
+        "price_ids": {
+          "monthly_usd": "price_1RAoYiD5KgnLQ3Dah6RXqJmr",
+          "monthly_ils": "price_1SVAiTD5KgnLQ3DaM17XpQqu",
+          "monthly_jpy": "price_1TBG2sD5KgnLQ3DaRDt3zpJ9",
+          "yearly_usd": "price_1RoOYKD5KgnLQ3DaWO5dWV1x",
+          "yearly_ils": "price_1SVAjKD5KgnLQ3DanjsGqHYa",
+          "yearly_jpy": "price_1TBG34D5KgnLQ3DaVwuRLlGj"
+        }
+      },
+      {
+        "name": "elite_4",
+        "display_name": "Elite 4",
+        "version": "v1",
+        "rank": 7,
+        "promo_eligible_yearly": false,
+        "limits": {
+          "monthly_message_credits": 3300,
+          "monthly_integration_credits": 125000,
+          "daily_message_limit": null,
+          "daily_support_conversation_limit": 100,
+          "max_apps": null
+        },
+        "features": [
+          "Premium Support"
+        ],
+        "who_is_it_for": "Professionals and businesses building commercial products",
+        "pricing": {
+          "monthly_usd": 50000,
+          "monthly_ils": 165000,
+          "monthly_jpy": 77500,
+          "yearly_usd": 480000,
+          "yearly_ils": 1584000,
+          "yearly_jpy": 744000
+        },
+        "price_ids": {
+          "monthly_usd": "price_1SHKt6D5KgnLQ3DauuvLZX6W",
+          "monthly_ils": "price_1SVAiUD5KgnLQ3DaWTQdakvd",
+          "monthly_jpy": "price_1TBG2tD5KgnLQ3Da0kgMPQu6",
+          "yearly_usd": "price_1SHKsWD5KgnLQ3DaUTXeg8rk",
+          "yearly_ils": "price_1SVAjLD5KgnLQ3DaUogYVLO7",
+          "yearly_jpy": "price_1TBG35D5KgnLQ3DaW55Eyjfz"
+        }
+      },
+      {
+        "name": "elite_5",
+        "display_name": "Elite 5",
+        "version": "v1",
+        "rank": 8,
+        "promo_eligible_yearly": false,
+        "limits": {
+          "monthly_message_credits": 4000,
+          "monthly_integration_credits": 150000,
+          "daily_message_limit": null,
+          "daily_support_conversation_limit": 100,
+          "max_apps": null
+        },
+        "features": [
+          "Premium Support"
+        ],
+        "who_is_it_for": "Professionals and businesses building commercial products",
+        "pricing": {
+          "monthly_usd": 60000,
+          "monthly_ils": 198000,
+          "monthly_jpy": 95000,
+          "yearly_usd": 576000,
+          "yearly_ils": 1900000,
+          "yearly_jpy": 912000
+        },
+        "price_ids": {
+          "monthly_usd": "price_1SpmOvD5KgnLQ3DagzR7vFyP",
+          "monthly_ils": "price_1SpmOvD5KgnLQ3DaqoXLdEC4",
+          "monthly_jpy": "price_1TBG2uD5KgnLQ3DaK8omSeNn",
+          "yearly_usd": "price_1SpmOwD5KgnLQ3Da2izZkUm9",
+          "yearly_ils": "price_1SpmOwD5KgnLQ3DaoVsmAPtl",
+          "yearly_jpy": "price_1TBG36D5KgnLQ3DamDIT3G5F"
+        }
+      },
+      {
+        "name": "elite_6",
+        "display_name": "Elite 6",
+        "version": "v1",
+        "rank": 9,
+        "promo_eligible_yearly": false,
+        "limits": {
+          "monthly_message_credits": 4700,
+          "monthly_integration_credits": 175000,
+          "daily_message_limit": null,
+          "daily_support_conversation_limit": 100,
+          "max_apps": null
+        },
+        "features": [
+          "Premium Support"
+        ],
+        "who_is_it_for": "Professionals and businesses building commercial products",
+        "pricing": {
+          "monthly_usd": 70000,
+          "monthly_ils": 230000,
+          "monthly_jpy": 110000,
+          "yearly_usd": 672000,
+          "yearly_ils": 2208000,
+          "yearly_jpy": 1056000
+        },
+        "price_ids": {
+          "monthly_usd": "price_1SpmOwD5KgnLQ3Daqh8mY4DH",
+          "monthly_ils": "price_1SpmOxD5KgnLQ3Da0Fkyqk0l",
+          "monthly_jpy": "price_1TBG2vD5KgnLQ3DaClteKpTg",
+          "yearly_usd": "price_1SpmOxD5KgnLQ3DayTTUCfQP",
+          "yearly_ils": "price_1SpmOxD5KgnLQ3Da9IcRZZjF",
+          "yearly_jpy": "price_1TBG37D5KgnLQ3DagICMby9J"
+        }
+      },
+      {
+        "name": "elite_7",
+        "display_name": "Elite 7",
+        "version": "v1",
+        "rank": 10,
+        "promo_eligible_yearly": false,
+        "limits": {
+          "monthly_message_credits": 5400,
+          "monthly_integration_credits": 200000,
+          "daily_message_limit": null,
+          "daily_support_conversation_limit": 100,
+          "max_apps": null
+        },
+        "features": [
+          "Premium Support"
+        ],
+        "who_is_it_for": "Professionals and businesses building commercial products",
+        "pricing": {
+          "monthly_usd": 80000,
+          "monthly_ils": 264000,
+          "monthly_jpy": 125000,
+          "yearly_usd": 768000,
+          "yearly_ils": 2535000,
+          "yearly_jpy": 1200000
+        },
+        "price_ids": {
+          "monthly_usd": "price_1SpmOyD5KgnLQ3DaPRKoIfuR",
+          "monthly_ils": "price_1SpmOyD5KgnLQ3DaN5wpPAcN",
+          "monthly_jpy": "price_1TBG2wD5KgnLQ3DaPFnSdxeW",
+          "yearly_usd": "price_1SpmOzD5KgnLQ3Da1pXzfy8G",
+          "yearly_ils": "price_1SpmOzD5KgnLQ3DaKLF5Zjpg",
+          "yearly_jpy": "price_1TBG38D5KgnLQ3Da8kzb9w12"
+        }
+      },
+      {
+        "name": "elite_8",
+        "display_name": "Elite 8",
+        "version": "v1",
+        "rank": 11,
+        "promo_eligible_yearly": false,
+        "limits": {
+          "monthly_message_credits": 6100,
+          "monthly_integration_credits": 225000,
+          "daily_message_limit": null,
+          "daily_support_conversation_limit": 100,
+          "max_apps": null
+        },
+        "features": [
+          "Premium Support"
+        ],
+        "who_is_it_for": "Professionals and businesses building commercial products",
+        "pricing": {
+          "monthly_usd": 90000,
+          "monthly_ils": 297000,
+          "monthly_jpy": 140000,
+          "yearly_usd": 864000,
+          "yearly_ils": 2852000,
+          "yearly_jpy": 1344000
+        },
+        "price_ids": {
+          "monthly_usd": "price_1SpmOzD5KgnLQ3Dav7DvpFfC",
+          "monthly_ils": "price_1SpmP0D5KgnLQ3DaOoGJ5VM0",
+          "monthly_jpy": "price_1TBG2xD5KgnLQ3DamUxrNdBZ",
+          "yearly_usd": "price_1SpmP0D5KgnLQ3Da5LqvkjAJ",
+          "yearly_ils": "price_1SpmP0D5KgnLQ3Datj8ZNOHU",
+          "yearly_jpy": "price_1TBG39D5KgnLQ3DaCKqXGEHr"
+        }
+      },
+      {
+        "name": "elite_9",
+        "display_name": "Elite 9",
+        "version": "v1",
+        "rank": 12,
+        "promo_eligible_yearly": false,
+        "limits": {
+          "monthly_message_credits": 6800,
+          "monthly_integration_credits": 250000,
+          "daily_message_limit": null,
+          "daily_support_conversation_limit": 100,
+          "max_apps": null
+        },
+        "features": [
+          "Premium Support"
+        ],
+        "who_is_it_for": "Professionals and businesses building commercial products",
+        "pricing": {
+          "monthly_usd": 100000,
+          "monthly_ils": 330000,
+          "monthly_jpy": 158000,
+          "yearly_usd": 960000,
+          "yearly_ils": 3168000,
+          "yearly_jpy": 1512000
+        },
+        "price_ids": {
+          "monthly_usd": "price_1SpmP1D5KgnLQ3Day8TYuFa1",
+          "monthly_ils": "price_1SpmP1D5KgnLQ3DaYh3QcUlk",
+          "monthly_jpy": "price_1TBG2yD5KgnLQ3DaDpVbRAbt",
+          "yearly_usd": "price_1SpmP1D5KgnLQ3DaivGlTTmH",
+          "yearly_ils": "price_1SpmP2D5KgnLQ3DaTC1FIFFW",
+          "yearly_jpy": "price_1TBG3AD5KgnLQ3DaskhAStmK"
+        }
+      },
+      {
+        "name": "enterprise",
+        "display_name": "Enterprise",
+        "version": "v1",
+        "rank": 13,
+        "promo_eligible_yearly": false,
+        "limits": {
+          "monthly_message_credits": 1000000,
+          "monthly_integration_credits": 100000,
+          "daily_message_limit": null,
+          "daily_support_conversation_limit": 1000,
+          "max_apps": null
+        },
+        "features": [],
+        "who_is_it_for": "",
+        "pricing": {
+          "monthly_usd": null,
+          "monthly_ils": null,
+          "monthly_jpy": null,
+          "yearly_usd": null,
+          "yearly_ils": null,
+          "yearly_jpy": null
+        },
+        "price_ids": {
+          "monthly_usd": null,
+          "monthly_ils": null,
+          "monthly_jpy": null,
+          "yearly_usd": null,
+          "yearly_ils": null,
+          "yearly_jpy": null
+        }
+      }
+    ],
+    "hierarchy": [
+      "free",
+      "starter",
+      "builder",
+      "pro",
+      "elite",
+      "elite_2",
+      "elite_3",
+      "elite_4",
+      "elite_5",
+      "elite_6",
+      "elite_7",
+      "elite_8",
+      "elite_9",
+      "enterprise"
+    ],
+    "free_tier": "free",
+    "recommended_tier": "pro",
+    "use_ils": true,
+    "currency": "ils"
+  },
+  "https://pixel-config.reddit.com/pixels/a2_i2x4hyzvucch/config": {
+    "aam": {
+      "email": true,
+      "phone_number": true
+    }
+  },
+  "https://px.ads.linkedin.com/attribution_trigger?pid=8692177&time=1773736708037&url=https%3A%2F%2Fapp.base44.com%2Flogin%3Ffrom_url%3Dhttps%253A%252F%252Fapp.base44.com%252Fapps%252F69582269f13402a151c116ad%252Feditor%252Fworkspace%252Fcode&conversionId=23400521&tm=gtmv2": {},
+  "https://browser-intake-datadoghq.com/api/v2/rum?ddsource=browser&dd-api-key=pubfe8a4f2972b412b4556fd67e77f82cb4&dd-evp-origin-version=6.25.1&dd-evp-origin=browser&dd-request-id=07554b7d-a92e-44d4-a762-a1769aa80adb&batch_time=1773736707656&_dd.api=fetch-keepalive": {
+    "request_id": "07554b7d-a92e-44d4-a762-a1769aa80adb"
+  },
+  "https://browser-intake-datadoghq.com/api/v2/rum?ddsource=browser&dd-api-key=pubfe8a4f2972b412b4556fd67e77f82cb4&dd-evp-origin-version=6.25.1&dd-evp-origin=browser&dd-request-id=0cb5edaa-ea8f-46ae-b2e7-7eeafb546cdd&batch_time=1773736707652&_dd.api=fetch-keepalive": {
+    "request_id": "0cb5edaa-ea8f-46ae-b2e7-7eeafb546cdd"
+  },
+  "https://browser-intake-datadoghq.com/api/v2/rum?ddsource=browser&dd-api-key=pubfe8a4f2972b412b4556fd67e77f82cb4&dd-evp-origin-version=6.25.1&dd-evp-origin=browser&dd-request-id=ff6f94d3-3fbc-4223-9fca-fca97121ad8e&batch_time=1773736707659&_dd.api=fetch-keepalive": {
+    "request_id": "ff6f94d3-3fbc-4223-9fca-fca97121ad8e"
+  },
+  "https://browser-intake-datadoghq.com/api/v2/replay?ddsource=browser&dd-api-key=pubfe8a4f2972b412b4556fd67e77f82cb4&dd-evp-origin-version=6.25.1&dd-evp-origin=browser&dd-request-id=d2453536-53c1-47da-9ef4-0673ab9a6188": {
+    "request_id": "d2453536-53c1-47da-9ef4-0673ab9a6188"
+  },
+  "https://browser-intake-datadoghq.com/api/v2/rum?ddsource=browser&dd-api-key=pubfe8a4f2972b412b4556fd67e77f82cb4&dd-evp-origin-version=6.25.1&dd-evp-origin=browser&dd-request-id=2258d865-c763-4edf-b8cd-a1c6e98ba0cd&batch_time=1773736708467&_dd.api=fetch": {
+    "request_id": "2258d865-c763-4edf-b8cd-a1c6e98ba0cd"
+  },
+  "https://browser-intake-datadoghq.com/api/v2/rum?ddsource=browser&dd-api-key=pubfe8a4f2972b412b4556fd67e77f82cb4&dd-evp-origin-version=6.25.1&dd-evp-origin=browser&dd-request-id=ca1d6719-13f9-4d24-b2da-213de1a47b27&batch_time=1773736708247&_dd.api=fetch": {
+    "request_id": "ca1d6719-13f9-4d24-b2da-213de1a47b27"
+  },
+  "https://browser-intake-datadoghq.com/api/v2/rum?ddsource=browser&dd-api-key=pubfe8a4f2972b412b4556fd67e77f82cb4&dd-evp-origin-version=6.25.1&dd-evp-origin=browser&dd-request-id=240cb8cb-c696-45c7-a185-7f1c410bad2f&batch_time=1773736708501&_dd.api=fetch-keepalive": {
+    "request_id": "240cb8cb-c696-45c7-a185-7f1c410bad2f"
+  },
+  "https://browser-intake-datadoghq.com/api/v2/rum?ddsource=browser&dd-api-key=pubfe8a4f2972b412b4556fd67e77f82cb4&dd-evp-origin-version=6.25.1&dd-evp-origin=browser&dd-request-id=20c581bb-bb02-4031-837c-1709a9728498&batch_time=1773736708086&_dd.api=fetch-keepalive": {
+    "request_id": "20c581bb-bb02-4031-837c-1709a9728498"
+  },
+  "https://browser-intake-datadoghq.com/api/v2/rum?ddsource=browser&dd-api-key=pubfe8a4f2972b412b4556fd67e77f82cb4&dd-evp-origin-version=6.25.1&dd-evp-origin=browser&dd-request-id=a58f6696-6120-4503-8977-33c865d70493&batch_time=1773736709345&_dd.api=fetch-keepalive": {
+    "request_id": "a58f6696-6120-4503-8977-33c865d70493"
+  },
+  "https://m.stripe.com/6": {
+    "muid": "b02c70f9-ea7d-47fc-a05f-b96dfa21b2d5a98609",
+    "guid": "ba02800e-ed0d-41fa-83c3-5057aac6731b43f015",
+    "sid": "ca9317a9-4d9a-419e-b404-9537016e5c223ccd6e"
+  }
+}

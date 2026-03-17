@@ -1,0 +1,69 @@
+{
+    "name": "SharedExpenseApproval",
+    "type": "object",
+    "properties": {
+      "from_user_id": {
+        "type": "string",
+        "description": "User who initiates shared expenses"
+      },
+      "from_user_name": {
+        "type": "string",
+        "description": "Name of initiating user (denormalized)"
+      },
+      "to_user_id": {
+        "type": "string",
+        "description": "User who receives shared expense requests"
+      },
+      "to_user_name": {
+        "type": "string",
+        "description": "Name of receiving user (denormalized)"
+      },
+      "approval_status": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "one_time",
+          "permanent"
+        ],
+        "default": "pending",
+        "description": "Approval status: pending (awaiting action), one_time (approved once), permanent (auto-approve all)"
+      }
+    },
+    "required": [
+      "from_user_id",
+      "to_user_id"
+    ],
+    "rls": {
+      "create": true,
+      "read": {
+        "$or": [
+          {
+            "from_user_id": "{{user.email}}"
+          },
+          {
+            "to_user_id": "{{user.email}}"
+          }
+        ]
+      },
+      "update": {
+        "$or": [
+          {
+            "from_user_id": "{{user.email}}"
+          },
+          {
+            "to_user_id": "{{user.email}}"
+          }
+        ]
+      },
+      "delete": {
+        "$or": [
+          {
+            "from_user_id": "{{user.email}}"
+          },
+          {
+            "to_user_id": "{{user.email}}"
+          }
+        ]
+      }
+    }
+  }

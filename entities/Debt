@@ -1,0 +1,37 @@
+{
+  "name": "Debt",
+  "type": "object",
+  "properties": {
+    "from_user_id": {
+      "type": "string",
+      "description": "User who owes money (debtor)"
+    },
+    "from_user_name": {
+      "type": "string",
+      "description": "Debtor name (denormalized)"
+    },
+    "to_user_id": {
+      "type": "string",
+      "description": "User who is owed money (creditor)"
+    },
+    "to_user_name": {
+      "type": "string",
+      "description": "Creditor name (denormalized)"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Net debt amount"
+    }
+  },
+  "required": [
+    "from_user_id",
+    "to_user_id",
+    "amount"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": true
+  }
+}

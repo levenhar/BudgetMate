@@ -1,0 +1,99 @@
+{
+  "name": "Budget",
+  "type": "object",
+  "properties": {
+    "budget_type": {
+      "type": "string",
+      "enum": [
+        "total",
+        "per_category"
+      ],
+      "default": "per_category",
+      "description": "\u05e1\u05d5\u05d2 \u05d4\u05ea\u05e7\u05e6\u05d9\u05d1: \u05db\u05d5\u05dc\u05dc \u05d0\u05d5 \u05dc\u05e4\u05d9 \u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4"
+    },
+    "total_budget": {
+      "type": "number",
+      "description": "\u05ea\u05e7\u05e6\u05d9\u05d1 \u05db\u05d5\u05dc\u05dc (\u05d0\u05dd budget_type = total)"
+    },
+    "category_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4 (\u05d0\u05dd budget_type = per_category)"
+    },
+    "category_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4"
+    },
+    "amount": {
+      "type": "number",
+      "description": "\u05e1\u05db\u05d5\u05dd \u05d4\u05ea\u05e7\u05e6\u05d9\u05d1"
+    },
+    "percentage": {
+      "type": "number",
+      "description": "\u05d0\u05d7\u05d5\u05d6 \u05de\u05d4\u05ea\u05e7\u05e6\u05d9\u05d1 \u05d4\u05db\u05d5\u05dc\u05dc (\u05d0\u05dd budget_type = total)"
+    },
+    "household_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05de\u05e9\u05e7 \u05d1\u05d9\u05ea (null \u05e2\u05d1\u05d5\u05e8 \u05d0\u05d9\u05e9\u05d9)"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05d4\u05de\u05e9\u05ea\u05de\u05e9"
+    }
+  },
+  "required": [
+    "budget_type"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}",
+          "household_id": null
+        },
+        {
+          "$and": [
+            {
+              "household_id": "{{user.data.current_household_id}}"
+            },
+            {
+              "created_by": "{{user.email}}"
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}",
+          "household_id": null
+        },
+        {
+          "household_id": "{{user.data.current_household_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}",
+          "household_id": null
+        },
+        {
+          "household_id": "{{user.data.current_household_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}",
+          "household_id": null
+        },
+        {
+          "household_id": "{{user.data.current_household_id}}"
+        }
+      ]
+    }
+  }
+}

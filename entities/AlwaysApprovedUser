@@ -1,0 +1,28 @@
+{
+  "name": "AlwaysApprovedUser",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "The approver - the user who always approves (User B's email)"
+    },
+    "approved_user_id": {
+      "type": "string",
+      "description": "The requester - the user whose expenses are auto-approved (User A's email)"
+    },
+    "approved_user_name": {
+      "type": "string",
+      "description": "Display name of the requester (denormalized)"
+    }
+  },
+  "required": [
+    "user_id",
+    "approved_user_id"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": true
+  }
+}

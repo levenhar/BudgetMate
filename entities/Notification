@@ -1,0 +1,87 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "to_user_id": {
+      "type": "string",
+      "description": "Email of user who should receive this notification"
+    },
+    "from_user_id": {
+      "type": "string",
+      "description": "Email of user who created the shared expense"
+    },
+    "from_user_name": {
+      "type": "string",
+      "description": "Name of the creator"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "shared_expense_request",
+        "shared_expense_approved",
+        "shared_expense_rejected"
+      ],
+      "description": "Notification type"
+    },
+    "shared_expense_id": {
+      "type": "string",
+      "description": "Reference to the shared expense"
+    },
+    "total_amount": {
+      "type": "number",
+      "description": "Total expense amount"
+    },
+    "user_share_amount": {
+      "type": "number",
+      "description": "This user's share of the expense"
+    },
+    "description": {
+      "type": "string",
+      "description": "Expense description"
+    },
+    "category_name": {
+      "type": "string",
+      "description": "Category name"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the notification has been read"
+    },
+    "action_taken": {
+      "type": "string",
+      "enum": [
+        "none",
+        "approved",
+        "rejected"
+      ],
+      "default": "none",
+      "description": "Action taken by the user"
+    }
+  },
+  "required": [
+    "to_user_id",
+    "from_user_id",
+    "type",
+    "shared_expense_id"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        {
+          "to_user_id": "{{user.email}}"
+        },
+        {
+          "from_user_id": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "to_user_id": "{{user.email}}"
+    },
+    "delete": {
+      "to_user_id": "{{user.email}}"
+    }
+  }
+}

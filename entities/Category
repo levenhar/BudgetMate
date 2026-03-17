@@ -1,0 +1,67 @@
+{
+  "name": "Category",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Category name"
+    },
+    "color": {
+      "type": "string",
+      "description": "Category color (hex or tailwind class)"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Icon name from lucide-react"
+    },
+    "household_id": {
+      "type": "string",
+      "description": "Associated household ID (null for personal)"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Owner email for personal categories"
+    }
+  },
+  "required": [
+    "name",
+    "color",
+    "icon"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "$or": [
+        {
+          "user_email": "{{user.email}}",
+          "household_id": null
+        },
+        {
+          "household_id": "{{user.data.current_household_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_email": "{{user.email}}",
+          "household_id": null
+        },
+        {
+          "household_id": "{{user.data.current_household_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_email": "{{user.email}}",
+          "household_id": null
+        },
+        {
+          "household_id": "{{user.data.current_household_id}}"
+        }
+      ]
+    }
+  }
+}

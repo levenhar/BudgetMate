@@ -1,0 +1,45 @@
+{
+  "name": "UserSettings",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User email"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "personal",
+        "household"
+      ],
+      "default": "personal",
+      "description": "Current mode"
+    },
+    "current_household_id": {
+      "type": "string",
+      "description": "Current household ID if in household mode"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD",
+      "description": "Preferred currency"
+    }
+  },
+  "required": [
+    "user_email"
+  ],
+  "rls": {
+    "create": {
+      "user_email": "{{user.email}}"
+    },
+    "read": {
+      "user_email": "{{user.email}}"
+    },
+    "update": {
+      "user_email": "{{user.email}}"
+    },
+    "delete": {
+      "user_email": "{{user.email}}"
+    }
+  }
+}
