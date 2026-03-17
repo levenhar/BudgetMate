@@ -8,7 +8,8 @@
       "Bash(npm install:*)",
       "mcp__supabase__list_projects",
       "mcp__supabase__get_project",
-      "mcp__supabase__*"
+      "mcp__supabase__*",
+      "mcp__claude_ai_Gmail__gmail_get_profile"
     ],
     "ask": [
       "Bash(git push:*)",
