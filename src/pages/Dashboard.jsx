@@ -119,7 +119,7 @@ export default function Dashboard() {
                   <p className="text-sm text-slate-500">{t.total_expenses || 'Total This Month'}</p>
                   <p className="text-2xl font-bold text-slate-900 mt-1">{fmt(totalThisMonth)}</p>
                   <p className="text-xs text-slate-400 mt-1">
-                    {currentMonthExpenses.length} {currentMonthExpenses.length === 1 ? 'transaction' : 'transactions'}
+                    {currentMonthExpenses.length} {currentMonthExpenses.length === 1 ? (t.transaction || 'transaction') : (t.transactions || 'transactions')}
                   </p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
@@ -141,7 +141,7 @@ export default function Dashboard() {
                   {totalBudget > 0 && (
                     <div className="mt-2 space-y-1">
                       <Progress value={budgetPct} className="h-1.5" />
-                      <p className="text-xs text-slate-400">{budgetPct.toFixed(0)}% used</p>
+                      <p className="text-xs text-slate-400">{budgetPct.toFixed(0)}{t.pct_used || '% used'}</p>
                     </div>
                   )}
                 </div>
@@ -163,7 +163,7 @@ export default function Dashboard() {
                   </p>
                   {totalBudget > 0 && (
                     <p className="text-xs text-slate-400 mt-1">
-                      {isOverBudget ? 'over budget' : 'left this month'}
+                      {isOverBudget ? (t.over_budget || 'over budget') : (t.left_this_month || 'left this month')}
                     </p>
                   )}
                 </div>
@@ -233,7 +233,7 @@ export default function Dashboard() {
       {/* Recent Expenses */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-6">
-          <h3 className="font-semibold text-slate-900 mb-4">{t.recent_expenses || 'Recent Expenses'}</h3>
+          <h3 className="font-semibold text-slate-900 mb-4">{t.last_expenses || 'Recent Expenses'}</h3>
           {isLoading ? (
             <div className="space-y-3">
               {[0, 1, 2, 3].map(i => (
@@ -252,8 +252,8 @@ export default function Dashboard() {
               <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
                 <Receipt className="h-6 w-6 text-slate-400" />
               </div>
-              <p className="text-sm font-medium text-slate-700">No expenses yet</p>
-              <p className="text-xs text-slate-400 mt-1">Tap + to add your first expense</p>
+              <p className="text-sm font-medium text-slate-700">{t.no_expenses_yet || 'No expenses yet'}</p>
+              <p className="text-xs text-slate-400 mt-1">{t.add_first_expense || 'Add your first expense to get started'}</p>
             </div>
           ) : (
             <div className="space-y-1">

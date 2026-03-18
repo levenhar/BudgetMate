@@ -211,6 +211,10 @@ export const translations = {
       awaiting_approvals: 'ממתין לאישורים',
       shared: 'משותף',
       // Dashboard
+      transaction: 'עסקה',
+      pct_used: '% בשימוש',
+      over_budget: 'חריגה מהתקציב',
+      left_this_month: 'נותרו החודש',
       monthly_statistics: 'סטטיסטיקה חודשית',
       views: 'הצגות',
       // Default categories
@@ -575,6 +579,10 @@ export const translations = {
       awaiting_approvals: 'Awaiting approvals',
       shared: 'Shared',
       // Dashboard
+      transaction: 'transaction',
+      pct_used: '% used',
+      over_budget: 'over budget',
+      left_this_month: 'left this month',
       monthly_statistics: 'Monthly Statistics',
       views: 'Views',
       // Default categories
