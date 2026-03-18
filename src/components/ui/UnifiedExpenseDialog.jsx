@@ -399,7 +399,7 @@ export default function UnifiedExpenseDialog({
                   <SelectTrigger className="flex-1 h-12" dir={dir}>
                     <SelectValue placeholder={t.category_placeholder} />
                   </SelectTrigger>
-                  <SelectContent dir={dir}>
+                  <SelectContent className="max-h-[200px]" dir={dir}>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
                         <span className="flex items-center gap-2">
@@ -563,7 +563,7 @@ export default function UnifiedExpenseDialog({
                   <SelectTrigger className="w-full" dir={dir}>
                     <SelectValue placeholder={t.choose_category} />
                   </SelectTrigger>
-                  <SelectContent position="popper" className="max-h-[300px]" dir={dir}>
+                  <SelectContent className="max-h-[200px]" dir={dir}>
                     {categories.length === 0 ? (
                       <div className="p-4 text-center text-sm text-slate-500">
                         {t.no_categories}
@@ -692,7 +692,7 @@ export default function UnifiedExpenseDialog({
                     <SelectTrigger dir={dir}>
                       <SelectValue placeholder={t.choose_category} />
                     </SelectTrigger>
-                    <SelectContent dir={dir}>
+                    <SelectContent className="max-h-[200px]" dir={dir}>
                       {categories.map((cat) => (
                         <SelectItem key={cat.id} value={cat.id}>
                           <span className="flex items-center gap-2">

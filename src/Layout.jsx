@@ -41,8 +41,9 @@ function LayoutInner({ children, currentPageName }) {
   const mobileMainItems = [
     { key: 'dashboard', icon: LayoutDashboard, page: 'Dashboard' },
     { key: 'expenses', icon: Receipt, page: 'Expenses' },
+    { key: 'statistics', icon: BarChart3, page: 'Statistics' },
     { key: 'budget', icon: Wallet, page: 'Budget' },
-    { key: 'goals', icon: Target, page: 'Goals' },
+    { key: 'debts', icon: Users, page: 'Debts' },
   ];
 
   React.useEffect(() => {
@@ -351,9 +352,10 @@ function LayoutInner({ children, currentPageName }) {
       </aside>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-100 z-50">
-        <div className="flex justify-around py-2">
-          {mobileMainItems.map((item) => {
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-slate-800 z-50">
+        <div className="relative flex items-center justify-around h-16">
+          {/* Left 3 items */}
+          {mobileMainItems.slice(0, 3).map((item) => {
             const isActive = currentPageName === item.page;
             const showBadge = item.page === 'Expenses' && pendingCount > 0;
             return (
@@ -361,7 +363,7 @@ function LayoutInner({ children, currentPageName }) {
                 key={item.page}
                 to={createPageUrl(item.page)}
                 className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
-                  isActive ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'
+                  isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <span className="relative">
@@ -376,12 +378,42 @@ function LayoutInner({ children, currentPageName }) {
               </Link>
             );
           })}
-          {/* Three-dots menu button */}
+
+          {/* Center spacer for raised button */}
+          <div className="w-16" />
+
+          {/* Right 2 items */}
+          {mobileMainItems.slice(3).map((item) => {
+            const isActive = currentPageName === item.page;
+            return (
+              <Link
+                key={item.page}
+                to={createPageUrl(item.page)}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
+                  isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <item.icon className="h-5 w-5" />
+                <span className="text-[11px] font-medium">{t[item.key]}</span>
+              </Link>
+            );
+          })}
+
+          {/* Menu button */}
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-slate-400 hover:text-slate-600 transition-all"
+            className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all text-slate-400 hover:text-slate-200"
           >
             <Menu className="h-5 w-5" />
+            <span className="text-[11px] font-medium">{t.navigation}</span>
+          </button>
+
+          {/* Raised + button (absolute center) */}
+          <button
+            onClick={() => { setAddExpenseTab('expense'); setShowAddExpense(true); }}
+            className="absolute left-1/2 -translate-x-1/2 -top-5 h-14 w-14 rounded-full bg-indigo-600 text-white shadow-lg flex items-center justify-center hover:bg-indigo-700 transition-colors"
+          >
+            <Plus className="h-7 w-7" />
           </button>
         </div>
       </nav>
