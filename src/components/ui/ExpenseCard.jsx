@@ -86,7 +86,11 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
                     <Send className="h-3 w-3" />
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap border bg-blue-50 border-blue-200 text-blue-700">
+                  <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap border ${
+                    expense.paid_by_user_id === currentUserEmail
+                      ? 'bg-green-50 border-green-200 text-green-700'
+                      : 'bg-red-50 border-red-200 text-red-600'
+                  }`}>
                     <Users className="h-3 w-3" />
                   </div>
                 )}
