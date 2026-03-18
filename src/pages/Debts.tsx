@@ -54,6 +54,9 @@ export default function Debts() {
 
   if (userEmail && sharedExpenses.length > 0) {
     for (const expense of sharedExpenses) {
+      // Only approved shared expenses (all participants have accepted) contribute to debts
+      if (expense.is_pending) continue;
+
       const splits = allSplits.filter((s: any) => s.shared_expense_id === expense.id);
       const pendingUsers: string[] = expense.pending_with_users || [];
 
