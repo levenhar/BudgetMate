@@ -1,5 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
+import { he } from 'date-fns/locale';
 import { Pencil, Trash2, CreditCard, Banknote, Building2, ArrowRightLeft, Users, Clock, Send, ChevronDown, ChevronRight, Tag, CalendarDays, FileText, Wallet } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useLanguage } from '@/components/i18n/LanguageContext';
@@ -48,7 +49,7 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
     <div className="rounded-lg overflow-hidden">
       {/* Row */}
       <div
-        className={`group flex items-center justify-between px-3 py-2 bg-white border transition-all duration-200 cursor-pointer ${
+        className={`group flex items-center px-3 py-2 bg-white border transition-all duration-200 cursor-pointer ${
           isExpanded
             ? 'border-b-0 rounded-t-lg border-slate-200 shadow-sm'
             : isPendingAwaitingMyApproval
@@ -59,7 +60,7 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
         }`}
         onClick={handleCardClick}
       >
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+        <div className="flex items-center gap-2.5 flex-shrink-0">
           <div
             className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: `${categoryColor}20` }}
@@ -69,7 +70,7 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
               style={{ backgroundColor: categoryColor }}
             />
           </div>
-          <div className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 text-xs">
             <span className="font-semibold text-slate-900 whitespace-nowrap">
               {currencySymbol}{expense.amount.toFixed(2)}
             </span>
@@ -95,14 +96,17 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
               </>
             )}
             <span className="text-slate-300">|</span>
-            <span className="text-slate-600 truncate">{mainLabel}</span>
+            <span className="text-slate-600 whitespace-nowrap">{mainLabel}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex-1 min-w-0 overflow-hidden flex items-center justify-end px-2">
           <span className="text-xs text-slate-400 whitespace-nowrap">
-            {format(new Date(expense.date), 'MMM d')}
+            {format(new Date(expense.date), 'd MMM', { locale: he })}
           </span>
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0">
           <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               variant="ghost"
@@ -150,11 +154,20 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
               <span className="font-semibold text-slate-800">{currencySymbol}{expense.amount.toFixed(2)}</span>
             </div>
 
+            {/* Description / Notes */}
+            {(expense.description || expense.notes) ? (
+              <div className="flex items-start gap-2">
+                <FileText className="h-3.5 w-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
+                <span className="text-slate-500 flex-shrink-0">{t.notes || 'הערה'}:</span>
+                <span className="text-slate-600 break-words">{expense.description || expense.notes}</span>
+              </div>
+            ) : <div />}
+
             {/* Date */}
             <div className="flex items-center gap-2">
               <CalendarDays className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-              <span className="text-slate-500">{t.date || 'Date'}:</span>
-              <span className="font-medium text-slate-700">{format(new Date(expense.date), 'MMM d, yyyy')}</span>
+              <span className="text-slate-500">{t.date || 'תאריך'}:</span>
+              <span className="font-medium text-slate-700">{format(new Date(expense.date), 'd MMMM yyyy', { locale: he })}</span>
             </div>
 
             {/* Payment method */}
@@ -176,15 +189,6 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
                 <Building2 className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
                 <span className="text-slate-500">{t.merchant || 'Merchant'}:</span>
                 <span className="font-medium text-slate-700 truncate">{expense.merchant}</span>
-              </div>
-            )}
-
-            {/* Description / Notes */}
-            {(expense.description || expense.notes) && (
-              <div className="flex items-start gap-2 col-span-2">
-                <FileText className="h-3.5 w-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
-                <span className="text-slate-500 flex-shrink-0">{t.notes || 'Notes'}:</span>
-                <span className="text-slate-600 break-words">{expense.description || expense.notes}</span>
               </div>
             )}
 
