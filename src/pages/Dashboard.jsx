@@ -7,6 +7,7 @@ import { useCurrency } from '@/lib/CurrencyContext';
 import { TrendingUp, TrendingDown, Receipt, Target } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { endOfMonth } from 'date-fns';
 
 export default function Dashboard() {
   const { t } = useLanguage();
@@ -65,7 +66,19 @@ export default function Dashboard() {
     enabled: !!user?.email,
   });
 
-  const isLoading = expensesLoading || categoriesLoading || budgetsLoading;
+  const { data: recurringExpenses = [], isLoading: recurringLoading } = useQuery({
+    queryKey: ['recurringExpenses', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      if (isHouseholdMode) {
+        return base44.entities.RecurringExpense.filter({ household_id: settings.current_household_id, is_active: true });
+      }
+      return base44.entities.RecurringExpense.filter({ user_email: user.email, household_id: null, is_active: true });
+    },
+    enabled: !!user?.email,
+  });
+
+  const isLoading = expensesLoading || categoriesLoading || budgetsLoading || recurringLoading;
 
   // Current month expenses
   const now = new Date();
@@ -75,13 +88,40 @@ export default function Dashboard() {
   });
   const totalThisMonth = currentMonthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
 
+  // Recurring expenses monthly equivalent for current month
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = endOfMonth(now);
+  const recurringMonthlyTotal = recurringExpenses.reduce((sum, recurring) => {
+    if (!recurring.is_active) return sum;
+    const startDate = new Date(recurring.start_date);
+    const endDate = recurring.end_date ? new Date(recurring.end_date) : null;
+    if (startDate > monthEnd) return sum;
+    if (endDate && endDate < monthStart) return sum;
+
+    switch (recurring.frequency) {
+      case 'daily':
+        return sum + recurring.amount * 30;
+      case 'weekly':
+        return sum + recurring.amount * 4.33;
+      case 'monthly':
+        return sum + recurring.amount;
+      case 'yearly':
+        return sum + recurring.amount / 12;
+      default:
+        return sum;
+    }
+  }, 0);
+
+  // Total used = one-time expenses + recurring monthly equivalent
+  const totalUsed = totalThisMonth + recurringMonthlyTotal;
+
   // Total budget
   const totalBudget = budgets.reduce((sum, b) => sum + (b.amount || b.total_budget || 0), 0);
 
   // Budget computed values
-  const budgetPct = totalBudget > 0 ? Math.min((totalThisMonth / totalBudget) * 100, 100) : 0;
-  const isOverBudget = totalBudget > 0 && totalThisMonth > totalBudget;
-  const remaining = totalBudget - totalThisMonth;
+  const budgetPct = totalBudget > 0 ? Math.min((totalUsed / totalBudget) * 100, 100) : 0;
+  const isOverBudget = totalBudget > 0 && totalUsed > totalBudget;
+  const remaining = totalBudget - totalUsed;
 
   // Top categories
   const categoryTotals = {};
