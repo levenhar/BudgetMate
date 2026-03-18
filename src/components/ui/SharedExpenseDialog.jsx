@@ -119,19 +119,20 @@ export default function SharedExpenseDialog({
 
   const validateAndSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (form.participants.length === 0) {
       toast.error('הוסף לפחות משתתף אחד');
       return;
     }
-    
+
     if (!form.paidByUserId) {
       toast.error('בחר מי שילם');
       return;
     }
 
     const totalAmount = parseFloat(form.amount);
-    
+    let finalSplits = form.splits;
+
     if (form.splitMethod === 'custom_amount') {
       const splitSum = form.splits.reduce((sum, s) => sum + (s.shareAmount || 0), 0);
       if (Math.abs(splitSum - totalAmount) > 0.01) {
@@ -139,25 +140,24 @@ export default function SharedExpenseDialog({
         return;
       }
     }
-    
+
     if (form.splitMethod === 'custom_percent') {
       const percentSum = form.splits.reduce((sum, s) => sum + (s.sharePercent || 0), 0);
       if (Math.abs(percentSum - 100) > 0.01) {
         toast.error(`סכום האחוזים (${percentSum.toFixed(1)}%) חייב להיות 100%`);
         return;
       }
-      // Convert percents to amounts
-      const newSplits = form.splits.map((s, i) => ({
+      // Convert percents to amounts — use local variable so onSubmit gets correct values
+      finalSplits = form.splits.map((s, i) => ({
         ...s,
         shareAmount: i === form.splits.length - 1
           ? totalAmount - form.splits.slice(0, -1).reduce((sum, split) => sum + (totalAmount * split.sharePercent / 100), 0)
           : totalAmount * s.sharePercent / 100
       }));
-      setForm({ ...form, splits: newSplits });
     }
 
     const category = categories.find(c => c.id === form.categoryId);
-    
+
     await onSubmit({
       total_amount: totalAmount,
       date: format(form.date, 'yyyy-MM-dd'),
@@ -167,7 +167,7 @@ export default function SharedExpenseDialog({
       paid_by_user_id: form.paidByUserId,
       split_method: form.splitMethod,
       household_id: isHouseholdMode ? householdId : null,
-      splits: form.splits
+      splits: finalSplits
     });
 
     resetForm();
@@ -340,7 +340,32 @@ export default function SharedExpenseDialog({
           {/* Split Method */}
           <div className="space-y-2">
             <Label>שיטת חלוקה</Label>
-            <Select value={form.splitMethod} onValueChange={(v) => setForm({ ...form, splitMethod: v })}>
+            <Select value={form.splitMethod} onValueChange={(v) => {
+              const total = parseFloat(form.amount) || 0;
+              const allP = [{ email: user?.email, name: user?.full_name }, ...form.participants];
+              let newSplits = form.splits;
+              if (v === 'equal') {
+                newSplits = calculateDefaultSplits(form.participants, form.amount, 'equal');
+              } else if (v === 'custom_amount') {
+                // Seed with equal amounts so each row is editable
+                const perPerson = allP.length > 0 ? total / allP.length : 0;
+                newSplits = allP.map(p => ({
+                  userId: p.email,
+                  userName: p.name,
+                  shareAmount: parseFloat(perPerson.toFixed(2)),
+                  sharePercent: allP.length > 0 ? 100 / allP.length : 0
+                }));
+              } else if (v === 'custom_percent') {
+                // Seed with equal percents
+                newSplits = allP.map(p => ({
+                  userId: p.email,
+                  userName: p.name,
+                  shareAmount: allP.length > 0 ? total / allP.length : 0,
+                  sharePercent: allP.length > 0 ? 100 / allP.length : 0
+                }));
+              }
+              setForm({ ...form, splitMethod: v, splits: newSplits });
+            }}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
