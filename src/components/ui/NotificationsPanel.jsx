@@ -125,7 +125,10 @@ export default function NotificationsPanel({ user }) {
       for (const notif of pendingNotifs) {
         doApprove(notif, false).catch(() => {});
       }
-      return notifs;
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+      return notifs.filter(n =>
+        n.action_taken === 'none' || new Date(n.updated_at) > twoHoursAgo
+      );
     },
     enabled: !!user?.email,
     refetchInterval: 30000,
