@@ -737,11 +737,19 @@ export default function Expenses() {
     }
 
     // Shared-with-user filter
-    if (filters.sharedWithUser) {
-      result = result.filter(e => 
+    if (filters.sharedWithUser === 'all_shared') {
+      // Show all shared expenses regardless of who paid
+      result = result.filter(e => e.is_shared);
+    } else if (filters.sharedWithUser) {
+      // Show shared expenses involving the specific user in any role
+      // (either they paid for the expense, or the expense is attributed to their account)
+      const selectedUser = filters.sharedWithUser;
+      result = result.filter(e =>
         e.is_shared && (
-          e.paid_by_user_id === filters.sharedWithUser ||
-          e.user_email === filters.sharedWithUser
+          e.paid_by_user_id === selectedUser ||
+          e.user_email === selectedUser ||
+          (Array.isArray(e.shared_with) && e.shared_with.includes(selectedUser)) ||
+          (Array.isArray(e.participants) && e.participants.includes(selectedUser))
         )
       );
     }

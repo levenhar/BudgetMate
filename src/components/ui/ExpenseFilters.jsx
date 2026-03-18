@@ -183,15 +183,16 @@ export default function ExpenseFilters({
 
         {sharedUsers.length > 0 && (
           <Select
-            value={filters.sharedWithUser || 'all'}
-            onValueChange={(v) => onFilterChange({ ...filters, sharedWithUser: v === 'all' ? '' : v })}
+            value={filters.sharedWithUser || 'none'}
+            onValueChange={(v) => onFilterChange({ ...filters, sharedWithUser: v === 'none' ? '' : v })}
           >
             <SelectTrigger className="h-10 bg-white min-w-[160px]">
               <Users className="h-4 w-4 me-2 text-slate-500 flex-shrink-0" />
               <SelectValue placeholder={t.shared_with || 'שותף עם'} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t.all_shared || 'כל המשותפות'}</SelectItem>
+              <SelectItem value="none">{t.all_expenses || 'כל ההוצאות'}</SelectItem>
+              <SelectItem value="all_shared">{t.all_shared || 'כל המשותפות'}</SelectItem>
               {sharedUsers.map((u) => (
                 <SelectItem key={u.email} value={u.email}>
                   {u.name || u.email}
