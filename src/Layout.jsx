@@ -8,6 +8,14 @@ import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UnifiedExpenseDialog from '@/components/ui/UnifiedExpenseDialog';
 import { LanguageProvider, useLanguage } from '@/components/i18n/LanguageContext';
 
@@ -41,7 +49,6 @@ function LayoutInner({ children, currentPageName }) {
   const mobileMainItems = [
     { key: 'dashboard', icon: LayoutDashboard, page: 'Dashboard' },
     { key: 'expenses', icon: Receipt, page: 'Expenses' },
-    { key: 'statistics', icon: BarChart3, page: 'Statistics' },
     { key: 'budget', icon: Wallet, page: 'Budget' },
     { key: 'debts', icon: Users, page: 'Debts' },
   ];
@@ -354,8 +361,8 @@ function LayoutInner({ children, currentPageName }) {
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-slate-800 z-50">
         <div className="relative flex items-center justify-around h-16">
-          {/* Left 3 items */}
-          {mobileMainItems.slice(0, 3).map((item) => {
+          {/* Left 2 items */}
+          {mobileMainItems.slice(0, 2).map((item) => {
             const isActive = currentPageName === item.page;
             const showBadge = item.page === 'Expenses' && pendingCount > 0;
             return (
@@ -383,7 +390,7 @@ function LayoutInner({ children, currentPageName }) {
           <div className="w-16" />
 
           {/* Right 2 items */}
-          {mobileMainItems.slice(3).map((item) => {
+          {mobileMainItems.slice(2).map((item) => {
             const isActive = currentPageName === item.page;
             return (
               <Link
@@ -398,15 +405,6 @@ function LayoutInner({ children, currentPageName }) {
               </Link>
             );
           })}
-
-          {/* Menu button */}
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all text-slate-400 hover:text-slate-200"
-          >
-            <Menu className="h-5 w-5" />
-            <span className="text-[11px] font-medium">{t.navigation}</span>
-          </button>
 
           {/* Raised + button (absolute center) */}
           <button
@@ -461,18 +459,56 @@ function LayoutInner({ children, currentPageName }) {
         {/* Sticky Page Header */}
         <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 lg:px-8 py-3 flex items-center justify-between">
           <h1 className="text-lg font-bold text-slate-900">{pageTitle}</h1>
-          <Button
-            onClick={() => {
-              if (currentPageName === 'RecurringExpenses') setAddExpenseTab('recurring');
-              else if (currentPageName === 'Debts') setAddExpenseTab('shared');
-              else setAddExpenseTab('expense');
-              setShowAddExpense(true);
-            }}
-            className="bg-indigo-600 hover:bg-indigo-700 h-9 px-4 text-sm gap-1.5"
-          >
-            <Plus className="h-4 w-4" />
-            {t.add_expense}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="focus:outline-none rounded-full">
+                <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-transparent hover:ring-indigo-300 transition-all">
+                  <AvatarImage
+                    src={user?.user_metadata?.avatar_url || user?.avatar_url || userPicture}
+                    alt={user?.full_name || 'User'}
+                  />
+                  <AvatarFallback className="bg-indigo-600 text-white text-sm font-semibold">
+                    {(user?.full_name || user?.email || 'U')
+                      .split(' ')
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join('')
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              {/* Add Expense shortcut */}
+              <DropdownMenuItem
+                className="gap-2 font-medium text-indigo-700 focus:text-indigo-700 focus:bg-indigo-50 cursor-pointer"
+                onSelect={() => {
+                  if (currentPageName === 'RecurringExpenses') setAddExpenseTab('recurring');
+                  else if (currentPageName === 'Debts') setAddExpenseTab('shared');
+                  else setAddExpenseTab('expense');
+                  setShowAddExpense(true);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                {t.add_expense}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {/* Navigation links */}
+              {navItems.map((item) => (
+                <DropdownMenuItem key={item.page} asChild>
+                  <Link
+                    to={createPageUrl(item.page)}
+                    className={`flex items-center gap-2 w-full cursor-pointer ${
+                      currentPageName === item.page ? 'text-indigo-700 font-semibold' : ''
+                    }`}
+                  >
+                    <item.icon className="h-4 w-4 flex-shrink-0" />
+                    {t[item.key]}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
 
         {children}
