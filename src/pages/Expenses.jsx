@@ -30,6 +30,7 @@ export default function Expenses() {
   const [pendingApprovalExpense, setPendingApprovalExpense] = useState(null);
   const [recurringExpanded, setRecurringExpanded] = useState(false);
   const [deleteConfirmExpense, setDeleteConfirmExpense] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
   
   // Read URL parameters
   const urlParams = new URLSearchParams(window.location.search);
@@ -981,6 +982,8 @@ export default function Expenses() {
                    expense={expense}
                    categoryColor={cat?.color || '#64748b'}
                    currentUserEmail={user?.email}
+                   isExpanded={expandedId === expense.id}
+                   onToggleExpand={(id) => setExpandedId(prev => prev === id ? null : id)}
                    onApprovePending={expense.is_pending && expense.is_shared && expense.created_by !== user?.email
                      ? (e) => setPendingApprovalExpense(e)
                      : undefined}

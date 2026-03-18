@@ -1,6 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { Pencil, Trash2, CreditCard, Banknote, Building2, ArrowRightLeft, Users, Clock, Send } from 'lucide-react';
+import { Pencil, Trash2, CreditCard, Banknote, Building2, ArrowRightLeft, Users, Clock, Send, ChevronDown, ChevronRight, Tag, CalendarDays, FileText, Wallet } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useLanguage } from '@/components/i18n/LanguageContext';
 import { useCurrency } from '@/lib/CurrencyContext';
@@ -13,11 +13,19 @@ const paymentIcons = {
   other: ArrowRightLeft,
 };
 
-export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, onApprovePending, currentUserEmail, sharedExpensePendingUsers }) {
+const paymentMethodLabels = {
+  cash: 'Cash',
+  credit_card: 'Credit Card',
+  debit_card: 'Debit Card',
+  bank_transfer: 'Bank Transfer',
+  other: 'Other',
+};
+
+export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, onApprovePending, currentUserEmail, sharedExpensePendingUsers, isExpanded, onToggleExpand }) {
   const { t } = useLanguage();
   const { currencySymbol } = useCurrency();
   const PaymentIcon = paymentIcons[expense.payment_method] || null;
-  
+
   const isCreator = expense.is_shared && expense.created_by === currentUserEmail;
   // Needs my approval: pending AND I haven't approved yet (approval_status !== 'approved')
   const isPendingAwaitingMyApproval = expense.is_pending && expense.is_shared && expense.approval_status !== 'approved' && !isCreator && onApprovePending;
@@ -25,104 +33,177 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
   const isWaitingForOthers = expense.is_pending && expense.is_shared && (expense.approval_status === 'approved' || isCreator);
   const isPendingAsCreator = expense.is_pending && expense.is_shared && isCreator;
 
+  // The main label: description (or notes) first, fallback to category name
+  const mainLabel = expense.description || expense.notes || expense.category_name;
+
   const handleCardClick = () => {
     if (isPendingAwaitingMyApproval || isWaitingForOthers) {
       onApprovePending && onApprovePending(expense);
+      return;
     }
+    onToggleExpand && onToggleExpand(expense.id);
   };
 
   return (
-    <div 
-      className={`group flex items-center justify-between px-3 py-2 bg-white rounded-lg border transition-all duration-200 ${
-        isPendingAwaitingMyApproval
-          ? 'border-amber-200 bg-amber-50 cursor-pointer hover:border-amber-300 hover:shadow-sm' 
-          : isWaitingForOthers
-          ? 'border-blue-100 bg-blue-50/40 cursor-pointer hover:border-blue-200 hover:shadow-sm'
-          : 'border-slate-100 hover:border-slate-200 hover:shadow-sm'
-      }`}
-      onClick={handleCardClick}
-    >
-      <div className="flex items-center gap-2.5 flex-1 min-w-0">
-        <div 
-          className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: `${categoryColor}20` }}
-        >
-          <div 
-            className="w-2 h-2 rounded-full"
-            style={{ backgroundColor: categoryColor }}
-          />
+    <div className="rounded-lg overflow-hidden">
+      {/* Row */}
+      <div
+        className={`group flex items-center justify-between px-3 py-2 bg-white border transition-all duration-200 cursor-pointer ${
+          isExpanded
+            ? 'border-b-0 rounded-t-lg border-slate-200 shadow-sm'
+            : isPendingAwaitingMyApproval
+            ? 'border-amber-200 bg-amber-50 rounded-lg hover:border-amber-300 hover:shadow-sm'
+            : isWaitingForOthers
+            ? 'border-blue-100 bg-blue-50/40 rounded-lg hover:border-blue-200 hover:shadow-sm'
+            : 'border-slate-100 rounded-lg hover:border-slate-200 hover:shadow-sm'
+        }`}
+        onClick={handleCardClick}
+      >
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          <div
+            className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: `${categoryColor}20` }}
+          >
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: categoryColor }}
+            />
+          </div>
+          <div className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+            <span className="font-semibold text-slate-900 whitespace-nowrap">
+              {currencySymbol}{expense.amount.toFixed(2)}
+            </span>
+            {expense.is_shared && (
+              <>
+                <span className="text-slate-300">|</span>
+                {isPendingAwaitingMyApproval ? (
+                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap border bg-amber-50 border-amber-200 text-amber-700">
+                    <Clock className="h-3 w-3" />
+                    <span>{t.awaiting_your_approval}</span>
+                  </div>
+                ) : isWaitingForOthers ? (
+                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap border bg-blue-50 border-blue-200 text-blue-600">
+                    <Send className="h-3 w-3" />
+                    <span>{t.awaiting_approvals}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap border bg-blue-50 border-blue-200 text-blue-700">
+                    <Users className="h-3 w-3" />
+                    <span>{t.shared}</span>
+                  </div>
+                )}
+              </>
+            )}
+            <span className="text-slate-300">|</span>
+            <span className="text-slate-600 truncate">{mainLabel}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
-          <span className="font-semibold text-slate-900 whitespace-nowrap">
-            {currencySymbol}{expense.amount.toFixed(2)}
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-xs text-slate-400 whitespace-nowrap">
+            {format(new Date(expense.date), 'MMM d')}
           </span>
-          {expense.is_shared && (
-            <>
-              <span className="text-slate-300">|</span>
-              {isPendingAwaitingMyApproval ? (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap border bg-amber-50 border-amber-200 text-amber-700">
-                  <Clock className="h-3 w-3" />
-                  <span>{t.awaiting_your_approval}</span>
-                </div>
-              ) : isWaitingForOthers ? (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap border bg-blue-50 border-blue-200 text-blue-600">
-                  <Send className="h-3 w-3" />
-                  <span>{t.awaiting_approvals}</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap border bg-blue-50 border-blue-200 text-blue-700">
-                  <Users className="h-3 w-3" />
-                  <span>{t.shared}</span>
-                </div>
-              )}
-            </>
-          )}
-          <span className="text-slate-300">|</span>
-          <span className="text-slate-600 truncate">{expense.category_name}</span>
-          {expense.merchant && (
-            <>
-              <span className="text-slate-300">|</span>
-              <span className="text-slate-500 truncate">{expense.merchant}</span>
-            </>
-          )}
-          {expense.description && (
-            <>
-              <span className="text-slate-300">|</span>
-              <span className="text-slate-400 truncate">{expense.description}</span>
-            </>
-          )}
-          {PaymentIcon && (
-            <>
-              <span className="text-slate-300">|</span>
-              <PaymentIcon className="h-3 w-3 text-slate-400 flex-shrink-0" />
-            </>
+          <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-slate-400 hover:text-slate-600"
+              onClick={(ev) => { ev.stopPropagation(); onEdit(expense); }}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-slate-400 hover:text-red-500"
+              onClick={(ev) => { ev.stopPropagation(); onDelete(expense); }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          {isExpanded ? (
+            <ChevronDown className="h-4 w-4 text-slate-400 flex-shrink-0" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-slate-300 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
           )}
         </div>
       </div>
-      
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <span className="text-xs text-slate-400 whitespace-nowrap">
-          {format(new Date(expense.date), 'MMM d')}
-        </span>
-        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-slate-400 hover:text-slate-600"
-            onClick={(ev) => { ev.stopPropagation(); onEdit(expense); }}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-slate-400 hover:text-red-500"
-            onClick={(ev) => { ev.stopPropagation(); onDelete(expense); }}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+
+      {/* Expanded detail panel */}
+      {isExpanded && (
+        <div className="bg-slate-50 border border-t-0 border-slate-200 rounded-b-lg px-4 py-3">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 text-xs">
+            {/* Category */}
+            <div className="flex items-center gap-2">
+              <Tag className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+              <span className="text-slate-500">{t.category || 'Category'}:</span>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: categoryColor }} />
+                <span className="font-medium text-slate-700 truncate">{expense.category_name}</span>
+              </div>
+            </div>
+
+            {/* Amount */}
+            <div className="flex items-center gap-2">
+              <Wallet className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+              <span className="text-slate-500">{t.amount || 'Amount'}:</span>
+              <span className="font-semibold text-slate-800">{currencySymbol}{expense.amount.toFixed(2)}</span>
+            </div>
+
+            {/* Date */}
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+              <span className="text-slate-500">{t.date || 'Date'}:</span>
+              <span className="font-medium text-slate-700">{format(new Date(expense.date), 'MMM d, yyyy')}</span>
+            </div>
+
+            {/* Payment method */}
+            {expense.payment_method && (
+              <div className="flex items-center gap-2">
+                {PaymentIcon ? (
+                  <PaymentIcon className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                ) : (
+                  <CreditCard className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                )}
+                <span className="text-slate-500">{t.payment_method || 'Payment'}:</span>
+                <span className="font-medium text-slate-700">{paymentMethodLabels[expense.payment_method] || expense.payment_method}</span>
+              </div>
+            )}
+
+            {/* Merchant */}
+            {expense.merchant && (
+              <div className="flex items-center gap-2 col-span-2">
+                <Building2 className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                <span className="text-slate-500">{t.merchant || 'Merchant'}:</span>
+                <span className="font-medium text-slate-700 truncate">{expense.merchant}</span>
+              </div>
+            )}
+
+            {/* Description / Notes */}
+            {(expense.description || expense.notes) && (
+              <div className="flex items-start gap-2 col-span-2">
+                <FileText className="h-3.5 w-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
+                <span className="text-slate-500 flex-shrink-0">{t.notes || 'Notes'}:</span>
+                <span className="text-slate-600 break-words">{expense.description || expense.notes}</span>
+              </div>
+            )}
+
+            {/* Shared info */}
+            {expense.is_shared && (
+              <div className="flex items-center gap-2 col-span-2">
+                <Users className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                <span className="text-slate-500">{t.shared || 'Shared'}:</span>
+                {expense.paid_by_user_id && expense.paid_by_user_id !== currentUserEmail && (
+                  <span className="text-slate-600">Paid by {expense.paid_by_user_id}</span>
+                )}
+                {(!expense.paid_by_user_id || expense.paid_by_user_id === currentUserEmail) && (
+                  <span className="text-slate-600">Paid by you</span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
