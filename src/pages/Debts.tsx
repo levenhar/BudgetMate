@@ -236,14 +236,14 @@ export default function Debts() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5 text-slate-500" />
-              Shared expenses with {selectedUser?.name}
+              {t.shared_expenses_with} {selectedUser?.name}
             </DialogTitle>
           </DialogHeader>
           <div className="overflow-y-auto flex-1 space-y-3 pr-1">
             {selectedUserExpenses.length === 0 ? (
               <div className="text-center py-10 text-slate-500">
                 <Users className="h-10 w-10 mx-auto mb-2 text-slate-300" />
-                <p>No shared expenses found</p>
+                <p>{t.no_shared_expenses_found}</p>
               </div>
             ) : (
               selectedUserExpenses.map((expense: any) => {
@@ -255,7 +255,7 @@ export default function Debts() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-slate-900 truncate">
-                          {expense.description || expense.category_name || 'Shared expense'}
+                          {expense.description || expense.category_name || t.shared}
                         </div>
                         <div className="text-xs text-slate-400 mt-0.5">
                           {expense.date ? format(new Date(expense.date), 'MMM d, yyyy') : '—'}
@@ -267,13 +267,13 @@ export default function Debts() {
                           {currencySymbol}{Number(expense.total_amount).toFixed(2)}
                         </div>
                         <div className={`text-xs font-medium mt-0.5 ${iPaid ? 'text-green-600' : 'text-red-500'}`}>
-                          {iPaid ? 'You paid' : `${selectedUser?.name} paid`}
+                          {iPaid ? t.you_paid : `${selectedUser?.name} ${t.they_paid}`}
                         </div>
                       </div>
                     </div>
                     {mySplit && (
                       <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-sm">
-                        <span className="text-slate-500">Your share</span>
+                        <span className="text-slate-500">{t.your_share}</span>
                         <span className={`font-semibold ${iPaid ? 'text-green-600' : 'text-red-500'}`}>
                           {iPaid ? '+' : '-'}{currencySymbol}{Number(mySplit.share_amount).toFixed(2)}
                         </span>
@@ -282,7 +282,7 @@ export default function Debts() {
                     {expense.is_pending && (
                       <div className="mt-2">
                         <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                          Pending approval
+                          {t.pending_approval}
                         </span>
                       </div>
                     )}
