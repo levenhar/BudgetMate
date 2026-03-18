@@ -10,6 +10,7 @@ import { CurrencyProvider } from '@/lib/CurrencyContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Login from '@/pages/Login';
 import AuthCallback from '@/pages/AuthCallback';
+import { LanguageProvider } from '@/components/i18n/LanguageContext';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -81,7 +82,7 @@ function App() {
           <Router>
             <NavigationTracker />
             <Routes>
-              <Route path="/login" element={<Login />} />
+              <Route path="/login" element={<LanguageProvider><Login /></LanguageProvider>} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/*" element={<AuthenticatedApp />} />
             </Routes>
