@@ -11,7 +11,7 @@ import { useLanguage } from '@/components/i18n/LanguageContext';
 
 export default function PendingExpenseApprovalDialog({ expense, user, open, onOpenChange }) {
   const { currencySymbol } = useCurrency();
-  const { dir } = useLanguage();
+  const { t, dir } = useLanguage();
   const [sharedExpense, setSharedExpense] = useState(null);
   const [userSplit, setUserSplit] = useState(null);
   const [allSplits, setAllSplits] = useState([]);
@@ -328,8 +328,8 @@ export default function PendingExpenseApprovalDialog({ expense, user, open, onOp
         }
 
         toast.success(allApproved
-          ? (action === 'always_approve' ? 'אישרת ותמיד תאשר מהמשתמש הזה! כל המשתתפים אישרו!' : 'כל המשתתפים אישרו! ההוצאה אושרה!')
-          : (action === 'always_approve' ? 'אישרת ותמיד תאשר מהמשתמש הזה!' : 'אישרת! ממתין לשאר המשתתפים...')
+          ? (action === 'always_approve' ? t.approved_always_approve_all : 'כל המשתתפים אישרו! ההוצאה אושרה!')
+          : (action === 'always_approve' ? t.approved_always_approve : 'אישרת! ממתין לשאר המשתתפים...')
         );
       }
 
@@ -432,7 +432,7 @@ export default function PendingExpenseApprovalDialog({ expense, user, open, onOp
                   disabled={loadingAction !== null}
                 >
                   {loadingAction === 'always_approve' ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <CheckCheck className="h-4 w-4 ml-2" />}
-                  אשר תמיד ממשתמש זה
+                  {t.always_approve_button}
                 </Button>
                 <Button
                   variant="outline"

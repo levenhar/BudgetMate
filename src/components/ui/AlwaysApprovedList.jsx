@@ -4,9 +4,11 @@ import { base44 } from '@/api/base44Client';
 import { Trash2, CheckCheck, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
+import { useLanguage } from '@/components/i18n/LanguageContext';
 
 export default function AlwaysApprovedList({ user }) {
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
 
   const { data: alwaysApproved = [], isLoading } = useQuery({
     queryKey: ['alwaysApproved', user?.email],
@@ -32,7 +34,7 @@ export default function AlwaysApprovedList({ user }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alwaysApproved'] });
-      toast.success('המשתמש הוסר מרשימת האישור האוטומטי');
+      toast.success(t.always_approved_removed);
     },
   });
 
@@ -48,13 +50,13 @@ export default function AlwaysApprovedList({ user }) {
     <div className="space-y-3">
       <div className="flex items-center gap-2 mb-4">
         <CheckCheck className="h-5 w-5 text-emerald-600" />
-        <h3 className="font-semibold text-slate-900">משתמשים עם אישור אוטומטי</h3>
+        <h3 className="font-semibold text-slate-900">{t.always_approved_title}</h3>
       </div>
 
       {alwaysApproved.length === 0 ? (
         <div className="text-center py-6 text-slate-500 text-sm bg-slate-50 rounded-xl">
           <CheckCheck className="h-8 w-8 mx-auto mb-2 text-slate-300" />
-          <p>אין משתמשים ברשימת האישור האוטומטי</p>
+          <p>{t.always_approved_empty}</p>
           <p className="text-xs mt-1 text-slate-400">כשתאשר הוצאה עם "אשר תמיד", המשתמש יופיע כאן</p>
         </div>
       ) : (

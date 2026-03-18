@@ -369,6 +369,13 @@ export const translations = {
       no_account_yet: 'אין לך חשבון?',
       sign_in: 'התחבר',
       sign_up: 'הירשם',
+      // Always-approved users
+      always_approved_title: 'משתמשים עם אישור אוטומטי',
+      always_approved_empty: 'אין משתמשים ברשימת האישור האוטומטי',
+      always_approved_removed: 'המשתמש הוסר מרשימת האישור האוטומטי',
+      always_approve_button: 'אשר תמיד ממשתמש זה',
+      approved_always_approve: 'אישרת ותמיד תאשר מהמשתמש הזה!',
+      approved_always_approve_all: 'אישרת ותמיד תאשר מהמשתמש הזה! כל המשתתפים אישרו!',
     },
     en: {
       direction: 'ltr',
@@ -737,6 +744,13 @@ export const translations = {
       no_account_yet: "Don't have an account?",
       sign_in: 'Sign In',
       sign_up: 'Sign Up',
+      // Always-approved users
+      always_approved_title: 'Users with Auto-Approval',
+      always_approved_empty: 'No users in the auto-approval list',
+      always_approved_removed: 'User removed from auto-approval list',
+      always_approve_button: 'Always approve from this user',
+      approved_always_approve: 'Approved and will always approve from this user!',
+      approved_always_approve_all: 'Approved and will always approve from this user! All participants approved!',
     },
   };
 
