@@ -56,16 +56,31 @@ export default function SharedExpenseDialog({
     setSearchResults(filtered);
   };
 
+  const buildSplitsAfterParticipantChange = (newParticipants, currentSplits, method) => {
+    const total = parseFloat(form.amount) || 0;
+    if (method === 'equal') {
+      return calculateDefaultSplits(newParticipants, form.amount, 'equal');
+    }
+    // For custom methods: rebuild the list preserving existing amounts, seeding new entries
+    const allP = [{ email: user?.email, name: user?.full_name }, ...newParticipants];
+    const perPerson = allP.length > 0 ? total / allP.length : 0;
+    return allP.map(p => {
+      const existing = currentSplits.find(s => s.userId === p.email);
+      return existing
+        ? existing
+        : { userId: p.email, userName: p.name, shareAmount: parseFloat(perPerson.toFixed(2)), sharePercent: allP.length > 0 ? 100 / allP.length : 0 };
+    });
+  };
+
   const addParticipant = (selectedUser) => {
     const newParticipants = [...form.participants, {
       email: selectedUser.email,
       name: selectedUser.full_name || selectedUser.email
     }];
-    
     setForm({
       ...form,
       participants: newParticipants,
-      splits: calculateDefaultSplits(newParticipants, form.amount, form.splitMethod)
+      splits: buildSplitsAfterParticipantChange(newParticipants, form.splits, form.splitMethod)
     });
     setUserSearch('');
     setSearchResults([]);
@@ -73,10 +88,13 @@ export default function SharedExpenseDialog({
 
   const removeParticipant = (email) => {
     const newParticipants = form.participants.filter(p => p.email !== email);
+    const newSplits = form.splitMethod === 'equal'
+      ? calculateDefaultSplits(newParticipants, form.amount, 'equal')
+      : form.splits.filter(s => s.userId !== email);
     setForm({
       ...form,
       participants: newParticipants,
-      splits: calculateDefaultSplits(newParticipants, form.amount, form.splitMethod),
+      splits: newSplits,
       paidByUserId: form.paidByUserId === email ? '' : form.paidByUserId
     });
   };
