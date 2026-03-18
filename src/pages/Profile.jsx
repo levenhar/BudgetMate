@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Pencil, Check, X, LogOut, Target, TrendingUp, Wallet } from 'lucide-react';
 
 export default function Profile() {
-  const { t, dir, lang, setLang } = useLanguage();
+  const { t, dir } = useLanguage();
   const { fmt } = useCurrency();
   const queryClient = useQueryClient();
   const [editingName, setEditingName] = useState(false);
@@ -213,43 +213,6 @@ export default function Profile() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Preferences */}
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-6">
-          <h3 className="font-semibold text-slate-900 mb-4">{t.preferences || 'Preferences'}</h3>
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-slate-700">{t.language || 'Language'}</p>
-              <p className="text-xs text-slate-400">
-                {t.language_description || 'Choose your preferred language'}
-              </p>
-            </div>
-            <div className="flex gap-2 shrink-0">
-              <button
-                onClick={() => setLang('he')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  lang === 'he'
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                עברית
-              </button>
-              <button
-                onClick={() => setLang('en')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  lang === 'en'
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                English
-              </button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* App Info */}
       <Card className="border-0 shadow-sm">
