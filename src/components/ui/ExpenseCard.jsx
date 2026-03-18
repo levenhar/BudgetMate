@@ -80,17 +80,14 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
                 {isPendingAwaitingMyApproval ? (
                   <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap border bg-amber-50 border-amber-200 text-amber-700">
                     <Clock className="h-3 w-3" />
-                    <span>{t.awaiting_your_approval}</span>
                   </div>
                 ) : isWaitingForOthers ? (
                   <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap border bg-blue-50 border-blue-200 text-blue-600">
                     <Send className="h-3 w-3" />
-                    <span>{t.awaiting_approvals}</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap border bg-blue-50 border-blue-200 text-blue-700">
                     <Users className="h-3 w-3" />
-                    <span>{t.shared}</span>
                   </div>
                 )}
               </>
