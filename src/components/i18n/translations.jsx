@@ -39,6 +39,7 @@ export const translations = {
       no_data_available: 'אין נתונים זמינים',
       no_expenses_for_period: 'אין הוצאות בתקופה זו',
       of_total_expenses: 'מסך ההוצאות',
+      top_categories: 'קטגוריות מובילות',
       add_first_expense: 'הוסף את ההוצאה הראשונה שלך כדי להתחיל',
       // Settings
       account: 'חשבון',
@@ -425,6 +426,7 @@ export const translations = {
       no_data_available: 'No data available',
       no_expenses_for_period: 'No expenses for this period',
       of_total_expenses: 'of total expenses',
+      top_categories: 'Top Categories',
       add_first_expense: 'Add your first expense to get started',
       // Settings
       account: 'Account',

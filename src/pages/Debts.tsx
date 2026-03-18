@@ -103,11 +103,13 @@ export default function Debts() {
 
   // Expenses involving both current user and the selected user
   const selectedUserExpenses = selectedUser
-    ? sharedExpenses.filter((expense: any) => {
-        const splits = allSplits.filter((s: any) => s.shared_expense_id === expense.id);
-        const userIds = splits.map((s: any) => s.user_id?.trim());
-        return userIds.includes(userEmail) && userIds.includes(selectedUser.email);
-      })
+    ? sharedExpenses
+        .filter((expense: any) => {
+          const splits = allSplits.filter((s: any) => s.shared_expense_id === expense.id);
+          const userIds = splits.map((s: any) => s.user_id?.trim());
+          return userIds.includes(userEmail) && userIds.includes(selectedUser.email);
+        })
+        .sort((a: any, b: any) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
     : [];
 
   if (isLoading) {
