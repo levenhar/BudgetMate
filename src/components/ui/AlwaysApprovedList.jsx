@@ -57,7 +57,7 @@ export default function AlwaysApprovedList({ user }) {
         <div className="text-center py-6 text-slate-500 text-sm bg-slate-50 rounded-xl">
           <CheckCheck className="h-8 w-8 mx-auto mb-2 text-slate-300" />
           <p>{t.always_approved_empty}</p>
-          <p className="text-xs mt-1 text-slate-400">כשתאשר הוצאה עם "אשר תמיד", המשתמש יופיע כאן</p>
+          <p className="text-xs mt-1 text-slate-400">{t.always_approved_placeholder}</p>
         </div>
       ) : (
         <div className="space-y-2 max-h-48 overflow-y-auto pr-1">

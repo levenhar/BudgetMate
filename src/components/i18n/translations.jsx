@@ -372,6 +372,7 @@ export const translations = {
       // Always-approved users
       always_approved_title: 'משתמשים עם אישור אוטומטי',
       always_approved_empty: 'אין משתמשים ברשימת האישור האוטומטי',
+      always_approved_placeholder: 'כשתאשר הוצאה עם "אשר תמיד", המשתמש יופיע כאן',
       always_approved_removed: 'המשתמש הוסר מרשימת האישור האוטומטי',
       always_approve_button: 'אשר תמיד ממשתמש זה',
       approved_always_approve: 'אישרת ותמיד תאשר מהמשתמש הזה!',
@@ -747,6 +748,7 @@ export const translations = {
       // Always-approved users
       always_approved_title: 'Users with Auto-Approval',
       always_approved_empty: 'No users in the auto-approval list',
+      always_approved_placeholder: 'When you approve an expense with "Always Approve", the user will appear here',
       always_approved_removed: 'User removed from auto-approval list',
       always_approve_button: 'Always approve from this user',
       approved_always_approve: 'Approved and will always approve from this user!',
