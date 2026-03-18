@@ -2,14 +2,16 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { useLanguage } from '@/components/i18n/LanguageContext';
 
 export default function CategoryBreakdown({ data, total, selectedMonth }) {
   const navigate = useNavigate();
   const { currencySymbol } = useCurrency();
+  const { t } = useLanguage();
   if (!data || data.length === 0) {
     return (
       <div className="text-center py-8 text-slate-400">
-        אין הוצאות בתקופה זו
+        {t.no_expenses_for_period}
       </div>
     );
   }

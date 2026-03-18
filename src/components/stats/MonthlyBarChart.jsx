@@ -2,13 +2,15 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { useLanguage } from '@/components/i18n/LanguageContext';
 
 export default function MonthlyBarChart({ data }) {
   const { currencySymbol } = useCurrency();
+  const { t } = useLanguage();
   if (!data || data.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-slate-400">
-        אין נתונים זמינים
+        {t.no_data_available}
       </div>
     );
   }

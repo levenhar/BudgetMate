@@ -419,7 +419,7 @@ export default function Statistics() {
                     </div>
                     <p className="text-xs text-slate-600">
                       {selectedMonthData.recurringInfo.count} {t.recurring_expenses_info} ·
-                      {((selectedMonthData.recurringInfo.total / selectedMonthData.total) * 100).toFixed(1)}% מסך ההוצאות · 
+                      {((selectedMonthData.recurringInfo.total / selectedMonthData.total) * 100).toFixed(1)}% {t.of_total_expenses} ·
                       {t.included_in_categories}
                     </p>
                   </div>

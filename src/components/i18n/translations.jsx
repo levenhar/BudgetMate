@@ -35,6 +35,10 @@ export const translations = {
       expenses_by_category: 'הוצאות לפי קטגוריה',
       without_recurring: 'ללא הוצאות קבועות',
       no_expenses_yet: 'אין הוצאות עדיין',
+      no_data_for_period: 'אין נתונים לתקופה זו',
+      no_data_available: 'אין נתונים זמינים',
+      no_expenses_for_period: 'אין הוצאות בתקופה זו',
+      of_total_expenses: 'מסך ההוצאות',
       add_first_expense: 'הוסף את ההוצאה הראשונה שלך כדי להתחיל',
       // Settings
       account: 'חשבון',
@@ -411,6 +415,10 @@ export const translations = {
       expenses_by_category: 'Expenses by Category',
       without_recurring: 'Without recurring expenses',
       no_expenses_yet: 'No expenses yet',
+      no_data_for_period: 'No data for this period',
+      no_data_available: 'No data available',
+      no_expenses_for_period: 'No expenses for this period',
+      of_total_expenses: 'of total expenses',
       add_first_expense: 'Add your first expense to get started',
       // Settings
       account: 'Account',

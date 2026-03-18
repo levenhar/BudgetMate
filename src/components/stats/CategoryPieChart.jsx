@@ -1,13 +1,15 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { useLanguage } from '@/components/i18n/LanguageContext';
 
 export default function CategoryPieChart({ data }) {
   const { currencySymbol } = useCurrency();
+  const { t } = useLanguage();
   if (!data || data.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-slate-400">
-        אין נתונים לתקופה זו
+        {t.no_data_for_period}
       </div>
     );
   }
