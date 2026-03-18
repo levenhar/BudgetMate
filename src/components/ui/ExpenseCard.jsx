@@ -97,7 +97,7 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
           </div>
         </div>
 
-        <div className="flex-1 min-w-0 overflow-hidden flex items-center justify-end px-2">
+        <div className="flex-1 min-w-0 overflow-hidden flex items-center justify-start px-2">
           <span className="text-xs text-slate-400 whitespace-nowrap">
             {format(new Date(expense.date), 'd MMM', { locale: he })}
           </span>
