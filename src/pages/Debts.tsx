@@ -27,20 +27,69 @@ export default function Debts() {
 
   const isHouseholdMode = settings?.mode === 'household' && settings?.current_household_id;
 
-  const { data: debts = [], isLoading } = useQuery({
-     queryKey: ['debts', user?.email],
-     queryFn: async () => {
-       if (!user?.email) return [];
-       return base44.entities.Debt.list();
-     },
-     enabled: !!user?.email,
-   });
+  const { data: sharedExpenses = [], isLoading: loadingExpenses } = useQuery({
+    queryKey: ['sharedExpenses', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return base44.entities.SharedExpense.list();
+    },
+    enabled: !!user?.email,
+  });
 
-  const userEmailTrimmed = user?.email?.trim();
-  const debtsOwedToMe = debts.filter(d => d.to_user_id?.trim() === userEmailTrimmed);
-  const debtsIOwe = debts.filter(d => d.from_user_id?.trim() === userEmailTrimmed);
+  const { data: allSplits = [], isLoading: loadingSplits } = useQuery({
+    queryKey: ['sharedExpenseSplits', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return base44.entities.SharedExpenseSplit.list();
+    },
+    enabled: !!user?.email,
+  });
 
+  const isLoading = loadingExpenses || loadingSplits;
 
+  const userEmail = user?.email?.trim();
+
+  // Compute net balance per user directly from shared expenses
+  const balanceByUser: Record<string, { amount: number; name: string; email: string }> = {};
+
+  if (userEmail && sharedExpenses.length > 0) {
+    for (const expense of sharedExpenses) {
+      const splits = allSplits.filter((s: any) => s.shared_expense_id === expense.id);
+      const pendingUsers: string[] = expense.pending_with_users || [];
+
+      if (expense.paid_by_user_id?.trim() === userEmail) {
+        // I paid — others owe me their share
+        for (const split of splits) {
+          const splitUserId = split.user_id?.trim();
+          if (!splitUserId || splitUserId === userEmail) continue;
+          // Skip if this user hasn't approved yet
+          if (pendingUsers.map((u: string) => u.trim()).includes(splitUserId)) continue;
+          if (!balanceByUser[splitUserId]) {
+            balanceByUser[splitUserId] = { amount: 0, name: split.user_name || splitUserId, email: splitUserId };
+          }
+          balanceByUser[splitUserId].amount += split.share_amount; // positive = they owe me
+        }
+      } else {
+        // Someone else paid — I may owe them
+        const mySplit = splits.find((s: any) => s.user_id?.trim() === userEmail);
+        if (!mySplit) continue;
+        // Skip if I haven't approved yet
+        if (pendingUsers.map((u: string) => u.trim()).includes(userEmail)) continue;
+        const payerId = expense.paid_by_user_id?.trim();
+        if (!payerId) continue;
+        const payerSplit = splits.find((s: any) => s.user_id?.trim() === payerId);
+        const payerName = payerSplit?.user_name || payerId;
+        if (!balanceByUser[payerId]) {
+          balanceByUser[payerId] = { amount: 0, name: payerName, email: payerId };
+        }
+        balanceByUser[payerId].amount -= mySplit.share_amount; // negative = I owe them
+      }
+    }
+  }
+
+  // Split into owed-to-me and i-owe
+  const debtsOwedToMe = Object.values(balanceByUser).filter(b => b.amount > 0.005);
+  const debtsIOwe = Object.values(balanceByUser).filter(b => b.amount < -0.005).map(b => ({ ...b, amount: Math.abs(b.amount) }));
 
   const totalOwedToMe = debtsOwedToMe.reduce((sum, d) => sum + d.amount, 0);
   const totalIOwe = debtsIOwe.reduce((sum, d) => sum + d.amount, 0);
@@ -95,12 +144,12 @@ export default function Debts() {
               <div className="space-y-2">
                 {debtsOwedToMe.map((debt) => (
                   <div
-                    key={debt.id}
+                    key={debt.email}
                     className="flex items-center justify-between p-4 bg-green-50 border border-green-100 rounded-xl"
                   >
                     <div>
                       <div className="font-semibold text-slate-900">
-                        {debt.from_user_name || debt.from_user_id}
+                        {debt.name}
                       </div>
                       <div className="text-sm text-slate-500">{t.owes_you}</div>
                     </div>
@@ -138,12 +187,12 @@ export default function Debts() {
               <div className="space-y-2">
                 {debtsIOwe.map((debt) => (
                   <div
-                    key={debt.id}
+                    key={debt.email}
                     className="flex items-center justify-between p-4 bg-red-50 border border-red-100 rounded-xl"
                   >
                     <div>
                       <div className="font-semibold text-slate-900">
-                        {debt.to_user_name || debt.to_user_id}
+                        {debt.name}
                       </div>
                       <div className="text-sm text-slate-500">{t.you_owe}</div>
                     </div>
