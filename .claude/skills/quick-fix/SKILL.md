@@ -1,62 +1,52 @@
 ---
 name: quick-fix
-description: This skill should be used when the user asks to "fix a small bug", "add a small feature", "quick fix", "minor UI change", "small tweak", "tiny improvement", "adjust the UI", "fix this issue", or any similarly scoped task that requires minimal code changes in the BudgetMate project.
-version: 0.1.0
+description: Spawn a background agent in a worktree to implement a small fix, test it, and commit — without interrupting your current work.
+user-invocable: true
+arguments:
+  - name: description
+    description: What to fix or add (e.g. "capitalize hard skills like videography → Videography")
+    required: true
 ---
 
-# Quick Fix Skill
+# Quick Fix
 
-For small, targeted bug fixes and minor UI feature additions in BudgetMate. The guiding principle is **minimum viable change** — touch only what is necessary.
+Launch a background agent in an isolated worktree to implement a small fix or feature. The agent works independently while the user continues their main task.
 
-## Workflow
+## Steps
 
-### 1. Identify the Exact Issue
+### 1. Understand the request
 
-Before touching any code:
+Parse the user's description to understand what needs to change. If the description is ambiguous, ask one clarifying question before launching — but err on the side of just doing it.
 
-- Read the specific file(s) involved — never guess at the implementation
-- Confirm the root cause with a single Grep or Read, not a full exploration
-- Define the one-line fix in your head before opening an editor
+### 2. Launch background agent
 
-### 2. Make Minimal Changes
+Spawn an agent with `isolation: "worktree"` and `run_in_background: true`.
 
-- Change only the lines directly responsible for the bug or feature
-- Do not refactor surrounding code, rename variables, or improve formatting
-- Do not add error handling, comments, or abstractions not strictly required
-- Do not touch files unrelated to the fix
+The agent's prompt must include:
+1. Read relevant files first to understand existing patterns and conventions
+2. Implement the fix following existing code style
+3. Add or update tests covering the change
+4. Run `python tests/run_tests.py` (or the project's test command) and fix any failures
+5. Commit with a descriptive message when tests pass
 
-**One file changed is better than two. One line changed is better than ten.**
+### 3. Confirm launch
 
-### 3. Verify
+Tell the user:
+- What the agent is working on (one line)
+- That it's running in the background in a worktree
+- That they'll be notified when it's done
+- Remind them they can continue working on their main task
 
-Run the build after every fix:
+Do NOT block. Return immediately after launching.
 
-```bash
-npm run build
-```
+### 4. When the agent completes
 
-If the build fails, fix only the build error — do not reorganize code.
+After the background agent finishes successfully and reports its worktree branch:
 
-### 4. Report Concisely
-
-After completing, state:
-- Which file(s) changed and which line(s)
-- What the fix does in one sentence
-- Nothing else unless the user asks
-
-## What to Avoid
-
-- Over-engineering: no new abstractions, hooks, or utilities for a one-off fix
-- Scope creep: if you notice other issues while fixing, mention them but do not fix them
-- Unnecessary comments or documentation
-- Style or formatting changes not related to the fix
-- Adding new dependencies
-
-## BudgetMate-Specific Notes
-
-- UI components live in `src/components/ui/` (Shadcn/UI primitives) and `src/components/` (feature components)
-- Pages are in `src/pages/` — one file per route
-- Use `@/` alias for all imports
-- Icons: Lucide React only
-- Toasts: Sonner (`toast.success`, `toast.error`)
-- Styling: Tailwind CSS utility classes — prefer editing existing classes over adding new ones
+1. Merge the branch into main: `git merge <branch> --no-ff -m "Merge <branch>: <short description>"`
+2. Clean up the worktree and branch:
+   ```bash
+   git worktree remove --force <worktree-path>
+   git branch -d <branch>
+   ```
+3. Tell the user the fix has been merged and cleaned up.
