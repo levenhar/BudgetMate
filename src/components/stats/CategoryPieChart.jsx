@@ -1,11 +1,14 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { useLanguage } from '@/components/i18n/LanguageContext';
 
-export default function CategoryPieChart({ data }) {
+export default function CategoryPieChart({ data, selectedMonth }) {
   const { currencySymbol } = useCurrency();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   if (!data || data.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-slate-400">
@@ -38,6 +41,21 @@ export default function CategoryPieChart({ data }) {
     return null;
   };
 
+  const handlePieClick = (pieData) => {
+    if (!pieData) return;
+    const params = new URLSearchParams();
+    params.set('category', pieData.name);
+    if (selectedMonth) {
+      const [year, month] = selectedMonth.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+      const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+      const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      params.set('dateFrom', monthStart.toISOString().split('T')[0]);
+      params.set('dateTo', monthEnd.toISOString().split('T')[0]);
+    }
+    navigate(`${createPageUrl('Expenses')}?${params.toString()}`);
+  };
+
   return (
     <div className="h-80">
       <ResponsiveContainer width="100%" height="100%">
@@ -50,6 +68,8 @@ export default function CategoryPieChart({ data }) {
             outerRadius={100}
             paddingAngle={2}
             dataKey="value"
+            onClick={handlePieClick}
+            style={{ cursor: 'pointer' }}
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />

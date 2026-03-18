@@ -418,7 +418,7 @@ export default function Statistics() {
               </div>
             </CardHeader>
             <CardContent className="pt-4">
-              <CategoryPieChart data={selectedMonthData.categoryData} />
+              <CategoryPieChart data={selectedMonthData.categoryData} selectedMonth={selectedMonth} />
             </CardContent>
           </Card>
         </div>
