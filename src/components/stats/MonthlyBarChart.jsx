@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { useLanguage } from '@/components/i18n/LanguageContext';
@@ -29,29 +29,47 @@ export default function MonthlyBarChart({ data }) {
     return null;
   };
 
+  const maxTotal = Math.max(...data.map(d => d.total), 0);
+
   return (
     <div className="h-80">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
+              <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.8} />
+            </linearGradient>
+            <linearGradient id="barGradientHighlight" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#4f46e5" stopOpacity={1} />
+              <stop offset="100%" stopColor="#7c3aed" stopOpacity={0.9} />
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-          <XAxis 
-            dataKey="month" 
+          <XAxis
+            dataKey="month"
             axisLine={false}
             tickLine={false}
             tick={{ fill: '#64748b', fontSize: 12 }}
           />
-          <YAxis 
+          <YAxis
             axisLine={false}
             tickLine={false}
             tick={{ fill: '#64748b', fontSize: 12 }}
             tickFormatter={(value) => `${currencySymbol}${value}`}
           />
-          <Tooltip content={<CustomTooltip />} />
-          <Bar 
-            dataKey="total" 
-            fill="#6366f1" 
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9', radius: 6 }} />
+          <Bar
+            dataKey="total"
             radius={[6, 6, 0, 0]}
-          />
+          >
+            {data.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={entry.total === maxTotal ? 'url(#barGradientHighlight)' : 'url(#barGradient)'}
+              />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>

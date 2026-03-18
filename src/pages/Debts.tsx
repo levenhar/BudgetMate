@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Loader2, TrendingUp, TrendingDown, Users } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Users, Receipt } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { format } from 'date-fns';
 
 import { useLanguage } from '@/components/i18n/LanguageContext';
 import { useCurrency } from '@/lib/CurrencyContext';
@@ -10,6 +12,7 @@ import { useCurrency } from '@/lib/CurrencyContext';
 export default function Debts() {
   const { t, dir } = useLanguage();
   const { currencySymbol } = useCurrency();
+  const [selectedUser, setSelectedUser] = useState<{ email: string; name: string } | null>(null);
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: () => base44.auth.me(),
@@ -98,6 +101,15 @@ export default function Debts() {
   const totalIOwe = debtsIOwe.reduce((sum, d) => sum + d.amount, 0);
   const netBalance = totalOwedToMe - totalIOwe;
 
+  // Expenses involving both current user and the selected user
+  const selectedUserExpenses = selectedUser
+    ? sharedExpenses.filter((expense: any) => {
+        const splits = allSplits.filter((s: any) => s.shared_expense_id === expense.id);
+        const userIds = splits.map((s: any) => s.user_id?.trim());
+        return userIds.includes(userEmail) && userIds.includes(selectedUser.email);
+      })
+    : [];
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -148,7 +160,8 @@ export default function Debts() {
                 {debtsOwedToMe.map((debt) => (
                   <div
                     key={debt.email}
-                    className="flex items-center justify-between p-4 bg-green-50 border border-green-100 rounded-xl"
+                    onClick={() => setSelectedUser({ email: debt.email, name: debt.name })}
+                    className="flex items-center justify-between p-4 bg-green-50 border border-green-100 rounded-xl cursor-pointer hover:bg-green-100 transition-colors"
                   >
                     <div>
                       <div className="font-semibold text-slate-900">
@@ -191,7 +204,8 @@ export default function Debts() {
                 {debtsIOwe.map((debt) => (
                   <div
                     key={debt.email}
-                    className="flex items-center justify-between p-4 bg-red-50 border border-red-100 rounded-xl"
+                    onClick={() => setSelectedUser({ email: debt.email, name: debt.name })}
+                    className="flex items-center justify-between p-4 bg-red-50 border border-red-100 rounded-xl cursor-pointer hover:bg-red-100 transition-colors"
                   >
                     <div>
                       <div className="font-semibold text-slate-900">
@@ -215,6 +229,70 @@ export default function Debts() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Shared Expenses Detail Modal */}
+      <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-slate-500" />
+              Shared expenses with {selectedUser?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1 space-y-3 pr-1">
+            {selectedUserExpenses.length === 0 ? (
+              <div className="text-center py-10 text-slate-500">
+                <Users className="h-10 w-10 mx-auto mb-2 text-slate-300" />
+                <p>No shared expenses found</p>
+              </div>
+            ) : (
+              selectedUserExpenses.map((expense: any) => {
+                const splits = allSplits.filter((s: any) => s.shared_expense_id === expense.id);
+                const mySplit = splits.find((s: any) => s.user_id?.trim() === userEmail);
+                const iPaid = expense.paid_by_user_id?.trim() === userEmail;
+                return (
+                  <div key={expense.id} className="border border-slate-100 rounded-xl p-4 bg-white shadow-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-slate-900 truncate">
+                          {expense.description || expense.category_name || 'Shared expense'}
+                        </div>
+                        <div className="text-xs text-slate-400 mt-0.5">
+                          {expense.date ? format(new Date(expense.date), 'MMM d, yyyy') : '—'}
+                          {expense.category_name && ` · ${expense.category_name}`}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-semibold text-slate-900">
+                          {currencySymbol}{Number(expense.total_amount).toFixed(2)}
+                        </div>
+                        <div className={`text-xs font-medium mt-0.5 ${iPaid ? 'text-green-600' : 'text-red-500'}`}>
+                          {iPaid ? 'You paid' : `${selectedUser?.name} paid`}
+                        </div>
+                      </div>
+                    </div>
+                    {mySplit && (
+                      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-sm">
+                        <span className="text-slate-500">Your share</span>
+                        <span className={`font-semibold ${iPaid ? 'text-green-600' : 'text-red-500'}`}>
+                          {iPaid ? '+' : '-'}{currencySymbol}{Number(mySplit.share_amount).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    {expense.is_pending && (
+                      <div className="mt-2">
+                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                          Pending approval
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

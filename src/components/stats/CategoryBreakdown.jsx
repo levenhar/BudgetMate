@@ -21,9 +21,9 @@ export default function CategoryBreakdown({ data, total, selectedMonth }) {
       {data.map((item, index) => {
         const percentage = total > 0 ? (item.value / total) * 100 : 0;
         return (
-          <div 
-            key={index} 
-            className="group cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
+          <div
+            key={index}
+            className="group cursor-pointer hover:bg-slate-50/80 p-2 rounded-lg transition-all duration-150 border border-transparent hover:border-slate-200 hover:shadow-sm"
             onClick={() => {
               const params = new URLSearchParams();
               params.set('category', item.name);
@@ -40,25 +40,27 @@ export default function CategoryBreakdown({ data, total, selectedMonth }) {
           >
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2">
-                <div 
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: item.color }}
+                <div
+                  className="w-3 h-3 rounded-full ring-2 ring-offset-1"
+                  style={{ backgroundColor: item.color, ringColor: item.color }}
                 />
-                <span className="text-sm font-medium text-slate-700">{item.name}</span>
+                <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">{item.name}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm text-slate-500">{percentage.toFixed(1)}%</span>
-                <span className="text-sm font-semibold text-slate-900 w-20 text-end">
+                <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                  {percentage.toFixed(1)}%
+                </span>
+                <span className="text-sm font-bold w-20 text-end" style={{ color: item.color }}>
                   {currencySymbol}{item.value.toFixed(2)}
                 </span>
               </div>
             </div>
             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full rounded-full transition-all duration-500"
-                style={{ 
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{
                   width: `${percentage}%`,
-                  backgroundColor: item.color 
+                  background: `linear-gradient(90deg, ${item.color}cc, ${item.color})`,
                 }}
               />
             </div>

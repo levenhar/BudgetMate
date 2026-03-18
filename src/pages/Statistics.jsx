@@ -293,10 +293,37 @@ export default function Statistics() {
     };
   }, [monthlyData, expenses, user, recurringExpenses]);
 
+  const statAccents = {
+    totalExpenses: {
+      border: 'border-indigo-500',
+      iconBg: 'bg-indigo-50',
+      iconColor: 'text-indigo-600',
+      valueColor: 'text-indigo-700',
+    },
+    monthlyAvg: {
+      border: 'border-violet-500',
+      iconBg: 'bg-violet-50',
+      iconColor: 'text-violet-600',
+      valueColor: 'text-violet-700',
+    },
+    highestMonth: {
+      border: 'border-amber-500',
+      iconBg: 'bg-amber-50',
+      iconColor: 'text-amber-600',
+      valueColor: 'text-amber-700',
+    },
+    trend: {
+      border: summaryStats.trend > 5 ? 'border-red-500' : summaryStats.trend < -5 ? 'border-green-500' : 'border-slate-300',
+      iconBg: summaryStats.trend > 5 ? 'bg-red-50' : summaryStats.trend < -5 ? 'bg-green-50' : 'bg-slate-50',
+      iconColor: summaryStats.trend > 5 ? 'text-red-600' : summaryStats.trend < -5 ? 'text-green-600' : 'text-slate-500',
+      valueColor: summaryStats.trend > 5 ? 'text-red-600' : summaryStats.trend < -5 ? 'text-green-600' : 'text-slate-700',
+    },
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
       </div>
     );
   }
@@ -317,33 +344,40 @@ export default function Statistics() {
             value={`${currencySymbol}${summaryStats.totalSpending.toFixed(2)}`}
             subtitle={t.incl_recurring}
             icon={DollarSign}
+            accentColor={statAccents.totalExpenses}
           />
           <StatCard
             title={t.monthly_average}
             value={`${currencySymbol}${summaryStats.avgMonthly.toFixed(2)}`}
             subtitle={t.per_month_no_recurring}
             icon={BarChart3}
+            accentColor={statAccents.monthlyAvg}
           />
           <StatCard
             title={t.highest_month}
             value={`${currencySymbol}${summaryStats.highestMonth.total.toFixed(2)}`}
             subtitle={summaryStats.highestMonth.fullMonth}
             icon={TrendingUp}
+            accentColor={statAccents.highestMonth}
           />
           <StatCard
             title={t.vs_prev_month}
             value={`${summaryStats.trend >= 0 ? '+' : ''}${summaryStats.trend.toFixed(1)}%`}
             trend={summaryStats.trend > 5 ? 'up' : summaryStats.trend < -5 ? 'down' : 'neutral'}
             icon={summaryStats.trend >= 0 ? TrendingUp : TrendingDown}
+            accentColor={statAccents.trend}
           />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Monthly Trend */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-2">
+          <Card className="shadow-sm border border-slate-200/70">
+            <CardHeader className="pb-2 border-b border-slate-100">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{t.monthly_expenses}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-5 rounded-full bg-indigo-500" />
+                  <CardTitle className="text-lg">{t.monthly_expenses}</CardTitle>
+                </div>
                 <Select value={monthsRange} onValueChange={setMonthsRange}>
                   <SelectTrigger className="w-32">
                     <SelectValue />
@@ -355,16 +389,19 @@ export default function Statistics() {
                 </Select>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <MonthlyBarChart data={monthlyData} />
             </CardContent>
           </Card>
 
           {/* Category Breakdown for Selected Month */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-2">
+          <Card className="shadow-sm border border-slate-200/70">
+            <CardHeader className="pb-2 border-b border-slate-100">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{t.category_breakdown_title}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-5 rounded-full bg-violet-500" />
+                  <CardTitle className="text-lg">{t.category_breakdown_title}</CardTitle>
+                </div>
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                   <SelectTrigger className="w-40">
                     <Calendar className="h-4 w-4 ml-2" />
@@ -380,44 +417,52 @@ export default function Statistics() {
                 </Select>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <CategoryPieChart data={selectedMonthData.categoryData} />
             </CardContent>
           </Card>
         </div>
 
         {/* Detailed Category Breakdown */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-2">
+        <Card className="shadow-sm border border-slate-200/70">
+          <CardHeader className="pb-2 border-b border-slate-100">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">{t.expenses_by_category_title}</CardTitle>
-                <p className="text-sm text-slate-500 mt-1">
-                  {monthOptions.find(m => m.value === selectedMonth)?.label} · {currencySymbol}{selectedMonthData.total.toFixed(2)} {t.total_label}
+                <div className="flex items-center gap-2 mb-0.5">
+                  <div className="w-1 h-5 rounded-full bg-amber-500" />
+                  <CardTitle className="text-lg">{t.expenses_by_category_title}</CardTitle>
+                </div>
+                <p className="text-sm text-slate-500 mt-1 ml-3">
+                  {monthOptions.find(m => m.value === selectedMonth)?.label}
+                  {' · '}
+                  <span className="font-semibold text-slate-700">
+                    {currencySymbol}{selectedMonthData.total.toFixed(2)}
+                  </span>
+                  {' '}{t.total_label}
                 </p>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <CategoryBreakdown 
-              data={selectedMonthData.categoryData} 
+          <CardContent className="pt-4">
+            <CategoryBreakdown
+              data={selectedMonthData.categoryData}
               total={selectedMonthData.total}
               selectedMonth={selectedMonth}
             />
 
             {/* Recurring Expenses Info */}
             {selectedMonthData.recurringInfo && (
-              <div className="mt-6 p-4 bg-slate-100 border border-slate-200 rounded-xl">
+              <div className="mt-6 p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-slate-500 rounded-full mt-1.5 flex-shrink-0" />
+                  <div className="w-2 h-2 bg-indigo-500 rounded-full mt-1.5 flex-shrink-0" />
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-slate-900">{t.recurring_expenses_info}</span>
-                      <span className="text-lg font-bold text-slate-700">
+                      <span className="font-semibold text-indigo-900">{t.recurring_expenses_info}</span>
+                      <span className="text-lg font-bold text-indigo-700">
                         {currencySymbol}{selectedMonthData.recurringInfo.total.toFixed(2)}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600">
+                    <p className="text-xs text-indigo-600">
                       {selectedMonthData.recurringInfo.count} {t.recurring_expenses_info} ·
                       {((selectedMonthData.recurringInfo.total / selectedMonthData.total) * 100).toFixed(1)}% {t.of_total_expenses} ·
                       {t.included_in_categories}
