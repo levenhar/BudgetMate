@@ -20,7 +20,7 @@ export default function MonthlyBarChart({ data }) {
       return (
         <div className="bg-white px-4 py-3 rounded-xl shadow-lg border border-slate-100">
           <div className="font-medium text-slate-900 mb-1">{label}</div>
-          <div className="text-lg font-semibold text-indigo-600">
+          <div className="text-lg font-semibold text-gray-900">
             {currencySymbol}{payload[0].value.toFixed(2)}
           </div>
         </div>
@@ -50,12 +50,12 @@ export default function MonthlyBarChart({ data }) {
             dataKey="month"
             axisLine={false}
             tickLine={false}
-            tick={{ fill: '#64748b', fontSize: 12 }}
+            tick={{ fill: '#111827', fontSize: 12 }}
           />
           <YAxis
             axisLine={false}
             tickLine={false}
-            tick={{ fill: '#64748b', fontSize: 12 }}
+            tick={{ fill: '#111827', fontSize: 12 }}
             tickFormatter={(value) => `${currencySymbol}${value}`}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9', radius: 6 }} />
