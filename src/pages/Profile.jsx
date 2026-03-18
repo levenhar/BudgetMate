@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/components/i18n/LanguageContext';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
 import { Pencil, Check, X, LogOut, Target, TrendingUp, Wallet } from 'lucide-react';
 
 export default function Profile() {
   const { t, dir } = useLanguage();
   const { fmt } = useCurrency();
+  const { logout } = useAuth();
   const queryClient = useQueryClient();
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -232,7 +234,7 @@ export default function Profile() {
           <Button
             variant="outline"
             className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
-            onClick={() => base44.auth.logout('/')}
+            onClick={() => logout()}
           >
             <LogOut className="h-4 w-4 me-2" />
             {t.logout || 'Logout'}

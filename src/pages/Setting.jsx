@@ -15,6 +15,7 @@ import AlwaysApprovedList from '@/components/ui/AlwaysApprovedList';
 import { useLanguage } from '@/components/i18n/LanguageContext';
 import { supportedLanguages, getTranslations } from '@/components/i18n/translations';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { useAuth } from '@/lib/AuthContext';
 
 const getDefaultCategories = (t) => [
   { name: t.category_supermarket, color: '#22c55e', icon: 'ShoppingCart' },
@@ -51,6 +52,7 @@ const DEFAULT_CATEGORY_KEYS = [
 ];
 
 export default function Settings() {
+  const { logout } = useAuth();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const { lang, setLang, t } = useLanguage();
@@ -221,7 +223,7 @@ export default function Settings() {
   };
 
   const handleLogout = () => {
-    base44.auth.logout();
+    logout();
   };
 
   return (
