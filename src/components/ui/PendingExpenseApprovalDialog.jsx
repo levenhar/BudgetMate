@@ -7,9 +7,11 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { useLanguage } from '@/components/i18n/LanguageContext';
 
 export default function PendingExpenseApprovalDialog({ expense, user, open, onOpenChange }) {
   const { currencySymbol } = useCurrency();
+  const { dir } = useLanguage();
   const [sharedExpense, setSharedExpense] = useState(null);
   const [userSplit, setUserSplit] = useState(null);
   const [allSplits, setAllSplits] = useState([]);
@@ -352,7 +354,7 @@ export default function PendingExpenseApprovalDialog({ expense, user, open, onOp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md" dir="rtl">
+      <DialogContent className="sm:max-w-md" dir={dir}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-amber-700">
             <Receipt className="h-5 w-5" />

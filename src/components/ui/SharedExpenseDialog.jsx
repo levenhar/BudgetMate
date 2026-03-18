@@ -11,6 +11,7 @@ import { CalendarIcon, Plus, Loader2, Users, X } from "lucide-react";
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { useLanguage } from '@/components/i18n/LanguageContext';
 
 export default function SharedExpenseDialog({
   open, 
@@ -23,6 +24,7 @@ export default function SharedExpenseDialog({
   householdId
 }) {
   const { currencySymbol } = useCurrency();
+  const { t, dir } = useLanguage();
   const [form, setForm] = useState({
     amount: '',
     date: new Date(),
@@ -194,12 +196,12 @@ export default function SharedExpenseDialog({
       if (!isOpen) resetForm();
       onOpenChange(isOpen);
     }}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto" dir={dir}>
         <DialogHeader>
           <DialogTitle>הוצאה משותפת</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={validateAndSubmit} className="space-y-4">
+        <form onSubmit={validateAndSubmit} className="space-y-4" dir={dir}>
           {/* Amount & Category */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -259,7 +261,7 @@ export default function SharedExpenseDialog({
               <Input
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="למשל: ארוחת ערב"
+                placeholder={t.description_placeholder}
               />
             </div>
           </div>
@@ -274,7 +276,7 @@ export default function SharedExpenseDialog({
                   setUserSearch(e.target.value);
                   searchUsers(e.target.value);
                 }}
-                placeholder="חפש משתתף לפי שם או אימייל..."
+                placeholder={t.search_participant}
                 className="pl-10"
               />
               <Users className="absolute right-3 top-3 h-4 w-4 text-slate-400" />
@@ -287,7 +289,7 @@ export default function SharedExpenseDialog({
                     key={u.email}
                     type="button"
                     onClick={() => addParticipant(u)}
-                    className="w-full text-right px-3 py-2 hover:bg-slate-50 flex items-center justify-between"
+                    className="w-full text-start px-3 py-2 hover:bg-slate-50 flex items-center justify-between"
                   >
                     <div>
                       <div className="font-medium">{u.full_name}</div>
@@ -356,8 +358,8 @@ export default function SharedExpenseDialog({
               <table className="w-full">
                 <thead className="bg-slate-50">
                   <tr>
-                    <th className="text-right p-2 text-sm font-medium">משתתף</th>
-                    <th className="text-right p-2 text-sm font-medium">
+                    <th className="text-start p-2 text-sm font-medium">משתתף</th>
+                    <th className="text-start p-2 text-sm font-medium">
                       {form.splitMethod === 'custom_percent' ? 'אחוז (%)' : `סכום (${currencySymbol})`}
                     </th>
                   </tr>

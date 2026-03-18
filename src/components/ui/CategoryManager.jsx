@@ -41,7 +41,7 @@ export default function CategoryManager({
   onReset,
   isLoading 
 }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [formData, setFormData] = useState({ name: '', color: PRESET_COLORS[0], icon: PRESET_ICONS[0] });
@@ -145,17 +145,17 @@ export default function CategoryManager({
 
       {/* Add Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" dir={dir}>
           <DialogHeader>
             <DialogTitle>{t.add_category_title}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4" dir={dir}>
             <div className="space-y-2">
               <Label>{t.category_name}</Label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="שם הקטגוריה"
+                placeholder={t.category_name}
               />
             </div>
             <div className="space-y-2">
@@ -189,11 +189,11 @@ export default function CategoryManager({
 
       {/* Edit Dialog */}
       <Dialog open={!!editingCategory} onOpenChange={() => setEditingCategory(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" dir={dir}>
           <DialogHeader>
             <DialogTitle>{t.edit_category_title}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4" dir={dir}>
             <div className="space-y-2">
               <Label>{t.category_name}</Label>
               <Input

@@ -283,7 +283,7 @@ export default function NotificationsPanel({ user }) {
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 text-right">
+                <div className="flex-1 text-start">
                   {notif.type === 'shared_expense_request' && (
                     <>
                       <p className="text-sm font-semibold text-slate-900">

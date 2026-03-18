@@ -46,7 +46,7 @@ export default function CategoryBreakdown({ data, total, selectedMonth }) {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-slate-500">{percentage.toFixed(1)}%</span>
-                <span className="text-sm font-semibold text-slate-900 w-20 text-right">
+                <span className="text-sm font-semibold text-slate-900 w-20 text-end">
                   {currencySymbol}{item.value.toFixed(2)}
                 </span>
               </div>

@@ -8,6 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, parseISO } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
+import { useLanguage } from '@/components/i18n/LanguageContext';
 
 export default function EditExpenseDialog({ 
   expense, 
@@ -18,6 +19,8 @@ export default function EditExpenseDialog({
   isLoading,
   isShared = false
 }) {
+  const { t, dir } = useLanguage();
+
   const [formData, setFormData] = useState({
     amount: '',
     date: new Date(),
@@ -56,21 +59,21 @@ export default function EditExpenseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md" dir="rtl">
+      <DialogContent className="sm:max-w-md" dir={dir}>
         <DialogHeader>
           <DialogTitle>
-            {expense?.is_shared ? 'ערוך הוצאה משותפת' : 'ערוך הוצאה'}
+            {expense?.is_shared ? t.edit_shared_expense || 'ערוך הוצאה משותפת' : t.edit_expense || 'ערוך הוצאה'}
           </DialogTitle>
           {expense?.is_shared && (
             <p className="text-sm text-slate-500 mt-1">
-              שינויים ישפיעו על כל המשתתפים
+              {t.edit_shared_expense_note || 'שינויים ישפיעו על כל המשתתפים'}
             </p>
           )}
         </DialogHeader>
-        
-        <div className="space-y-4 py-4">
+
+        <div className="space-y-4 py-4" dir={dir}>
           <div className="space-y-2">
-            <Label>סכום</Label>
+            <Label>{t.amount}</Label>
             <Input
               type="number"
               step="0.01"
@@ -81,13 +84,13 @@ export default function EditExpenseDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>קטגוריה</Label>
-            <Select 
-              value={formData.category_id} 
+            <Label>{t.category}</Label>
+            <Select
+              value={formData.category_id}
               onValueChange={(v) => setFormData({ ...formData, category_id: v })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="בחר קטגוריה" />
+                <SelectValue placeholder={t.category_placeholder} />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((cat) => (
@@ -106,7 +109,7 @@ export default function EditExpenseDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>תאריך</Label>
+            <Label>{t.date_label}</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-start">
@@ -126,38 +129,38 @@ export default function EditExpenseDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>תיאור</Label>
+            <Label>{t.description_label}</Label>
             <Input
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="אופציונלי"
+              placeholder={t.description_optional || 'אופציונלי'}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>עסק</Label>
+              <Label>{t.merchant_placeholder}</Label>
               <Input
                 value={formData.merchant}
                 onChange={(e) => setFormData({ ...formData, merchant: e.target.value })}
-                placeholder="אופציונלי"
+                placeholder={t.description_optional || 'אופציונלי'}
               />
             </div>
             <div className="space-y-2">
-              <Label>תשלום</Label>
-              <Select 
-                value={formData.payment_method} 
+              <Label>{t.payment_method_placeholder}</Label>
+              <Select
+                value={formData.payment_method}
                 onValueChange={(v) => setFormData({ ...formData, payment_method: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="אמצעי" />
+                  <SelectValue placeholder={t.payment_method_placeholder} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cash">מזומן</SelectItem>
-                  <SelectItem value="credit_card">כרטיס אשראי</SelectItem>
-                  <SelectItem value="debit_card">כרטיס חיוב</SelectItem>
-                  <SelectItem value="bank_transfer">העברה בנקאית</SelectItem>
-                  <SelectItem value="other">אחר</SelectItem>
+                  <SelectItem value="cash">{t.payment_cash}</SelectItem>
+                  <SelectItem value="credit_card">{t.payment_credit_card}</SelectItem>
+                  <SelectItem value="debit_card">{t.payment_debit_card}</SelectItem>
+                  <SelectItem value="bank_transfer">{t.payment_bank_transfer}</SelectItem>
+                  <SelectItem value="other">{t.payment_other}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -166,14 +169,14 @@ export default function EditExpenseDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            ביטול
+            {t.cancel}
           </Button>
-          <Button 
-            onClick={handleSave} 
+          <Button
+            onClick={handleSave}
             disabled={!formData.amount || !formData.category_id || isLoading}
             className="bg-slate-900 hover:bg-slate-800"
           >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'שמור'}
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.save}
           </Button>
         </DialogFooter>
       </DialogContent>

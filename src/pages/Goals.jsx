@@ -399,7 +399,7 @@ export default function Goals() {
 
       {/* Add / Edit Goal Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm" dir={dir}>
           <DialogHeader>
             <DialogTitle>
               {editGoal ? t.edit_goal || 'Edit Goal' : t.add_goal || 'Add Goal'}
@@ -437,6 +437,7 @@ export default function Goals() {
                 placeholder={t.goal_name_placeholder || 'e.g. Vacation, New Car'}
                 required
                 className="mt-1.5"
+                dir={dir}
               />
             </div>
 

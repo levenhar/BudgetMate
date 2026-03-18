@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Copy, Check, Plus, LogOut, Crown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from '@/components/i18n/LanguageContext';
 
 export default function HouseholdManager({ 
   household,
@@ -15,6 +16,7 @@ export default function HouseholdManager({
   onLeaveHousehold,
   isLoading
 }) {
+  const { dir } = useLanguage();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [householdName, setHouseholdName] = useState('');
@@ -131,7 +133,7 @@ export default function HouseholdManager({
 
       {/* Create Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" dir={dir}>
           <DialogHeader>
             <DialogTitle>צור משק בית</DialogTitle>
             <DialogDescription>
@@ -162,7 +164,7 @@ export default function HouseholdManager({
 
       {/* Join Dialog */}
       <Dialog open={showJoinDialog} onOpenChange={setShowJoinDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" dir={dir}>
           <DialogHeader>
             <DialogTitle>הצטרף למשק בית</DialogTitle>
             <DialogDescription>

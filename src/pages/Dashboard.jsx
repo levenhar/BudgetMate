@@ -214,7 +214,7 @@ export default function Dashboard() {
                       />
                       <span className="text-sm text-slate-700 flex-1">{name}</span>
                       <span className="text-sm font-medium text-slate-900">{fmt(total)}</span>
-                      <span className="text-xs text-slate-400 w-12 text-right">{pct.toFixed(0)}%</span>
+                      <span className="text-xs text-slate-400 w-12 text-end">{pct.toFixed(0)}%</span>
                     </div>
                     <div className="ms-6 mt-1 h-1 rounded-full bg-slate-100 overflow-hidden">
                       <div

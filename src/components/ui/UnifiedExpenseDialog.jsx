@@ -30,7 +30,7 @@ export default function UnifiedExpenseDialog({
   isHouseholdMode,
   householdId
 }) {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const { currencySymbol } = useCurrency();
   const [activeTab, setActiveTab] = useState(defaultTab);
 
@@ -364,7 +364,7 @@ export default function UnifiedExpenseDialog({
       }
       onOpenChange(isOpen);
     }}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto" dir={dir}>
         <DialogHeader>
           <DialogTitle>{t.add_expense_dialog_title}</DialogTitle>
         </DialogHeader>
@@ -378,7 +378,7 @@ export default function UnifiedExpenseDialog({
 
           {/* Regular Expense Tab */}
           <TabsContent value="expense">
-            <form onSubmit={handleSubmitExpense} className="space-y-4">
+            <form onSubmit={handleSubmitExpense} className="space-y-4" dir={dir}>
               <div className="flex gap-3">
                 <div className="flex-1">
                   <Input
@@ -396,10 +396,10 @@ export default function UnifiedExpenseDialog({
 
               <div className="flex gap-3">
                 <Select value={expenseForm.categoryId || undefined} onValueChange={(v) => setExpenseForm({ ...expenseForm, categoryId: v })} required>
-                  <SelectTrigger className="flex-1 h-12">
+                  <SelectTrigger className="flex-1 h-12" dir={dir}>
                     <SelectValue placeholder={t.category_placeholder} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent dir={dir}>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
                         <span className="flex items-center gap-2">
@@ -444,7 +444,7 @@ export default function UnifiedExpenseDialog({
                     value={expenseForm.description}
                     onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
                     className="h-11"
-                    dir="rtl"
+                    dir={dir}
                   />
                   <div className="flex gap-3">
                     <Input
@@ -452,7 +452,7 @@ export default function UnifiedExpenseDialog({
                      value={expenseForm.merchant}
                      onChange={(e) => setExpenseForm({ ...expenseForm, merchant: e.target.value })}
                      className="flex-1 h-11"
-                     dir="rtl"
+                     dir={dir}
                     />
                     <Select value={expenseForm.paymentMethod || undefined} onValueChange={(v) => setExpenseForm({ ...expenseForm, paymentMethod: v })}>
                       <SelectTrigger className="flex-1 h-11">
@@ -469,7 +469,7 @@ export default function UnifiedExpenseDialog({
                   </div>
                   
                   <div className="space-y-2">
-                    <Label className="text-right block">{t.installments_label}</Label>
+                    <Label className="text-start block">{t.installments_label}</Label>
                     <Input
                      type="number"
                      min="1"
@@ -481,7 +481,7 @@ export default function UnifiedExpenseDialog({
                      dir="ltr"
                     />
                     {expenseForm.installments > 1 && expenseForm.amount && (
-                     <p className="text-xs text-slate-500 text-right">
+                     <p className="text-xs text-slate-500 text-start">
                         {t.installments_breakdown.replace('{count}', expenseForm.installments).replace('{symbol}', currencySymbol).replace('{amount}', (parseFloat(expenseForm.amount) / expenseForm.installments).toFixed(2))}
                       </p>
                     )}
@@ -508,62 +508,62 @@ export default function UnifiedExpenseDialog({
 
           {/* Recurring Expense Tab */}
           <TabsContent value="recurring">
-            <form onSubmit={handleSubmitRecurring} className="space-y-4">
+            <form onSubmit={handleSubmitRecurring} className="space-y-4" dir={dir}>
               <div className="space-y-2">
-                <Label className="text-right block">{t.recurring_name_label}</Label>
+                <Label className="text-start block">{t.recurring_name_label}</Label>
                 <Input
                  value={recurringForm.name}
                  onChange={(e) => setRecurringForm({ ...recurringForm, name: e.target.value })}
                  placeholder={t.recurring_name_placeholder}
                  required
-                 dir="rtl"
+                 dir={dir}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-right block">{t.amount_label}</Label>
+                  <Label className="text-start block">{t.amount_label}</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={recurringForm.amount}
                     onChange={(e) => setRecurringForm({ ...recurringForm, amount: e.target.value })}
-                    className="text-lg font-semibold"
+                    className={`text-lg font-semibold ${dir === 'rtl' ? 'text-right' : ''}`}
                     dir="ltr"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-right block">{t.frequency_label}</Label>
+                  <Label className="text-start block">{t.frequency_label}</Label>
                   <Select 
                     value={recurringForm.frequency} 
                     onValueChange={(v) => setRecurringForm({ ...recurringForm, frequency: v })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger dir={dir}>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="daily">{t.frequency_daily}</SelectItem>
-                      <SelectItem value="weekly">{t.frequency_weekly}</SelectItem>
-                      <SelectItem value="monthly">{t.frequency_monthly}</SelectItem>
-                      <SelectItem value="yearly">{t.frequency_yearly}</SelectItem>
+                    <SelectContent dir={dir}>
+                      <SelectItem value="daily">{t.daily}</SelectItem>
+                      <SelectItem value="weekly">{t.weekly}</SelectItem>
+                      <SelectItem value="monthly">{t.monthly_freq}</SelectItem>
+                      <SelectItem value="yearly">{t.yearly}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-right block">{t.category_label}</Label>
+                <Label className="text-start block">{t.category_label}</Label>
                 <Select 
                   value={recurringForm.category_id || undefined} 
                   onValueChange={(v) => setRecurringForm({ ...recurringForm, category_id: v })}
                   required
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full" dir={dir}>
                     <SelectValue placeholder={t.choose_category} />
                   </SelectTrigger>
-                  <SelectContent position="popper" className="max-h-[300px]">
+                  <SelectContent position="popper" className="max-h-[300px]" dir={dir}>
                     {categories.length === 0 ? (
                       <div className="p-4 text-center text-sm text-slate-500">
                         {t.no_categories}
@@ -584,7 +584,7 @@ export default function UnifiedExpenseDialog({
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-right block">{t.start_date_label}</Label>
+                  <Label className="text-start block">{t.start_date_label}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
@@ -603,7 +603,7 @@ export default function UnifiedExpenseDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-right block">{t.end_date_label}</Label>
+                  <Label className="text-start block">{t.end_date_label}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
@@ -635,17 +635,17 @@ export default function UnifiedExpenseDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-right block">{t.description_label}</Label>
+                <Label className="text-start block">{t.description_label}</Label>
                 <Input
                  value={recurringForm.description}
                  onChange={(e) => setRecurringForm({ ...recurringForm, description: e.target.value })}
                  placeholder={t.description_notes_placeholder}
-                 dir="rtl"
+                 dir={dir}
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl" dir="rtl">
-               <Label className="cursor-pointer text-right">{t.active_label}</Label>
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl" dir={dir}>
+               <Label className="cursor-pointer text-start">{t.active_label}</Label>
                 <Switch
                   checked={recurringForm.is_active}
                   onCheckedChange={(checked) => setRecurringForm({ ...recurringForm, is_active: checked })}
@@ -671,28 +671,28 @@ export default function UnifiedExpenseDialog({
 
           {/* Shared Expense Tab */}
           <TabsContent value="shared">
-            <form onSubmit={handleSubmitShared} className="space-y-4">
+            <form onSubmit={handleSubmitShared} className="space-y-4" dir={dir}>
               {/* Amount & Category */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-right block">{t.total_amount_label}</Label>
+                  <Label className="text-start block">{t.total_amount_label}</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={sharedForm.amount}
                     onChange={(e) => setSharedForm({ ...sharedForm, amount: e.target.value })}
-                    className="text-lg font-semibold"
+                    className={`text-lg font-semibold ${dir === 'rtl' ? 'text-right' : ''}`}
                     dir="ltr"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-right block">{t.category_label}</Label>
+                  <Label className="text-start block">{t.category_label}</Label>
                   <Select value={sharedForm.categoryId || undefined} onValueChange={(v) => setSharedForm({ ...sharedForm, categoryId: v })} required>
-                    <SelectTrigger>
+                    <SelectTrigger dir={dir}>
                       <SelectValue placeholder={t.choose_category} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent dir={dir}>
                       {categories.map((cat) => (
                         <SelectItem key={cat.id} value={cat.id}>
                           <span className="flex items-center gap-2">
@@ -709,7 +709,7 @@ export default function UnifiedExpenseDialog({
               {/* Date & Description */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-right block">{t.date_label}</Label>
+                  <Label className="text-start block">{t.date_label}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
@@ -727,26 +727,26 @@ export default function UnifiedExpenseDialog({
                   </Popover>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-right block">{t.description_label}</Label>
+                  <Label className="text-start block">{t.description_label}</Label>
                   <Input
                    value={sharedForm.description}
                    onChange={(e) => setSharedForm({ ...sharedForm, description: e.target.value })}
                    placeholder={t.description_placeholder}
-                   dir="rtl"
+                   dir={dir}
                   />
                 </div>
               </div>
 
               {/* Add Participants */}
               <div className="space-y-2">
-                <Label className="text-right block">{t.participants_label}</Label>
+                <Label className="text-start block">{t.participants_label}</Label>
                 <div className="space-y-2">
                   <Input
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
                     placeholder={t.search_participant}
                     className="flex-1"
-                    dir="rtl"
+                    dir={dir}
                   />
                   {userSearch && (
                     <div className="border border-slate-200 rounded-lg max-h-40 overflow-y-auto">
@@ -759,9 +759,9 @@ export default function UnifiedExpenseDialog({
                             key={u.email}
                             type="button"
                             onClick={() => addParticipantByEmail(u.email, u.name)}
-                            className="w-full text-right px-3 py-2 flex items-center justify-between hover:bg-slate-50 cursor-pointer"
+                            className="w-full text-start px-3 py-2 flex items-center justify-between hover:bg-slate-50 cursor-pointer"
                           >
-                            <div className="text-right flex-1">
+                            <div className="text-start flex-1">
                               <div className="font-medium text-sm">{u.name}</div>
                               {u.name !== u.email && <div className="text-xs text-slate-500">{u.email}</div>}
                               {!u.alwaysApproved && (
@@ -810,7 +810,7 @@ export default function UnifiedExpenseDialog({
 
               {/* Who Paid */}
               <div className="space-y-2">
-                <Label className="text-right block">{t.who_paid_label}</Label>
+                <Label className="text-start block">{t.who_paid_label}</Label>
                 <Select value={sharedForm.paidByUserId || undefined} onValueChange={(v) => setSharedForm({ ...sharedForm, paidByUserId: v })} required>
                   <SelectTrigger>
                     <SelectValue placeholder={t.choose_who_paid} />
@@ -827,7 +827,7 @@ export default function UnifiedExpenseDialog({
 
               {/* Split Method */}
               <div className="space-y-2">
-                <Label className="text-right block">{t.split_method_label}</Label>
+                <Label className="text-start block">{t.split_method_label}</Label>
                 <Select value={sharedForm.splitMethod} onValueChange={(v) => setSharedForm({ ...sharedForm, splitMethod: v })}>
                   <SelectTrigger>
                     <SelectValue />
@@ -846,8 +846,8 @@ export default function UnifiedExpenseDialog({
                   <table className="w-full">
                     <thead className="bg-slate-50">
                       <tr>
-                        <th className="text-right p-2 text-sm font-medium">{t.split_table_participant}</th>
-                        <th className="text-right p-2 text-sm font-medium">
+                        <th className="text-start p-2 text-sm font-medium">{t.split_table_participant}</th>
+                        <th className="text-start p-2 text-sm font-medium">
                           {sharedForm.splitMethod === 'custom_percent' ? t.split_table_percent : t.split_table_amount.replace('{symbol}', currencySymbol)}
                         </th>
                       </tr>

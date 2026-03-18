@@ -606,7 +606,7 @@ export default function Budget() {
                             )}
                           </div>
                         </div>
-                        <div className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+                        <div className="text-end">
                           <p className="text-sm text-slate-600">
                             {currencySymbol}{spent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / {currencySymbol}{categoryBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
@@ -723,7 +723,6 @@ export default function Budget() {
                       onChange={(e) => updateCategoryInput(category.id, e.target.value)}
                       placeholder={inputMode === 'percentage' ? '0%' : '0.00'}
                       dir="ltr"
-                      className="text-left"
                     />
                   </div>
                 </div>

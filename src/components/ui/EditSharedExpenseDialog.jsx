@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { useLanguage } from '@/components/i18n/LanguageContext';
 
 export default function EditSharedExpenseDialog({
   open,
@@ -23,6 +24,7 @@ export default function EditSharedExpenseDialog({
   isLoading = false
 }) {
   const { currencySymbol } = useCurrency();
+  const { dir } = useLanguage();
   const [form, setForm] = useState({
     amount: '',
     date: new Date(),
@@ -246,7 +248,7 @@ export default function EditSharedExpenseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto" dir={dir}>
         <DialogHeader>
           <DialogTitle>ערוך הוצאה משותפת</DialogTitle>
           <p className="text-sm text-slate-500 mt-1">
@@ -254,7 +256,7 @@ export default function EditSharedExpenseDialog({
           </p>
         </DialogHeader>
 
-        <form onSubmit={validateAndSubmit} className="space-y-4">
+        <form onSubmit={validateAndSubmit} className="space-y-4" dir={dir}>
           {/* Amount & Category */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -407,7 +409,7 @@ export default function EditSharedExpenseDialog({
                               key={u.email}
                               type="button"
                               onClick={() => addParticipant(u.email)}
-                              className="w-full text-right px-3 py-2 hover:bg-white rounded-md transition-colors text-sm"
+                              className="w-full text-start px-3 py-2 hover:bg-white rounded-md transition-colors text-sm"
                             >
                               {u.email}
                             </button>
@@ -422,8 +424,8 @@ export default function EditSharedExpenseDialog({
                 <table className="w-full">
                   <thead className="bg-slate-50">
                     <tr>
-                      <th className="text-right p-2 text-sm font-medium">משתתף</th>
-                      <th className="text-right p-2 text-sm font-medium">
+                      <th className="text-start p-2 text-sm font-medium">משתתף</th>
+                      <th className="text-start p-2 text-sm font-medium">
                         {form.splitMethod === 'custom_percent' ? 'אחוז (%)' : `סכום (${currencySymbol})`}
                       </th>
                       <th className="w-10"></th>

@@ -373,7 +373,7 @@ export default function RecurringExpenses() {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-slate-900">{t.future_payments}</h2>
-              <div className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+              <div className="text-end">
                 <div className="text-2xl font-bold text-slate-900">
                   {currencySymbol}{installmentGroups.reduce((sum, g) => sum + g.installmentAmount, 0).toFixed(2)}
                 </div>
@@ -452,7 +452,7 @@ export default function RecurringExpenses() {
         {recurringExpenses.length > 0 && (
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-slate-900">{t.active_recurring}</h2>
-            <div className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+            <div className="text-end">
               <div className="text-2xl font-bold text-slate-900">
                 {currencySymbol}{activeRecurring.filter(r => r.is_active).reduce((sum, r) => sum + r.amount, 0).toFixed(2)}
               </div>
@@ -610,14 +610,14 @@ export default function RecurringExpenses() {
         <Dialog open={!!editingInstallmentGroup} onOpenChange={(open) => {
           if (!open) setEditingInstallmentGroup(null);
         }}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg" dir={dir}>
             <DialogHeader>
               <DialogTitle>{t.edit_installments}</DialogTitle>
             </DialogHeader>
-            
-            <div className="space-y-4 py-4">
+
+            <div className="space-y-4 py-4" dir={dir}>
               <div className="space-y-2">
-                <Label className="text-right block">{t.description_optional_short}</Label>
+                <Label className="text-start block">{t.description_optional_short}</Label>
                 <Input
                   value={installmentFormData.description}
                   onChange={(e) => setInstallmentFormData({ ...installmentFormData, description: e.target.value })}
@@ -626,7 +626,7 @@ export default function RecurringExpenses() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-right block">{t.category}</Label>
+                <Label className="text-start block">{t.category}</Label>
                 <Select
                   value={installmentFormData.category_id}
                   onValueChange={(v) => setInstallmentFormData({ ...installmentFormData, category_id: v })}
@@ -651,7 +651,7 @@ export default function RecurringExpenses() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-right block">{t.total_amount}</Label>
+                <Label className="text-start block">{t.total_amount}</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -703,16 +703,16 @@ export default function RecurringExpenses() {
         <Dialog open={!!editingExpense} onOpenChange={(open) => {
           if (!open) resetForm();
         }}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg" dir={dir}>
             <DialogHeader>
               <DialogTitle>
                 {editingExpense ? t.edit_recurring : t.add_recurring}
               </DialogTitle>
             </DialogHeader>
-            
-            <div className="space-y-4 py-4">
+
+            <div className="space-y-4 py-4" dir={dir}>
               <div className="space-y-2">
-                <Label className="text-right block">{t.expense_name}</Label>
+                <Label className="text-start block">{t.expense_name}</Label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -722,7 +722,7 @@ export default function RecurringExpenses() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-right block">{t.amount}</Label>
+                  <Label className="text-start block">{t.amount}</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -734,7 +734,7 @@ export default function RecurringExpenses() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-right block">{t.frequency_label}</Label>
+                  <Label className="text-start block">{t.frequency_label}</Label>
                   <Select 
                     value={formData.frequency} 
                     onValueChange={(v) => setFormData({ ...formData, frequency: v })}
@@ -753,7 +753,7 @@ export default function RecurringExpenses() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-right block">{t.category}</Label>
+                <Label className="text-start block">{t.category}</Label>
                 <Select 
                   value={formData.category_id} 
                   onValueChange={(v) => setFormData({ ...formData, category_id: v })}
@@ -785,7 +785,7 @@ export default function RecurringExpenses() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-right block">{t.start_date}</Label>
+                  <Label className="text-start block">{t.start_date}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
@@ -804,7 +804,7 @@ export default function RecurringExpenses() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-right block">{t.end_date_optional}</Label>
+                  <Label className="text-start block">{t.end_date_optional}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
@@ -836,7 +836,7 @@ export default function RecurringExpenses() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-right block">{t.description_optional_short}</Label>
+                <Label className="text-start block">{t.description_optional_short}</Label>
                 <Input
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
