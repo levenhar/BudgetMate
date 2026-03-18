@@ -297,26 +297,26 @@ export default function Statistics() {
     totalExpenses: {
       border: 'border-indigo-500',
       iconBg: 'bg-indigo-50',
-      iconColor: 'text-indigo-600',
-      valueColor: 'text-indigo-700',
+      iconColor: 'text-gray-900',
+      valueColor: 'text-gray-900',
     },
     monthlyAvg: {
       border: 'border-violet-500',
       iconBg: 'bg-violet-50',
-      iconColor: 'text-violet-600',
-      valueColor: 'text-violet-700',
+      iconColor: 'text-gray-900',
+      valueColor: 'text-gray-900',
     },
     highestMonth: {
       border: 'border-amber-500',
       iconBg: 'bg-amber-50',
-      iconColor: 'text-amber-600',
-      valueColor: 'text-amber-700',
+      iconColor: 'text-gray-900',
+      valueColor: 'text-gray-900',
     },
     trend: {
       border: summaryStats.trend > 5 ? 'border-red-500' : summaryStats.trend < -5 ? 'border-green-500' : 'border-slate-300',
       iconBg: summaryStats.trend > 5 ? 'bg-red-50' : summaryStats.trend < -5 ? 'bg-green-50' : 'bg-slate-50',
-      iconColor: summaryStats.trend > 5 ? 'text-red-600' : summaryStats.trend < -5 ? 'text-green-600' : 'text-slate-500',
-      valueColor: summaryStats.trend > 5 ? 'text-red-600' : summaryStats.trend < -5 ? 'text-green-600' : 'text-slate-700',
+      iconColor: 'text-gray-900',
+      valueColor: 'text-gray-900',
     },
   };
 
@@ -457,12 +457,12 @@ export default function Statistics() {
                   <div className="w-2 h-2 bg-indigo-500 rounded-full mt-1.5 flex-shrink-0" />
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-indigo-900">{t.recurring_expenses_info}</span>
-                      <span className="text-lg font-bold text-indigo-700">
+                      <span className="font-semibold text-gray-900">{t.recurring_expenses_info}</span>
+                      <span className="text-lg font-bold text-gray-900">
                         {currencySymbol}{selectedMonthData.recurringInfo.total.toFixed(2)}
                       </span>
                     </div>
-                    <p className="text-xs text-indigo-600">
+                    <p className="text-xs text-gray-700">
                       {selectedMonthData.recurringInfo.count} {t.recurring_expenses_info} ·
                       {((selectedMonthData.recurringInfo.total / selectedMonthData.total) * 100).toFixed(1)}% {t.of_total_expenses} ·
                       {t.included_in_categories}

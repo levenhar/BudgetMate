@@ -3,20 +3,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 export default function StatCard({ title, value, subtitle, icon: Icon, trend, accentColor }) {
-  const trendColor =
-    trend === 'up' ? 'text-red-500' : trend === 'down' ? 'text-green-500' : 'text-slate-400';
+  const trendColor = 'text-gray-900';
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
 
   // accentColor drives the left border and icon background
   const borderClass = accentColor ? `border-l-4 ${accentColor.border}` : 'border-0';
   const iconBgClass = accentColor ? accentColor.iconBg : 'bg-slate-50';
   const iconColorClass = accentColor ? accentColor.iconColor : 'text-slate-500';
-  const valueColorClass =
-    trend === 'up'
-      ? 'text-red-600'
-      : trend === 'down'
-      ? 'text-green-600'
-      : accentColor?.valueColor || 'text-slate-900';
+  const valueColorClass = accentColor?.valueColor || 'text-gray-900';
 
   return (
     <Card className={`shadow-sm ${borderClass}`}>

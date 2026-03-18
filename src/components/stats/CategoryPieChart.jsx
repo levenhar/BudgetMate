@@ -29,7 +29,7 @@ export default function CategoryPieChart({ data }) {
             />
             <span className="font-medium text-slate-900">{item.name}</span>
           </div>
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-gray-900">
             {currencySymbol}{item.value.toFixed(2)} ({percentage}%)
           </div>
         </div>
@@ -61,7 +61,7 @@ export default function CategoryPieChart({ data }) {
             align="center"
             verticalAlign="bottom"
             formatter={(value) => (
-              <span className="text-sm text-slate-600">{value}</span>
+              <span className="text-sm text-gray-900">{value}</span>
             )}
           />
         </PieChart>

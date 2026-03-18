@@ -44,13 +44,13 @@ export default function CategoryBreakdown({ data, total, selectedMonth }) {
                   className="w-3 h-3 rounded-full ring-2 ring-offset-1"
                   style={{ backgroundColor: item.color, ringColor: item.color }}
                 />
-                <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">{item.name}</span>
+                <span className="text-sm font-medium text-gray-900 transition-colors">{item.name}</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
                   {percentage.toFixed(1)}%
                 </span>
-                <span className="text-sm font-bold w-20 text-end" style={{ color: item.color }}>
+                <span className="text-sm font-bold w-20 text-end text-gray-900">
                   {currencySymbol}{item.value.toFixed(2)}
                 </span>
               </div>
