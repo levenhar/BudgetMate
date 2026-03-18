@@ -21,9 +21,20 @@ export default function ExpenseFilters({
   const [pickerView, setPickerView] = useState('month');
   const [selectedMonth, setSelectedMonth] = useState(null);
 
-  const monthsHe = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
-  const monthsEn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const months = (dir === 'rtl' ? monthsHe : monthsEn).map((label, i) => ({ value: i, label }));
+  const months = [
+    { value: 0,  label: t.month_jan || 'ינואר' },
+    { value: 1,  label: t.month_feb || 'פברואר' },
+    { value: 2,  label: t.month_mar || 'מרץ' },
+    { value: 3,  label: t.month_apr || 'אפריל' },
+    { value: 4,  label: t.month_may || 'מאי' },
+    { value: 5,  label: t.month_jun || 'יוני' },
+    { value: 6,  label: t.month_jul || 'יולי' },
+    { value: 7,  label: t.month_aug || 'אוגוסט' },
+    { value: 8,  label: t.month_sep || 'ספטמבר' },
+    { value: 9,  label: t.month_oct || 'אוקטובר' },
+    { value: 10, label: t.month_nov || 'נובמבר' },
+    { value: 11, label: t.month_dec || 'דצמבר' },
+  ];
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 20 }, (_, i) => currentYear - i);

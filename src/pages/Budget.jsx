@@ -200,41 +200,41 @@ export default function Budget() {
     mutationFn: (data) => base44.entities.Budget.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      toast.success('התקציב נוצר בהצלחה');
+      toast.success(t.budget_created);
       setShowDialog(false);
       resetForms();
     },
-    onError: () => toast.error('שגיאה ביצירת תקציב'),
+    onError: () => toast.error(t.budget_create_error),
   });
 
   const bulkCreateBudgetMutation = useMutation({
     mutationFn: (data) => base44.entities.Budget.bulkCreate(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      toast.success('התקציב נוצר בהצלחה');
+      toast.success(t.budget_created);
       setShowDialog(false);
       resetForms();
     },
-    onError: () => toast.error('שגיאה ביצירת תקציב'),
+    onError: () => toast.error(t.budget_create_error),
   });
 
   const updateBudgetMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Budget.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      toast.success('התקציב עודכן');
+      toast.success(t.budget_updated);
       setEditingBudget(null);
     },
-    onError: () => toast.error('שגיאה בעדכון תקציב'),
+    onError: () => toast.error(t.budget_update_error),
   });
 
   const deleteBudgetMutation = useMutation({
     mutationFn: (id) => base44.entities.Budget.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      toast.success('התקציב נמחק');
+      toast.success(t.budget_deleted);
     },
-    onError: () => toast.error('שגיאה במחיקת תקציב'),
+    onError: () => toast.error(t.budget_delete_error),
   });
 
   const resetForms = () => {
@@ -273,16 +273,16 @@ export default function Budget() {
     
     const newValue = parseFloat(quickEditValue);
     if (newValue <= 0) {
-      toast.error(quickEditMode === 'percentage' ? 'האחוז חייב להיות חיובי' : 'הסכום חייב להיות חיובי');
+      toast.error(quickEditMode === 'percentage' ? t.percent_must_be_positive : t.amount_must_be_positive);
       return;
     }
 
     if (quickEditMode === 'percentage') {
       const currentPercentage = quickEditCategory.percentage || 0;
       const percentageChange = newValue - currentPercentage;
-      
+
       if (percentageChange > availablePercentage) {
-        toast.error(`ניתן להוסיף רק עד ${availablePercentage.toFixed(1)}% נוספים`);
+        toast.error(t.percent_limit_exceeded.replace('{n}', availablePercentage.toFixed(1)));
         return;
       }
       
@@ -602,11 +602,11 @@ export default function Budget() {
                           <div>
                             <h3 className="font-semibold text-slate-900">{budget.category_name}</h3>
                             {budgetTypeForMonth === 'total' && (
-                              <p className="text-xs text-slate-500">{budget.percentage}% מהתקציב</p>
+                              <p className="text-xs text-slate-500">{budget.percentage}{t.percent_of_budget}</p>
                             )}
                           </div>
                         </div>
-                        <div className="text-left">
+                        <div className={dir === 'rtl' ? 'text-right' : 'text-left'}>
                           <p className="text-sm text-slate-600">
                             {currencySymbol}{spent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / {currencySymbol}{categoryBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
@@ -736,19 +736,18 @@ export default function Budget() {
                 {inputMode === 'percentage' ? (
                   <>
                     <p className="text-sm text-slate-600">
-                      סה"כ אחוזים: {totalPercentage.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
+                      {t.total_percent} {totalPercentage.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
                     </p>
                     {totalPercentage > 0 && totalPercentage <= 100 && (
-                      <p className="text-sm text-green-600">✓ אחוזים תקינים ({totalPercentage.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%)</p>
+                      <p className="text-sm text-green-600">{t.valid_percentages} ({totalPercentage.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%)</p>
                     )}
                     {totalPercentage > 100 && (
-                      <p className="text-sm text-red-600">עודפים ${(totalPercentage - 100).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</p>
+                      <p className="text-sm text-red-600">{t.excess} {(totalPercentage - 100).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</p>
                     )}
                   </>
                 ) : (
                   <p className="text-sm text-slate-600">
-                    סה"כ תקציב: {currencySymbol}
-                    {Object.values(categoryInputs)
+                    {t.total_budget_colon} {currencySymbol}{Object.values(categoryInputs)
                       .reduce((sum, v) => sum + (parseFloat(v) || 0), 0)
                       .toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
@@ -801,16 +800,16 @@ export default function Budget() {
               <div className="bg-slate-50 rounded-lg p-3 text-sm space-y-1">
                 {quickEditMode === 'percentage' ? (
                   <>
-                    <p className="text-slate-600">אחוז נוכחי: {quickEditCategory.percentage?.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</p>
-                    <p className="text-slate-600">תקציב כולל: {currencySymbol}{quickEditCategory.total_budget?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</p>
+                    <p className="text-slate-600">{t.current_percent_colon} {quickEditCategory.percentage?.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</p>
+                    <p className="text-slate-600">{t.total_budget_label2} {currencySymbol}{quickEditCategory.total_budget?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</p>
                     <p className={`font-medium ${availablePercentage > 0 ? 'text-green-600' : 'text-amber-600'}`}>
-                      {availablePercentage > 0 
-                        ? `נותרו ${availablePercentage.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% פנויים`
-                        : 'אין אחוזים פנויים - ניתן רק להקטין'}
+                      {availablePercentage > 0
+                        ? t.available_percent_free.replace('{n}', availablePercentage.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }))
+                        : t.no_percent_available}
                     </p>
                   </>
                 ) : (
-                  <p className="text-slate-600">תקציב נוכחי: {currencySymbol}{quickEditCategory.amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</p>
+                  <p className="text-slate-600">{t.current_budget_colon} {currencySymbol}{quickEditCategory.amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</p>
                 )}
               </div>
             )}

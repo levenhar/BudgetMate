@@ -393,7 +393,7 @@ export default function Statistics() {
               <div>
                 <CardTitle className="text-lg">{t.expenses_by_category_title}</CardTitle>
                 <p className="text-sm text-slate-500 mt-1">
-                  {monthOptions.find(m => m.value === selectedMonth)?.label} · {currencySymbol}{selectedMonthData.total.toFixed(2)} סה"כ
+                  {monthOptions.find(m => m.value === selectedMonth)?.label} · {currencySymbol}{selectedMonthData.total.toFixed(2)} {t.total_label}
                 </p>
               </div>
             </div>
@@ -418,7 +418,7 @@ export default function Statistics() {
                       </span>
                     </div>
                     <p className="text-xs text-slate-600">
-                      {selectedMonthData.recurringInfo.count} הוצאות קבועות · 
+                      {selectedMonthData.recurringInfo.count} {t.recurring_expenses_info} ·
                       {((selectedMonthData.recurringInfo.total / selectedMonthData.total) * 100).toFixed(1)}% מסך ההוצאות · 
                       {t.included_in_categories}
                     </p>

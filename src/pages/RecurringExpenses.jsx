@@ -161,7 +161,7 @@ export default function RecurringExpenses() {
     mutationFn: (data) => base44.entities.RecurringExpense.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries(['recurringExpenses']);
-      toast.success('הוצאה קבועה נוספה בהצלחה');
+      toast.success(t.recurring_added_success);
       resetForm();
       setIsAddDialogOpen(false);
     },
@@ -210,7 +210,7 @@ export default function RecurringExpenses() {
     mutationFn: ({ id, data }) => base44.entities.RecurringExpense.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['recurringExpenses']);
-      toast.success('הוצאה קבועה עודכנה בהצלחה');
+      toast.success(t.recurring_updated_success);
       resetForm();
     },
   });
@@ -219,7 +219,7 @@ export default function RecurringExpenses() {
     mutationFn: (id) => base44.entities.RecurringExpense.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['recurringExpenses']);
-      toast.success('הוצאה קבועה נמחקה');
+      toast.success(t.recurring_deleted_success);
     },
   });
 
@@ -229,7 +229,7 @@ export default function RecurringExpenses() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['expenses']);
-      toast.success('כל התשלומים נמחקו בהצלחה');
+      toast.success(t.all_payments_deleted_success);
     },
   });
 
@@ -255,7 +255,7 @@ export default function RecurringExpenses() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['expenses']);
-      toast.success('כל התשלומים עודכנו בהצלחה');
+      toast.success(t.all_payments_updated_success);
       setEditingInstallmentGroup(null);
     },
   });
@@ -314,10 +314,10 @@ export default function RecurringExpenses() {
   };
 
   const frequencyLabels = {
-    daily: 'יומי',
-    weekly: 'שבועי',
-    monthly: 'חודשי',
-    yearly: 'שנתי'
+    daily: t.daily,
+    weekly: t.weekly,
+    monthly: t.monthly_freq,
+    yearly: t.yearly,
   };
 
   // Separate active and expired recurring expenses
@@ -373,11 +373,11 @@ export default function RecurringExpenses() {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-slate-900">{t.future_payments}</h2>
-              <div className="text-left">
+              <div className={dir === 'rtl' ? 'text-right' : 'text-left'}>
                 <div className="text-2xl font-bold text-slate-900">
                   {currencySymbol}{installmentGroups.reduce((sum, g) => sum + g.installmentAmount, 0).toFixed(2)}
                 </div>
-                <div className="text-sm text-slate-500">{t.per_month}</div>
+                <div className="text-sm text-slate-500">{t.per_month_text}</div>
               </div>
             </div>
             <div className="space-y-2">
@@ -398,11 +398,11 @@ export default function RecurringExpenses() {
                             {group.baseDescription || 'הוצאה'}
                           </span>
                           <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
-                            {group.futureCount}/{group.totalInstallments} תשלומים נותרו
+                            {group.futureCount}/{group.totalInstallments} {t.installments_remaining}
                           </span>
                         </div>
                         <div className="text-sm text-slate-500 mt-0.5">
-                          {group.category_name} · {currencySymbol}{group.installmentAmount.toFixed(2)} לחודש · סה״כ {currencySymbol}{group.totalAmount.toFixed(2)}
+                          {group.category_name} · {currencySymbol}{group.installmentAmount.toFixed(2)} {t.per_month_text} · {t.total_label} {currencySymbol}{group.totalAmount.toFixed(2)}
                         </div>
                       </div>
                     </div>
@@ -432,7 +432,7 @@ export default function RecurringExpenses() {
                           size="icon"
                           className="h-8 w-8 text-slate-400 hover:text-red-500"
                           onClick={() => {
-                            if (confirm(`האם למחוק את כל ${group.totalInstallments} התשלומים?`)) {
+                            if (confirm(t.confirm_delete_all_payments.replace('{n}', group.totalInstallments))) {
                               deleteInstallmentGroupMutation.mutate(group.expenses.map(e => e.id));
                             }
                           }}
@@ -452,11 +452,11 @@ export default function RecurringExpenses() {
         {recurringExpenses.length > 0 && (
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-slate-900">{t.active_recurring}</h2>
-            <div className="text-left">
+            <div className={dir === 'rtl' ? 'text-right' : 'text-left'}>
               <div className="text-2xl font-bold text-slate-900">
                 {currencySymbol}{activeRecurring.filter(r => r.is_active).reduce((sum, r) => sum + r.amount, 0).toFixed(2)}
               </div>
-              <div className="text-sm text-slate-500">לחודש</div>
+              <div className="text-sm text-slate-500">{t.per_month_text}</div>
             </div>
           </div>
         )}
@@ -517,7 +517,7 @@ export default function RecurringExpenses() {
                         size="icon"
                         className="h-8 w-8 text-slate-400 hover:text-red-500"
                         onClick={() => {
-                          if (confirm('האם למחוק הוצאה קבועה זו?')) {
+                          if (confirm(t.confirm_delete_recurring)) {
                             deleteMutation.mutate(expense.id);
                           }
                         }}
@@ -572,7 +572,7 @@ export default function RecurringExpenses() {
                               </span>
                             </div>
                             <div className="text-sm text-slate-500 mt-0.5">
-                              {frequencyLabels[expense.frequency]} · {expense.category_name} · הסתיים ב-{format(parseISO(expense.end_date), 'dd/MM/yy')}
+                              {frequencyLabels[expense.frequency]} · {expense.category_name} · {t.ended_on}{format(parseISO(expense.end_date), 'dd/MM/yy')}
                             </div>
                           </div>
                         </div>
@@ -585,7 +585,7 @@ export default function RecurringExpenses() {
                               size="icon"
                               className="h-8 w-8 text-slate-400 hover:text-red-500"
                               onClick={() => {
-                                if (confirm('האם למחוק הוצאה קבועה זו?')) {
+                                if (confirm(t.confirm_delete_recurring)) {
                                   deleteMutation.mutate(expense.id);
                                 }
                               }}
@@ -617,22 +617,22 @@ export default function RecurringExpenses() {
             
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label className="text-right block">{t.description_optional}</Label>
+                <Label className="text-right block">{t.description_optional_short}</Label>
                 <Input
                   value={installmentFormData.description}
                   onChange={(e) => setInstallmentFormData({ ...installmentFormData, description: e.target.value })}
-                  placeholder="למשל: מוצר, רכישה"
+                  placeholder={t.example_expense}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-right block">קטגוריה</Label>
-                <Select 
-                  value={installmentFormData.category_id} 
+                <Label className="text-right block">{t.category}</Label>
+                <Select
+                  value={installmentFormData.category_id}
                   onValueChange={(v) => setInstallmentFormData({ ...installmentFormData, category_id: v })}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="בחר קטגוריה" />
+                    <SelectValue placeholder={t.choose_category} />
                   </SelectTrigger>
                   <SelectContent position="popper" className="max-h-[300px]">
                     {categories.map((cat) => (
@@ -662,7 +662,9 @@ export default function RecurringExpenses() {
                 />
                 {installmentFormData.totalAmount && editingInstallmentGroup && (
                   <p className="text-xs text-slate-500">
-                    {editingInstallmentGroup.totalInstallments} תשלומים של {currencySymbol}{(parseFloat(installmentFormData.totalAmount) / editingInstallmentGroup.totalInstallments).toFixed(2)} כל אחד
+                    {t.installments_of
+                      .replace('{n}', editingInstallmentGroup.totalInstallments)
+                      .replace('{amount}', currencySymbol + (parseFloat(installmentFormData.totalAmount) / editingInstallmentGroup.totalInstallments).toFixed(2))}
                   </p>
                 )}
               </div>
@@ -714,7 +716,7 @@ export default function RecurringExpenses() {
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="למשל: דמי שכירות, Netflix, ביטוח"
+                  placeholder={t.example_recurring}
                 />
               </div>
 
@@ -757,12 +759,12 @@ export default function RecurringExpenses() {
                   onValueChange={(v) => setFormData({ ...formData, category_id: v })}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="בחר קטגוריה" />
+                    <SelectValue placeholder={t.choose_category} />
                   </SelectTrigger>
                   <SelectContent position="popper" className="max-h-[300px]">
                     {categories.length === 0 ? (
                       <div className="p-4 text-center text-sm text-slate-500">
-                        אין קטגוריות זמינות
+                        {t.no_categories_available}
                       </div>
                     ) : (
                       categories.map((cat) => (
@@ -807,7 +809,7 @@ export default function RecurringExpenses() {
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
                         <Calendar className="h-4 w-4 ml-2" />
-                        {formData.end_date ? format(formData.end_date, 'dd/MM/yyyy') : t.no_end_date}
+                        {formData.end_date ? format(formData.end_date, 'dd/MM/yyyy') : t.no_end_date_recurring}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -824,7 +826,7 @@ export default function RecurringExpenses() {
                             className="w-full"
                             onClick={() => setFormData({ ...formData, end_date: null })}
                           >
-                            {t.clear_end_date}
+                            {t.clear_end_date_recurring}
                           </Button>
                         </div>
                       )}
@@ -834,11 +836,11 @@ export default function RecurringExpenses() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-right block">{t.description_optional}</Label>
+                <Label className="text-right block">{t.description_optional_short}</Label>
                 <Input
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="הוסף הערות או פרטים נוספים"
+                  placeholder={t.add_notes}
                 />
               </div>
 

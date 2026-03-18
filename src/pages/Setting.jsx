@@ -136,7 +136,7 @@ export default function Settings() {
     }
     
     queryClient.invalidateQueries({ queryKey: ['categories'] });
-    toast.success('הקטגוריה נוספה בהצלחה!');
+    toast.success(t.category_added_success);
     setIsLoading(false);
     return newCategory;
   };
@@ -145,7 +145,7 @@ export default function Settings() {
     setIsLoading(true);
     await base44.entities.Category.update(id, data);
     queryClient.invalidateQueries({ queryKey: ['categories'] });
-    toast.success('הקטגוריה עודכנה בהצלחה!');
+    toast.success(t.category_updated_success);
     setIsLoading(false);
   };
 
@@ -153,7 +153,7 @@ export default function Settings() {
     setIsLoading(true);
     await base44.entities.Category.delete(id);
     queryClient.invalidateQueries({ queryKey: ['categories'] });
-    toast.success('הקטגוריה נמחקה בהצלחה!');
+    toast.success(t.category_deleted_success);
     setIsLoading(false);
   };
 
@@ -216,7 +216,7 @@ export default function Settings() {
     
     queryClient.invalidateQueries({ queryKey: ['categories'] });
     queryClient.invalidateQueries({ queryKey: ['expenses'] });
-    toast.success('הקטגוריות אופסו לברירת המחדל!');
+    toast.success(t.categories_reset_success);
     setIsLoading(false);
   };
 
