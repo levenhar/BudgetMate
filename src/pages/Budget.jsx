@@ -82,7 +82,7 @@ export default function Budget() {
       if (mode === 'household' && householdId) {
         return base44.entities.Expense.filter({ household_id: householdId });
       }
-      return base44.entities.Expense.filter({ created_by: user.email, household_id: null });
+      return base44.entities.Expense.filter({ user_email: user.email, household_id: null });
     },
     enabled: !!user,
   });
@@ -93,7 +93,7 @@ export default function Budget() {
       if (mode === 'household' && householdId) {
         return base44.entities.RecurringExpense.filter({ household_id: householdId, is_active: true });
       }
-      return base44.entities.RecurringExpense.filter({ created_by: user.email, household_id: null, is_active: true });
+      return base44.entities.RecurringExpense.filter({ user_email: user.email, household_id: null, is_active: true });
     },
     enabled: !!user,
   });
@@ -592,11 +592,11 @@ export default function Budget() {
                         <div className="flex items-center gap-3">
                           <div
                             className="w-10 h-10 rounded-lg flex items-center justify-center"
-                            style={{ backgroundColor: `${category?.color}20` }}
+                            style={{ backgroundColor: `${category?.color || '#94a3b8'}20` }}
                           >
                             <div
                               className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: category?.color }}
+                              style={{ backgroundColor: category?.color || '#94a3b8' }}
                             />
                           </div>
                           <div>
@@ -705,11 +705,11 @@ export default function Budget() {
                 <div key={category.id} className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg">
                   <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${category.color}20` }}
+                    style={{ backgroundColor: `${category.color || '#94a3b8'}20` }}
                   >
                     <div
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: category.color }}
+                      style={{ backgroundColor: category.color || '#94a3b8' }}
                     />
                   </div>
                   <div className="flex-1">
