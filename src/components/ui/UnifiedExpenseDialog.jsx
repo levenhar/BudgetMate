@@ -77,6 +77,10 @@ export default function UnifiedExpenseDialog({
   const [userSearch, setUserSearch] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [availableUsers, setAvailableUsers] = useState([]);
+  const [expenseDateOpen, setExpenseDateOpen] = useState(false);
+  const [recurringStartDateOpen, setRecurringStartDateOpen] = useState(false);
+  const [recurringEndDateOpen, setRecurringEndDateOpen] = useState(false);
+  const [sharedDateOpen, setSharedDateOpen] = useState(false);
 
   const resetExpenseForm = () => {
     setExpenseForm({
@@ -249,18 +253,21 @@ export default function UnifiedExpenseDialog({
     if (!expenseForm.amount || !expenseForm.categoryId) return;
 
     const category = categories.find(c => c.id === expenseForm.categoryId);
-    await onSubmitExpense({
-      amount: parseFloat(expenseForm.amount),
-      date: format(expenseForm.date, 'yyyy-MM-dd'),
-      category_id: expenseForm.categoryId,
-      category_name: category?.name || '',
-      description: expenseForm.description || undefined,
-      merchant: expenseForm.merchant || undefined,
-      payment_method: expenseForm.paymentMethod || undefined,
-      installments: expenseForm.installments,
-    });
-
-    resetExpenseForm();
+    try {
+      await onSubmitExpense({
+        amount: parseFloat(expenseForm.amount),
+        date: format(expenseForm.date, 'yyyy-MM-dd'),
+        category_id: expenseForm.categoryId,
+        category_name: category?.name || '',
+        description: expenseForm.description || undefined,
+        merchant: expenseForm.merchant || undefined,
+        payment_method: expenseForm.paymentMethod || undefined,
+        installments: expenseForm.installments,
+      });
+      resetExpenseForm();
+    } catch (err) {
+      // error handled by caller; do not reset form
+    }
   };
 
   const handleSubmitRecurring = async (e) => {
@@ -268,22 +275,25 @@ export default function UnifiedExpenseDialog({
     if (!recurringForm.name || !recurringForm.amount || !recurringForm.category_id) return;
 
     const category = categories.find(c => c.id === recurringForm.category_id);
-    await onSubmitRecurring({
-      name: recurringForm.name,
-      amount: parseFloat(recurringForm.amount),
-      category_id: recurringForm.category_id,
-      category_name: category?.name || '',
-      frequency: recurringForm.frequency,
-      start_date: format(recurringForm.start_date, 'yyyy-MM-dd'),
-      end_date: recurringForm.end_date ? format(recurringForm.end_date, 'yyyy-MM-dd') : null,
-      description: recurringForm.description || undefined,
-      is_active: recurringForm.is_active
-    });
-
-    resetRecurringForm();
+    try {
+      await onSubmitRecurring({
+        name: recurringForm.name,
+        amount: parseFloat(recurringForm.amount),
+        category_id: recurringForm.category_id,
+        category_name: category?.name || '',
+        frequency: recurringForm.frequency,
+        start_date: format(recurringForm.start_date, 'yyyy-MM-dd'),
+        end_date: recurringForm.end_date ? format(recurringForm.end_date, 'yyyy-MM-dd') : null,
+        description: recurringForm.description || undefined,
+        is_active: recurringForm.is_active
+      });
+      resetRecurringForm();
+    } catch (err) {
+      // error handled by caller; do not reset form
+    }
   };
 
-  const handleSubmitShared = (e) => {
+  const handleSubmitShared = async (e) => {
     e.preventDefault();
     if (isSubmittingShared) return;
 
@@ -334,18 +344,23 @@ export default function UnifiedExpenseDialog({
     const category = categories.find(c => c.id === sharedForm.categoryId);
 
     // Pass all participants to the mutation - it will determine pending status
-    onSubmitShared({
-      total_amount: totalAmount,
-      date: format(sharedForm.date, 'yyyy-MM-dd'),
-      category_id: sharedForm.categoryId,
-      category_name: category?.name || '',
-      description: sharedForm.description,
-      paid_by_user_id: sharedForm.paidByUserId,
-      split_method: sharedForm.splitMethod,
-      household_id: isHouseholdMode ? householdId : null,
-      splits: finalSplits,
-      participants: sharedForm.participants,
-    });
+    try {
+      await onSubmitShared({
+        total_amount: totalAmount,
+        date: format(sharedForm.date, 'yyyy-MM-dd'),
+        category_id: sharedForm.categoryId,
+        category_name: category?.name || '',
+        description: sharedForm.description,
+        paid_by_user_id: sharedForm.paidByUserId,
+        split_method: sharedForm.splitMethod,
+        household_id: isHouseholdMode ? householdId : null,
+        splits: finalSplits,
+        participants: sharedForm.participants,
+      });
+      resetSharedForm();
+    } catch (err) {
+      // error handled by caller; do not reset form
+    }
   };
 
   const currentUserName = user?.full_name || user?.email || '';
@@ -411,7 +426,7 @@ export default function UnifiedExpenseDialog({
                   </SelectContent>
                 </Select>
 
-                <Popover>
+                <Popover open={expenseDateOpen} onOpenChange={setExpenseDateOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="h-12 px-4">
                       <CalendarIcon className="h-4 w-4 ml-2" />
@@ -422,7 +437,7 @@ export default function UnifiedExpenseDialog({
                     <Calendar
                       mode="single"
                       selected={expenseForm.date}
-                      onSelect={(d) => d && setExpenseForm({ ...expenseForm, date: d })}
+                      onSelect={(d) => { if (d) { setExpenseForm({ ...expenseForm, date: d }); setExpenseDateOpen(false); } }}
                       initialFocus
                     />
                   </PopoverContent>
@@ -585,7 +600,7 @@ export default function UnifiedExpenseDialog({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label className="text-start block">{t.start_date_label}</Label>
-                  <Popover>
+                  <Popover open={recurringStartDateOpen} onOpenChange={setRecurringStartDateOpen}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
                         <CalendarIcon className="h-4 w-4 ml-2" />
@@ -596,7 +611,7 @@ export default function UnifiedExpenseDialog({
                       <Calendar
                         mode="single"
                         selected={recurringForm.start_date}
-                        onSelect={(d) => d && setRecurringForm({ ...recurringForm, start_date: d })}
+                        onSelect={(d) => { if (d) { setRecurringForm({ ...recurringForm, start_date: d }); setRecurringStartDateOpen(false); } }}
                       />
                     </PopoverContent>
                   </Popover>
@@ -604,7 +619,7 @@ export default function UnifiedExpenseDialog({
 
                 <div className="space-y-2">
                   <Label className="text-start block">{t.end_date_label}</Label>
-                  <Popover>
+                  <Popover open={recurringEndDateOpen} onOpenChange={setRecurringEndDateOpen}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
                         <CalendarIcon className="h-4 w-4 ml-2" />
@@ -615,7 +630,7 @@ export default function UnifiedExpenseDialog({
                       <Calendar
                         mode="single"
                         selected={recurringForm.end_date}
-                        onSelect={(d) => setRecurringForm({ ...recurringForm, end_date: d })}
+                        onSelect={(d) => { setRecurringForm({ ...recurringForm, end_date: d }); setRecurringEndDateOpen(false); }}
                       />
                       {recurringForm.end_date && (
                         <div className="p-2 border-t">
@@ -710,7 +725,7 @@ export default function UnifiedExpenseDialog({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label className="text-start block">{t.date_label}</Label>
-                  <Popover>
+                  <Popover open={sharedDateOpen} onOpenChange={setSharedDateOpen}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
                         <CalendarIcon className="h-4 w-4 ml-2" />
@@ -721,7 +736,7 @@ export default function UnifiedExpenseDialog({
                       <Calendar
                         mode="single"
                         selected={sharedForm.date}
-                        onSelect={(d) => d && setSharedForm({ ...sharedForm, date: d })}
+                        onSelect={(d) => { if (d) { setSharedForm({ ...sharedForm, date: d }); setSharedDateOpen(false); } }}
                       />
                     </PopoverContent>
                   </Popover>

@@ -442,16 +442,16 @@ export default function Budget() {
   const budgetProgress = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6" dir={dir}>
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6" dir={dir}>
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">{t.budget}</h1>
-            <p className="text-slate-500 mt-1">{t.no_budget_desc}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{t.budget}</h1>
+            <p className="text-slate-500 mt-1 text-sm sm:text-base">{t.no_budget_desc}</p>
           </div>
           {!hasBudget && (
-            <Button onClick={() => setShowDialog(true)} className="bg-slate-900 hover:bg-slate-800">
+            <Button onClick={() => setShowDialog(true)} className="bg-slate-900 hover:bg-slate-800 shrink-0">
               <Plus className="h-5 w-5 ms-2" />
               {t.set_budget}
             </Button>
@@ -461,24 +461,25 @@ export default function Budget() {
         {hasBudget ? (
           <>
             {/* Overview Card */}
-            <Card className="p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                <div className="flex items-center gap-4">
+            <Card className="p-4 sm:p-6">
+              <div className="flex flex-col gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
-                    <h2 className="text-xl font-semibold text-slate-900">{t.budget_overview}</h2>
+                    <h2 className="text-lg sm:text-xl font-semibold text-slate-900">{t.budget_overview}</h2>
                     <p className="text-sm text-slate-500 mt-1">{t.fixed_monthly_budget}</p>
                   </div>
                   <Input
                     type="month"
                     value={selectedMonth.substring(0, 7)}
                     onChange={(e) => setSelectedMonth(e.target.value + '-01')}
-                    className="w-40"
+                    className="w-full sm:w-40"
                   />
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
+                    className="flex-1 sm:flex-none"
                     onClick={() => {
                       const inputs = {};
                       const budgetType = budgets[0]?.budget_type;
@@ -500,9 +501,10 @@ export default function Budget() {
                     <Pencil className="h-4 w-4 ms-2" />
                     {t.edit_budget}
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
+                    className="flex-1 sm:flex-none"
                     onClick={() => {
                       budgets.forEach(b => deleteBudgetMutation.mutate(b.id));
                     }}
@@ -564,9 +566,9 @@ export default function Budget() {
             </Card>
 
             {/* Category Breakdown */}
-            <Card className="p-6">
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-slate-900">{t.category_breakdown}</h2>
+            <Card className="p-4 sm:p-6">
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-slate-900">{t.category_breakdown}</h2>
                 <p className="text-xs text-slate-500 mt-1">{t.right_click_hint}</p>
               </div>
               <div className="space-y-4">
@@ -588,10 +590,10 @@ export default function Budget() {
                             navigate(createPageUrl('Expenses') + `?category=${encodeURIComponent(budget.category_name)}&dateFrom=${monthStart}&dateTo=${monthEnd}`);
                           }}
                         >
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
                         <div className="flex items-center gap-3">
                           <div
-                            className="w-10 h-10 rounded-lg flex items-center justify-center"
+                            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
                             style={{ backgroundColor: `${category?.color || '#94a3b8'}20` }}
                           >
                             <div
@@ -606,7 +608,7 @@ export default function Budget() {
                             )}
                           </div>
                         </div>
-                        <div className="text-end">
+                        <div className="sm:text-end text-start ps-13 sm:ps-0">
                           <p className="text-sm text-slate-600">
                             {currencySymbol}{spent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / {currencySymbol}{categoryBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
@@ -647,10 +649,10 @@ export default function Budget() {
             </Card>
           </>
         ) : (
-          <Card className="p-12 text-center">
-            <DollarSign className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">{t.no_budget_defined}</h3>
-            <p className="text-slate-500 mb-6">{t.no_budget_desc}</p>
+          <Card className="p-8 sm:p-12 text-center">
+            <DollarSign className="h-12 w-12 sm:h-16 sm:w-16 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-lg sm:text-xl font-semibold text-slate-900 mb-2">{t.no_budget_defined}</h3>
+            <p className="text-slate-500 mb-6 text-sm sm:text-base">{t.no_budget_desc}</p>
             <Button onClick={() => setShowDialog(true)} className="bg-slate-900 hover:bg-slate-800">
               <Plus className="h-5 w-5 ms-2" />
               {t.set_budget}
@@ -712,10 +714,10 @@ export default function Budget() {
                       style={{ backgroundColor: category.color || '#94a3b8' }}
                     />
                   </div>
-                  <div className="flex-1">
-                    <Label className="text-sm font-medium">{category.name}</Label>
+                  <div className="flex-1 min-w-0">
+                    <Label className="text-sm font-medium truncate block">{category.name}</Label>
                   </div>
-                  <div className="w-32">
+                  <div className="w-24 sm:w-32 shrink-0">
                     <Input
                       type="number"
                       step="0.01"
