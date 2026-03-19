@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Loader2, TrendingUp, TrendingDown, Users, Receipt } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Users, Receipt, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 import { useLanguage } from '@/components/i18n/LanguageContext';
 import { useCurrency } from '@/lib/CurrencyContext';
@@ -12,7 +24,10 @@ import { useCurrency } from '@/lib/CurrencyContext';
 export default function Debts() {
   const { t, dir } = useLanguage();
   const { currencySymbol } = useCurrency();
+  const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<{ email: string; name: string } | null>(null);
+  const [settleTarget, setSettleTarget] = useState<{ email: string; name: string } | null>(null);
+
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: () => base44.auth.me(),
@@ -52,15 +67,45 @@ export default function Debts() {
 
   const userEmail = user?.email?.trim();
 
-  // Compute net balance per user directly from shared expenses
+  // Settle debt mutation — only creditor (payer) can invoke this
+  const settleDebtMutation = useMutation({
+    mutationFn: async (borrowerEmail: string) => {
+      // Find all shared expenses paid by the current user that involve the borrower
+      const expensesToSettle = (sharedExpenses as any[]).filter((expense: any) => {
+        if (expense.is_pending || expense.is_settled) return false;
+        if (expense.paid_by_user_id?.trim() !== userEmail) return false;
+        const splits = (allSplits as any[]).filter((s: any) => s.shared_expense_id === expense.id);
+        const splitUserIds = splits.map((s: any) => s.user_id?.trim());
+        return splitUserIds.includes(borrowerEmail.trim());
+      });
+
+      for (const expense of expensesToSettle) {
+        await base44.entities.SharedExpense.update(expense.id, { is_settled: true });
+      }
+    },
+    onSuccess: () => {
+      const name = settleTarget?.name || '';
+      toast.success((t as any).settle_debt_success?.replace('{name}', name) || `Debt with ${name} settled`);
+      queryClient.invalidateQueries({ queryKey: ['sharedExpenses'] });
+      setSettleTarget(null);
+    },
+    onError: () => {
+      toast.error((t as any).settle_debt_error || 'Error settling debt');
+      setSettleTarget(null);
+    },
+  });
+
+  // Compute net balance per user directly from shared expenses (exclude settled)
   const balanceByUser: Record<string, { amount: number; name: string; email: string }> = {};
 
-  if (userEmail && sharedExpenses.length > 0) {
-    for (const expense of sharedExpenses) {
+  if (userEmail && (sharedExpenses as any[]).length > 0) {
+    for (const expense of sharedExpenses as any[]) {
       // Only approved shared expenses (all participants have accepted) contribute to debts
+      // Skip pending and settled expenses
       if (expense.is_pending) continue;
+      if (expense.is_settled) continue;
 
-      const splits = allSplits.filter((s: any) => s.shared_expense_id === expense.id);
+      const splits = (allSplits as any[]).filter((s: any) => s.shared_expense_id === expense.id);
       const pendingUsers: string[] = expense.pending_with_users || [];
 
       if (expense.paid_by_user_id?.trim() === userEmail) {
@@ -103,9 +148,9 @@ export default function Debts() {
 
   // Expenses involving both current user and the selected user
   const selectedUserExpenses = selectedUser
-    ? sharedExpenses
+    ? (sharedExpenses as any[])
         .filter((expense: any) => {
-          const splits = allSplits.filter((s: any) => s.shared_expense_id === expense.id);
+          const splits = (allSplits as any[]).filter((s: any) => s.shared_expense_id === expense.id);
           const userIds = splits.map((s: any) => s.user_id?.trim());
           return userIds.includes(userEmail) && userIds.includes(selectedUser.email);
         })
@@ -162,17 +207,34 @@ export default function Debts() {
                 {debtsOwedToMe.map((debt) => (
                   <div
                     key={debt.email}
-                    onClick={() => setSelectedUser({ email: debt.email, name: debt.name })}
-                    className="flex items-center justify-between p-4 bg-green-50 border border-green-100 rounded-xl cursor-pointer hover:bg-green-100 transition-colors"
+                    className="flex items-center justify-between p-4 bg-green-50 border border-green-100 rounded-xl"
                   >
-                    <div>
+                    <div
+                      className="flex-1 cursor-pointer"
+                      onClick={() => setSelectedUser({ email: debt.email, name: debt.name })}
+                    >
                       <div className="font-semibold text-slate-900">
                         {debt.name}
                       </div>
                       <div className="text-sm text-slate-500">{t.owes_you}</div>
                     </div>
-                    <div className="text-xl font-bold text-green-600">
-                      {currencySymbol}{debt.amount.toFixed(2)}
+                    <div className="flex items-center gap-3">
+                      <div className="text-xl font-bold text-green-600">
+                        {currencySymbol}{debt.amount.toFixed(2)}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-green-700 border-green-300 hover:bg-green-100 hover:border-green-400 flex items-center gap-1.5 shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSettleTarget({ email: debt.email, name: debt.name });
+                        }}
+                        disabled={settleDebtMutation.isPending}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        {(t as any).mark_as_settled || 'Mark as Settled'}
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -249,11 +311,11 @@ export default function Debts() {
               </div>
             ) : (
               selectedUserExpenses.map((expense: any) => {
-                const splits = allSplits.filter((s: any) => s.shared_expense_id === expense.id);
+                const splits = (allSplits as any[]).filter((s: any) => s.shared_expense_id === expense.id);
                 const mySplit = splits.find((s: any) => s.user_id?.trim() === userEmail);
                 const iPaid = expense.paid_by_user_id?.trim() === userEmail;
                 return (
-                  <div key={expense.id} className="border border-slate-100 rounded-xl p-4 bg-white shadow-sm">
+                  <div key={expense.id} className={`border rounded-xl p-4 bg-white shadow-sm ${expense.is_settled ? 'opacity-60 border-slate-200' : 'border-slate-100'}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-slate-900 truncate">
@@ -288,6 +350,14 @@ export default function Debts() {
                         </span>
                       </div>
                     )}
+                    {expense.is_settled && (
+                      <div className="mt-2">
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1 w-fit">
+                          <CheckCircle className="h-3 w-3" />
+                          {(t as any).mark_as_settled || 'Settled'}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })
@@ -295,6 +365,42 @@ export default function Debts() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Settle Debt Confirmation Dialog */}
+      <AlertDialog open={!!settleTarget} onOpenChange={(open) => { if (!open) setSettleTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              {(t as any).settle_debt_title || 'Settle Debt'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {((t as any).settle_debt_confirm || 'Are you sure you want to mark the entire debt with {name} as settled? This will remove all shared expenses between you.')
+                .replace('{name}', settleTarget?.name || '')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={settleDebtMutation.isPending}>
+              {(t as any).cancel || 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-green-600 hover:bg-green-700 text-white"
+              disabled={settleDebtMutation.isPending}
+              onClick={() => {
+                if (settleTarget) {
+                  settleDebtMutation.mutate(settleTarget.email);
+                }
+              }}
+            >
+              {settleDebtMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                (t as any).mark_as_settled || 'Mark as Settled'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
