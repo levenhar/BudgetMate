@@ -29,6 +29,7 @@ export default function Expenses() {
   const [editingSharedSplits, setEditingSharedSplits] = useState(null);
   const [pendingApprovalExpense, setPendingApprovalExpense] = useState(null);
   const [recurringExpanded, setRecurringExpanded] = useState(false);
+  const [dialogDefaultTab, setDialogDefaultTab] = useState('expense');
   const [deleteConfirmExpense, setDeleteConfirmExpense] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   
@@ -915,6 +916,19 @@ export default function Expenses() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-lg font-bold text-slate-900">{currencySymbol}{recurringTotal.toFixed(2)}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-slate-500 hover:text-slate-900 hover:bg-slate-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDialogDefaultTab('recurring');
+                    setShowAddExpense(true);
+                  }}
+                  title="Add recurring expense"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
                 {recurringExpanded ? (
                   <ChevronDown className="h-5 w-5 text-slate-400" />
                 ) : (
@@ -1041,7 +1055,10 @@ export default function Expenses() {
       {/* Add Expense Dialog */}
       <UnifiedExpenseDialog
         open={showAddExpense}
-        onOpenChange={setShowAddExpense}
+        onOpenChange={(open) => {
+          setShowAddExpense(open);
+          if (!open) setDialogDefaultTab('expense');
+        }}
         categories={categories}
         onSubmitExpense={(data) => createExpenseMutation.mutate(data)}
         onSubmitRecurring={(data) => createRecurringMutation.mutate(data)}
@@ -1049,7 +1066,7 @@ export default function Expenses() {
         isSubmittingExpense={createExpenseMutation.isPending}
         isSubmittingRecurring={createRecurringMutation.isPending}
         isSubmittingShared={createSharedExpenseMutation.isPending}
-        defaultTab="expense"
+        defaultTab={dialogDefaultTab}
         user={user}
         isHouseholdMode={isHouseholdMode}
         householdId={settings?.current_household_id}
