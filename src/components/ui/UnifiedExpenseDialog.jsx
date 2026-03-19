@@ -37,6 +37,59 @@ export default function UnifiedExpenseDialog({
   useEffect(() => {
     setActiveTab(defaultTab);
   }, [defaultTab]);
+
+  const handleTabChange = (newTab) => {
+    const getSharedSnapshot = () => {
+      if (activeTab === "expense") return {
+        amount: expenseForm.amount,
+        categoryId: expenseForm.categoryId,
+        date: expenseForm.date,
+        description: expenseForm.description,
+      };
+      if (activeTab === "recurring") return {
+        amount: recurringForm.amount,
+        categoryId: recurringForm.category_id,
+        date: recurringForm.start_date,
+        description: recurringForm.description,
+      };
+      return {
+        amount: sharedForm.amount,
+        categoryId: sharedForm.categoryId,
+        date: sharedForm.date,
+        description: sharedForm.description,
+      };
+    };
+
+    const snap = getSharedSnapshot();
+
+    if (newTab === "expense") {
+      setExpenseForm(prev => ({
+        ...prev,
+        ...(snap.amount      && { amount: snap.amount }),
+        ...(snap.categoryId  && { categoryId: snap.categoryId }),
+        ...(snap.date        && { date: snap.date }),
+        ...(snap.description && { description: snap.description }),
+      }));
+    } else if (newTab === "recurring") {
+      setRecurringForm(prev => ({
+        ...prev,
+        ...(snap.amount      && { amount: snap.amount }),
+        ...(snap.categoryId  && { category_id: snap.categoryId }),
+        ...(snap.date        && { start_date: snap.date }),
+        ...(snap.description && { description: snap.description }),
+      }));
+    } else if (newTab === "shared") {
+      setSharedForm(prev => ({
+        ...prev,
+        ...(snap.amount      && { amount: snap.amount }),
+        ...(snap.categoryId  && { categoryId: snap.categoryId }),
+        ...(snap.date        && { date: snap.date }),
+        ...(snap.description && { description: snap.description }),
+      }));
+    }
+
+    setActiveTab(newTab);
+  };
   
   // Regular expense form
   const [expenseForm, setExpenseForm] = useState({
@@ -384,7 +437,7 @@ export default function UnifiedExpenseDialog({
           <DialogTitle>{t.add_expense_dialog_title}</DialogTitle>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="shared">{t.shared_tab}</TabsTrigger>
             <TabsTrigger value="recurring">{t.recurring_tab}</TabsTrigger>
