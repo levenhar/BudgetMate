@@ -26,15 +26,19 @@ function useCurrencyRate(defaultCurrency) {
   const [selectedCurrency, setSelectedCurrency] = React.useState(defaultCurrency);
   const [rateStatus, setRateStatus] = React.useState('idle'); // 'idle'|'loading'|'ready'|'error'
   const [exchangeRate, setExchangeRate] = React.useState(null);
+  const fetchGenRef = React.useRef(0);
 
   const doFetch = React.useCallback(async (from, to, errorMsg) => {
+    const gen = ++fetchGenRef.current;
     setRateStatus('loading');
     setExchangeRate(null);
     try {
       const rate = await fetchExchangeRate(from, to);
+      if (gen !== fetchGenRef.current) return;
       setExchangeRate(rate);
       setRateStatus('ready');
     } catch {
+      if (gen !== fetchGenRef.current) return;
       setRateStatus('error');
       if (errorMsg) toast.error(errorMsg);
     }
@@ -66,7 +70,7 @@ function useCurrencyRate(defaultCurrency) {
 /**
  * Renders the rate info line, spinner, or error+retry below the amount field.
  */
-function CurrencyRateInfo({ rateStatus, exchangeRate, fromCurrency, toCurrency, toSymbol, amount, t, onRetry }) {
+function CurrencyRateInfo({ rateStatus, exchangeRate, fromCurrency, toSymbol, amount, t, onRetry }) {
   if (rateStatus === 'idle') return null;
 
   if (rateStatus === 'loading') {
@@ -403,6 +407,7 @@ export default function UnifiedExpenseDialog({
       const isForeign = expenseRate.selectedCurrency !== currencyCode;
       const originalAmount = parseFloat(expenseForm.amount);
       const convertedAmount = isForeign ? originalAmount * expenseRate.exchangeRate : originalAmount;
+      if (isForeign && !expenseRate.exchangeRate) return;
 
       await onSubmitExpense({
         amount: convertedAmount,
@@ -434,6 +439,7 @@ export default function UnifiedExpenseDialog({
       const isForeign = recurringRate.selectedCurrency !== currencyCode;
       const originalAmount = parseFloat(recurringForm.amount);
       const convertedAmount = isForeign ? originalAmount * recurringRate.exchangeRate : originalAmount;
+      if (isForeign && !recurringRate.exchangeRate) return;
 
       await onSubmitRecurring({
         name: recurringForm.name,
@@ -474,16 +480,17 @@ export default function UnifiedExpenseDialog({
     const totalAmount = parseFloat(sharedForm.amount);
     const isForeign = sharedRate.selectedCurrency !== currencyCode;
     const convertedTotal = isForeign ? totalAmount * sharedRate.exchangeRate : totalAmount;
+    if (isForeign && !sharedRate.exchangeRate) return;
 
     let finalSplits = sharedForm.splits;
     if (!finalSplits || finalSplits.length === 0) {
-      finalSplits = calculateDefaultSplits(sharedForm.participants, sharedForm.amount, sharedForm.splitMethod);
+      finalSplits = calculateDefaultSplits(sharedForm.participants, convertedTotal, sharedForm.splitMethod);
     }
 
     if (sharedForm.splitMethod === 'custom_amount') {
       const splitSum = finalSplits.reduce((sum, s) => sum + (s.shareAmount || 0), 0);
-      if (Math.abs(splitSum - totalAmount) > 0.01) {
-        toast.error(t.error_split_mismatch.replace('{sum}', splitSum.toFixed(2)).replace('{total}', totalAmount.toFixed(2)));
+      if (Math.abs(splitSum - convertedTotal) > 0.01) {
+        toast.error(t.error_split_mismatch.replace('{sum}', splitSum.toFixed(2)).replace('{total}', convertedTotal.toFixed(2)));
         return;
       }
     }
@@ -497,8 +504,8 @@ export default function UnifiedExpenseDialog({
       finalSplits = finalSplits.map((s, i) => ({
         ...s,
         shareAmount: i === finalSplits.length - 1
-          ? totalAmount - finalSplits.slice(0, -1).reduce((sum, split) => sum + (totalAmount * split.sharePercent / 100), 0)
-          : totalAmount * s.sharePercent / 100
+          ? convertedTotal - finalSplits.slice(0, -1).reduce((sum, split) => sum + (convertedTotal * split.sharePercent / 100), 0)
+          : convertedTotal * s.sharePercent / 100
       }));
     }
 
@@ -597,7 +604,6 @@ export default function UnifiedExpenseDialog({
                 rateStatus={expenseRate.rateStatus}
                 exchangeRate={expenseRate.exchangeRate}
                 fromCurrency={expenseRate.selectedCurrency}
-                toCurrency={currencyCode}
                 toSymbol={currencySymbol}
                 amount={expenseForm.amount}
                 t={t}
@@ -764,7 +770,6 @@ export default function UnifiedExpenseDialog({
                     rateStatus={recurringRate.rateStatus}
                     exchangeRate={recurringRate.exchangeRate}
                     fromCurrency={recurringRate.selectedCurrency}
-                    toCurrency={currencyCode}
                     toSymbol={currencySymbol}
                     amount={recurringForm.amount}
                     t={t}
@@ -946,7 +951,6 @@ export default function UnifiedExpenseDialog({
                     rateStatus={sharedRate.rateStatus}
                     exchangeRate={sharedRate.exchangeRate}
                     fromCurrency={sharedRate.selectedCurrency}
-                    toCurrency={currencyCode}
                     toSymbol={currencySymbol}
                     amount={sharedForm.amount}
                     t={t}
