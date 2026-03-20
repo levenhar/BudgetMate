@@ -79,9 +79,8 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
             {expense.original_currency && (
               <>
                 <span className="text-slate-300">·</span>
-                <span className="text-slate-400 text-xs whitespace-nowrap truncate max-w-[80px]">
-                  {CURRENCY_SYMBOLS[expense.original_currency] || expense.original_currency}
-                  {expense.original_amount?.toFixed(2)} {expense.original_currency}
+                <span className="text-slate-400 text-xs whitespace-nowrap">
+                  {`${CURRENCY_SYMBOLS[expense.original_currency] || ''}${expense.original_amount?.toFixed(2) ?? ''} ${expense.original_currency}`}
                 </span>
               </>
             )}
@@ -172,12 +171,11 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
 
             {/* Original currency */}
             {expense.original_currency && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 col-span-2">
                 <ArrowRightLeft className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
                 <span className="text-slate-500">{t.original_amount_label || 'Original'}:</span>
                 <span className="font-medium text-slate-700">
-                  {CURRENCY_SYMBOLS[expense.original_currency] || expense.original_currency}
-                  {expense.original_amount?.toFixed(2)} {expense.original_currency}
+                  {`${CURRENCY_SYMBOLS[expense.original_currency] || ''}${expense.original_amount?.toFixed(2) ?? ''} ${expense.original_currency}`}
                   {expense.exchange_rate && (
                     <span className="text-slate-400 ml-1">· rate: {expense.exchange_rate.toFixed(4)}</span>
                   )}
