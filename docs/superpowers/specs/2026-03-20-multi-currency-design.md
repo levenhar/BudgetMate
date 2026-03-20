@@ -65,7 +65,23 @@ fetchExchangeRate(fromCurrency: string, toCurrency: string): Promise<number>
 
 ### Currency Selector
 - Compact `Select` (ILS / USD / EUR) placed inline next to the amount input on all 3 tabs.
-- Default value = user's default currency from `CurrencyContext`.
+- Default value initialised from `currencyCode` via `useCurrency()` — each tab's form state includes a `currency` field, initialised to `currencyCode` on mount.
+- On all 3 tabs: the currency selector sits **to the right of the amount input** in the same flex row (amount takes `flex-1`, selector is fixed-width ~80px). This means on recurring tab the amount + currency selector span one row, and the frequency select drops to the second column of the grid as before.
+- Mobile: badge text truncates with `truncate` if the row is too narrow; the full value is visible in the expanded detail panel.
+
+### Form state machine for rate loading
+
+Each tab tracks: `{ rateStatus: 'idle' | 'loading' | 'error' | 'ready', exchangeRate: number | null }`.
+
+| Event | Transition |
+|---|---|
+| User selects default currency | → `idle`, info line hidden, original fields cleared |
+| User selects foreign currency | → `loading`, spinner shown |
+| Fetch succeeds | → `ready`, rate stored, info line shown |
+| Fetch fails | → `error`, toast shown, submit disabled |
+| User re-selects same foreign currency | re-fetch (re-enter `loading`) |
+
+Submit button is disabled when `rateStatus === 'loading'` or `rateStatus === 'error'`.
 
 ### Same-currency path
 - No network call, no extra UI, behavior identical to today.
@@ -73,8 +89,8 @@ fetchExchangeRate(fromCurrency: string, toCurrency: string): Promise<number>
 ### Foreign-currency path
 1. User selects a different currency → rate fetch begins immediately.
 2. While fetching: small spinner below the amount field.
-3. On success: info line shown — `"1 USD = 3.71 ₪  ·  Total: ₪185.50"` (updates live as amount changes).
-4. On failure: Sonner toast error; submit button disabled until a valid rate is available.
+3. On success: info line shown — `"1 USD = 3.71 ₪  ·  Total: ₪185.50"` (updates live as amount changes using the cached `exchangeRate`).
+4. On failure: Sonner toast error; submit button disabled until user retries (re-selects currency to re-fetch).
 
 ### Submit payload additions
 When currency differs from default:
@@ -83,7 +99,7 @@ When currency differs from default:
 - `exchange_rate`: the fetched rate
 - `amount`: `original_amount × exchange_rate` (converted)
 
-When same as default: fields omitted (no change from current behavior).
+When same as default: `original_currency`, `original_amount`, `exchange_rate` are **omitted** from the payload entirely (not set to null) — no change from current behavior.
 
 ---
 
@@ -104,9 +120,14 @@ When same as default: fields omitted (no change from current behavior).
 
 ## 5. Edit Expense Dialog
 
-- Pre-fills `original_currency` and `original_amount` from the stored record.
-- Re-fetches live rate on dialog open (shows current rate, not the stored one).
-- On save: recalculates `amount = original_amount × fresh_rate`; updates all 3 fields.
+- Pre-fills `currency` selector with `original_currency` (or default currency if null), and `amount` field with `original_amount` (or `amount` if null).
+- On dialog open: if `original_currency` is set and differs from default, immediately trigger a rate fetch (same state machine as the add form: `loading → ready | error`).
+- Info line shows the fresh rate alongside a note of the stored rate: `"Current: 1 USD = 3.75 ₪  (was 3.71 at entry)"`.
+- On save: if foreign currency, `amount = original_amount × fresh_rate`; all 3 fields updated. If user switched back to default currency, `original_currency`, `original_amount`, `exchange_rate` are set to `null` in the update payload.
+- If rate fetch fails on open: submit is disabled; a small inline "Retry" link appears in the info line area (same location as the spinner/info line). Clicking it re-triggers the fetch.
+
+### Frankfurter API response validation
+`fetchExchangeRate` must validate: `response.rates[toCurrency]` exists and is a positive number. If missing or invalid, treat as fetch failure (throw).
 
 ---
 
@@ -114,16 +135,37 @@ When same as default: fields omitted (no change from current behavior).
 
 | Scenario | Behaviour |
 |---|---|
-| Rate fetch fails (network) | Sonner toast, submit disabled |
-| frankfurter returns unexpected shape | Same as above |
-| User edits amount after rate loaded | Info line recalculates immediately client-side |
-| User switches currency back to default | Info line hidden, original fields cleared |
+| Rate fetch fails (network) | Sonner toast, submit disabled, retry by re-selecting currency |
+| frankfurter returns missing/invalid rate | Treated as fetch failure — same as above |
+| User edits amount after rate loaded | Info line recalculates immediately client-side (no re-fetch) |
+| User switches currency back to default | Info line hidden, `rateStatus → idle`, original fields omitted from payload |
+| Edit dialog: rate fetch fails on open | Submit disabled, inline retry button shown |
+| Edit dialog: user clears foreign currency | `original_currency/amount/exchange_rate` set to null on save |
 
 ---
 
-## 7. Out of Scope
+## 7. i18n
 
-- Shared expense split amounts in foreign currency (splits always use the converted default-currency amount)
-- Historical rate lookup by expense date
-- More than 3 currencies
+New translation keys to add to `translations.jsx` for all supported languages:
+
+| Key | Example (EN) |
+|---|---|
+| `currency_rate_info` | `"1 {from} = {rate} {toSymbol}  ·  Total: {totalSymbol}{total}"` |
+| `currency_rate_info_edit` | `"Current: 1 {from} = {rate} {toSymbol}  (was {storedRate} at entry)"` |
+| `currency_rate_loading` | `"Fetching exchange rate..."` |
+| `currency_rate_error` | `"Could not fetch exchange rate"` |
+| `currency_rate_retry` | `"Retry"` |
+| `currency_label` | `"Currency"` |
+| `original_amount_label` | `"Original"` |
+
+The info line is built with string interpolation (same pattern as other translated strings in the app). In RTL layout, the `·` separator and symbol positions should follow the surrounding text direction automatically.
+
+---
+
+## 8. Out of Scope
+
+- Shared expense split amounts in foreign currency: when a shared expense is entered in a foreign currency, the converted `amount` (in default currency) is what gets split among participants. Example: $50 USD = ₪185.50; each of 2 people owes ₪92.75. The original $50 USD is recorded on the shared expense record for display purposes only.
+- Historical rate lookup by expense date (always uses live rate at time of entry/edit)
+- More than 3 currencies (ILS, USD, EUR only)
 - Per-user currency favorites
+- Session-level caching of exchange rates (each currency selection triggers a fresh fetch)
