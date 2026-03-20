@@ -426,14 +426,6 @@ function LayoutInner({ children, currentPageName }) {
             );
           })}
 
-          {/* Logout button */}
-          <button
-            onClick={() => logout()}
-            className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all text-red-400 hover:text-red-300"
-          >
-            <LogOut className="h-5 w-5" />
-            <span className="text-[11px] font-medium">{t.logout}</span>
-          </button>
         </div>
       </nav>
 
