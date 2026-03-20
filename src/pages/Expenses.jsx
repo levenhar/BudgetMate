@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -33,11 +34,11 @@ export default function Expenses() {
   const [deleteConfirmExpense, setDeleteConfirmExpense] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   
-  // Read URL parameters
-  const urlParams = new URLSearchParams(window.location.search);
-  const categoryFromUrl = urlParams.get('category');
-  const dateFromUrl = urlParams.get('dateFrom');
-  const dateToUrl = urlParams.get('dateTo');
+  // Read URL parameters via React Router (reactive, avoids stale window.location)
+  const [searchParams] = useSearchParams();
+  const categoryFromUrl = searchParams.get('category');
+  const dateFromUrl = searchParams.get('dateFrom');
+  const dateToUrl = searchParams.get('dateTo');
   
   // Default to current month if no date params in URL
   const now = new Date();
@@ -86,12 +87,16 @@ export default function Expenses() {
     enabled: !!user?.email,
   });
 
-  // Apply category filter from URL when categories are loaded
+  // Apply category filter from URL when categories are loaded.
+  // Uses functional setFilters to avoid stale-closure on filters.categoryId.
   React.useEffect(() => {
-    if (categoryFromUrl && categories.length > 0 && !filters.categoryId) {
+    if (categoryFromUrl && categories.length > 0) {
       const category = categories.find(c => c.name === categoryFromUrl);
       if (category) {
-        setFilters(prev => ({ ...prev, categoryId: category.id }));
+        setFilters(prev => {
+          if (prev.categoryId === category.id) return prev;
+          return { ...prev, categoryId: category.id };
+        });
       }
     }
   }, [categoryFromUrl, categories]);
