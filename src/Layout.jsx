@@ -497,20 +497,6 @@ function LayoutInner({ children, currentPageName }) {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
-              {/* Add Expense shortcut */}
-              <DropdownMenuItem
-                className="gap-2 font-medium text-indigo-700 focus:text-indigo-700 focus:bg-indigo-50 cursor-pointer"
-                onSelect={() => {
-                  if (currentPageName === 'RecurringExpenses') setAddExpenseTab('recurring');
-                  else if (currentPageName === 'Debts') setAddExpenseTab('shared');
-                  else setAddExpenseTab('expense');
-                  setShowAddExpense(true);
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                {t.add_expense}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
               {/* Navigation links */}
               {navItems.map((item) => (
                 <DropdownMenuItem key={item.page} asChild>
