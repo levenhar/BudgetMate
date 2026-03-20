@@ -489,9 +489,17 @@ export default function UnifiedExpenseDialog({
 
     if (sharedForm.splitMethod === 'custom_amount') {
       const splitSum = finalSplits.reduce((sum, s) => sum + (s.shareAmount || 0), 0);
-      if (Math.abs(splitSum - convertedTotal) > 0.01) {
-        toast.error(t.error_split_mismatch.replace('{sum}', splitSum.toFixed(2)).replace('{total}', convertedTotal.toFixed(2)));
+      // Validate against original amount (splits were entered in original currency)
+      if (Math.abs(splitSum - totalAmount) > 0.01) {
+        toast.error(t.error_split_mismatch.replace('{sum}', splitSum.toFixed(2)).replace('{total}', totalAmount.toFixed(2)));
         return;
+      }
+      // Convert split amounts to base currency if foreign
+      if (isForeign && sharedRate.exchangeRate) {
+        finalSplits = finalSplits.map(s => ({
+          ...s,
+          shareAmount: (s.shareAmount || 0) * sharedRate.exchangeRate,
+        }));
       }
     }
 

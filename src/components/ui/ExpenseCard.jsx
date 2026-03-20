@@ -177,7 +177,7 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
                 <span className="font-medium text-slate-700">
                   {`${CURRENCY_SYMBOLS[expense.original_currency] || ''}${expense.original_amount?.toFixed(2) ?? ''} ${expense.original_currency}`}
                   {expense.exchange_rate && (
-                    <span className="text-slate-400 ml-1">· rate: {expense.exchange_rate.toFixed(4)}</span>
+                    <span className="text-slate-400 ml-1">· {t.exchange_rate_label || 'rate:'} {expense.exchange_rate.toFixed(4)}</span>
                   )}
                 </span>
               </div>
