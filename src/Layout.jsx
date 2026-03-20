@@ -541,17 +541,19 @@ function LayoutInner({ children, currentPageName }) {
         </header>
 
         {children}
-      </main>
 
-      {/* Desktop FAB — hidden on mobile (mobile has its own raised + button in the bottom nav) */}
-      <button
-        onClick={() => { setAddExpenseTab('expense'); setShowAddExpense(true); }}
-        title={t.add_expense || 'Add Expense'}
-        className="hidden lg:flex fixed bottom-6 right-6 z-50 h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 active:scale-95 transition-all duration-150"
-        aria-label={t.add_expense || 'Add Expense'}
-      >
-        <Plus className="h-7 w-7" />
-      </button>
+        {/* Desktop FAB — inside main so it never overlaps the sidebar in LTR or RTL mode */}
+        <div className="hidden lg:flex sticky bottom-6 z-50 px-6 pointer-events-none justify-end">
+          <button
+            onClick={() => { setAddExpenseTab('expense'); setShowAddExpense(true); }}
+            title={t.add_expense || 'Add Expense'}
+            className="pointer-events-auto h-14 w-14 flex items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 active:scale-95 transition-all duration-150"
+            aria-label={t.add_expense || 'Add Expense'}
+          >
+            <Plus className="h-7 w-7" />
+          </button>
+        </div>
+      </main>
 
       <Toaster position="top-center" richColors />
 
