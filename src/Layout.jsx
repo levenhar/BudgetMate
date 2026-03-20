@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { LayoutDashboard, Receipt, BarChart3, Settings, Wallet, Repeat, Menu, Users, Plus, X, Target, UserCircle } from 'lucide-react';
+import { LayoutDashboard, Receipt, BarChart3, Settings, Wallet, Repeat, Menu, Users, Plus, X, Target, UserCircle, LogOut } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UnifiedExpenseDialog from '@/components/ui/UnifiedExpenseDialog';
 import { LanguageProvider, useLanguage } from '@/components/i18n/LanguageContext';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function Layout({ children, currentPageName }) {
   return (
@@ -29,6 +30,7 @@ export default function Layout({ children, currentPageName }) {
 
 function LayoutInner({ children, currentPageName }) {
   const { t, dir } = useLanguage();
+  const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [addExpenseTab, setAddExpenseTab] = useState('expense');
@@ -355,6 +357,20 @@ function LayoutInner({ children, currentPageName }) {
               );
             })}
           </nav>
+
+          {/* Logout button at bottom of sidebar */}
+          <div className="px-4 pb-6">
+            <div className="border-t border-slate-100 pt-4">
+              <button
+                onClick={() => logout()}
+                title={!sidebarOpen ? t.logout : undefined}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all ${!sidebarOpen ? 'justify-center' : ''}`}
+              >
+                <LogOut className="h-5 w-5 flex-shrink-0" />
+                {sidebarOpen && t.logout}
+              </button>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -449,6 +465,14 @@ function LayoutInner({ children, currentPageName }) {
                   </Link>
                 );
               })}
+              <div className="border-t border-slate-100 mx-5 my-2" />
+              <button
+                onClick={() => { setMobileMenuOpen(false); logout(); }}
+                className="w-full flex items-center gap-3 px-5 py-3.5 text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <LogOut className="h-5 w-5 flex-shrink-0" />
+                <span className="text-sm font-medium">{t.logout}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -513,6 +537,16 @@ function LayoutInner({ children, currentPageName }) {
 
         {children}
       </main>
+
+      {/* Desktop FAB — hidden on mobile (mobile has its own raised + button in the bottom nav) */}
+      <button
+        onClick={() => { setAddExpenseTab('expense'); setShowAddExpense(true); }}
+        title={t.add_expense || 'Add Expense'}
+        className="hidden lg:flex fixed bottom-6 right-6 z-50 h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 active:scale-95 transition-all duration-150"
+        aria-label={t.add_expense || 'Add Expense'}
+      >
+        <Plus className="h-7 w-7" />
+      </button>
 
       <Toaster position="top-center" richColors />
 

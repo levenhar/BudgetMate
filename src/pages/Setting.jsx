@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { User, Users, LogOut, Loader2, Globe, DollarSign } from 'lucide-react';
+import { User, Users, Loader2, Globe, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -15,7 +15,6 @@ import AlwaysApprovedList from '@/components/ui/AlwaysApprovedList';
 import { useLanguage } from '@/components/i18n/LanguageContext';
 import { supportedLanguages, getTranslations } from '@/components/i18n/translations';
 import { useCurrency } from '@/lib/CurrencyContext';
-import { useAuth } from '@/lib/AuthContext';
 
 const getDefaultCategories = (t) => [
   { name: t.category_supermarket, color: '#22c55e', icon: 'ShoppingCart' },
@@ -52,7 +51,6 @@ const DEFAULT_CATEGORY_KEYS = [
 ];
 
 export default function Settings() {
-  const { logout } = useAuth();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const { lang, setLang, t } = useLanguage();
@@ -222,10 +220,6 @@ export default function Settings() {
     setIsLoading(false);
   };
 
-  const handleLogout = () => {
-    logout();
-  };
-
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-2xl mx-auto px-4 py-8">
@@ -245,19 +239,11 @@ export default function Settings() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between py-2">
+              <div className="flex items-center py-2">
                 <div>
                   <p className="font-medium text-slate-900">{user?.full_name || t.user_label}</p>
                   <p className="text-sm text-slate-500">{user?.email}</p>
                 </div>
-                <Button 
-                  variant="outline" 
-                  onClick={handleLogout}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <LogOut className="h-4 w-4 me-2" />
-                  {t.logout}
-                </Button>
               </div>
             </CardContent>
           </Card>
