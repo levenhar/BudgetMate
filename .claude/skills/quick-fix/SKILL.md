@@ -43,10 +43,16 @@ Do NOT block. Return immediately after launching.
 
 After the background agent finishes successfully and reports its worktree branch:
 
-1. Merge the branch into main: `git merge <branch> --no-ff -m "Merge <branch>: <short description>"`
-2. Clean up the worktree and branch:
+1. Get the worktree path and branch name from the agent result.
+2. Merge the branch into main:
+   ```bash
+   git merge <branch> --no-ff -m "Merge <branch>: <short description>"
+   ```
+3. **MANDATORY cleanup** — always run both commands, even if merge failed:
    ```bash
    git worktree remove --force <worktree-path>
    git branch -d <branch>
    ```
-3. Tell the user the fix has been merged and cleaned up.
+   The worktree path follows the pattern `.claude/worktrees/<branch-name>`.
+   Verify removal with `git worktree list` — main should be the only entry.
+4. Tell the user the fix has been merged and the worktree has been cleaned up.
