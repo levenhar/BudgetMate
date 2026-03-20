@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+<<<<<<< HEAD
 import { LayoutDashboard, Receipt, BarChart3, Settings, Wallet, Repeat, Menu, Users, Plus, X, Target, UserCircle, LogOut } from 'lucide-react';
+=======
+import { LayoutDashboard, Receipt, BarChart3, Settings, Wallet, Repeat, Menu, Users, Plus, X, Target } from 'lucide-react';
+>>>>>>> worktree-agent-a60b5bf9
 import { Toaster } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -44,7 +48,6 @@ function LayoutInner({ children, currentPageName }) {
     { key: 'debts', icon: Users, page: 'Debts' },
     { key: 'statistics', icon: BarChart3, page: 'Statistics' },
     { key: 'goals', icon: Target, page: 'Goals' },
-    { key: 'profile', icon: UserCircle, page: 'Profile' },
     { key: 'settings', icon: Settings, page: 'Settings' },
   ];
 
@@ -282,7 +285,7 @@ function LayoutInner({ children, currentPageName }) {
   const pageTitleKeyMap = {
     Dashboard: 'dashboard', Expenses: 'expenses', RecurringExpenses: 'recurring_expenses',
     Budget: 'budget', Debts: 'debts', Statistics: 'statistics', Settings: 'settings',
-    Goals: 'goals', Profile: 'profile',
+    Goals: 'goals',
   };
   const pageTitle = t[pageTitleKeyMap[currentPageName]] || currentPageName;
 
@@ -331,9 +334,6 @@ function LayoutInner({ children, currentPageName }) {
               const showBadge = item.page === 'Expenses' && pendingCount > 0;
               return (
                 <React.Fragment key={item.page}>
-                  {item.page === 'Profile' && (
-                    <div className="my-2 border-t border-slate-100" />
-                  )}
                   <Link
                     to={createPageUrl(item.page)}
                     title={!sidebarOpen ? t[item.key] : undefined}

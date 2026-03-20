@@ -52,7 +52,6 @@ import Dashboard from './pages/Dashboard';
 import Debts from './pages/Debts';
 import Expenses from './pages/Expenses';
 import Goals from './pages/Goals';
-import Profile from './pages/Profile';
 import RecurringExpenses from './pages/RecurringExpenses';
 import Settings from './pages/Setting';
 import Statistics from './pages/Statistics';
@@ -65,7 +64,6 @@ export const PAGES = {
     "Debts": Debts,
     "Expenses": Expenses,
     "Goals": Goals,
-    "Profile": Profile,
     "RecurringExpenses": RecurringExpenses,
     "Settings": Settings,
     "Statistics": Statistics,
