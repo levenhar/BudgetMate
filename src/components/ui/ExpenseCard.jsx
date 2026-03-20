@@ -4,7 +4,7 @@ import { he } from 'date-fns/locale';
 import { Pencil, Trash2, CreditCard, Banknote, Building2, ArrowRightLeft, Users, Clock, Send, ChevronDown, ChevronRight, Tag, CalendarDays, FileText, Wallet, CheckCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useLanguage } from '@/components/i18n/LanguageContext';
-import { useCurrency } from '@/lib/CurrencyContext';
+import { useCurrency, CURRENCY_SYMBOLS } from '@/lib/CurrencyContext';
 
 const paymentIcons = {
   cash: Banknote,
@@ -76,6 +76,15 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
             <span className="font-semibold text-slate-900 whitespace-nowrap">
               {currencySymbol}{expense.amount.toFixed(2)}
             </span>
+            {expense.original_currency && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="text-slate-400 text-xs whitespace-nowrap truncate max-w-[80px]">
+                  {CURRENCY_SYMBOLS[expense.original_currency] || expense.original_currency}
+                  {expense.original_amount?.toFixed(2)} {expense.original_currency}
+                </span>
+              </>
+            )}
             {expense.is_shared && (
               <>
                 <span className="text-slate-300">|</span>
@@ -160,6 +169,21 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
               <span className="text-slate-500">{t.amount || 'Amount'}:</span>
               <span className="font-semibold text-slate-800">{currencySymbol}{expense.amount.toFixed(2)}</span>
             </div>
+
+            {/* Original currency */}
+            {expense.original_currency && (
+              <div className="flex items-center gap-2">
+                <ArrowRightLeft className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                <span className="text-slate-500">{t.original_amount_label || 'Original'}:</span>
+                <span className="font-medium text-slate-700">
+                  {CURRENCY_SYMBOLS[expense.original_currency] || expense.original_currency}
+                  {expense.original_amount?.toFixed(2)} {expense.original_currency}
+                  {expense.exchange_rate && (
+                    <span className="text-slate-400 ml-1">· rate: {expense.exchange_rate.toFixed(4)}</span>
+                  )}
+                </span>
+              </div>
+            )}
 
             {/* Description / Notes */}
             {(expense.description || expense.notes) ? (
