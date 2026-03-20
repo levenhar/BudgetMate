@@ -507,6 +507,14 @@ function LayoutInner({ children, currentPageName }) {
                   </Link>
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={logout}
+                className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+              >
+                <LogOut className="h-4 w-4 flex-shrink-0" />
+                {t.logout}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
