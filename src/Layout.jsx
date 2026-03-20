@@ -386,9 +386,6 @@ function LayoutInner({ children, currentPageName }) {
             );
           })}
 
-          {/* Center spacer for raised button */}
-          <div className="w-16" />
-
           {/* Right 2 items */}
           {mobileMainItems.slice(2).map((item) => {
             const isActive = currentPageName === item.page;
@@ -405,14 +402,6 @@ function LayoutInner({ children, currentPageName }) {
               </Link>
             );
           })}
-
-          {/* Raised + button (absolute center) */}
-          <button
-            onClick={() => { setAddExpenseTab('expense'); setShowAddExpense(true); }}
-            className="absolute left-1/2 -translate-x-1/2 -top-5 h-14 w-14 rounded-full bg-indigo-600 text-white shadow-lg flex items-center justify-center hover:bg-indigo-700 transition-colors"
-          >
-            <Plus className="h-7 w-7" />
-          </button>
         </div>
       </nav>
 
