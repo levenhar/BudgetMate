@@ -116,6 +116,33 @@ export default function Expenses() {
     enabled: !!user?.email,
   });
 
+  // Fetch shared expenses (to cross-reference is_settled status)
+  const { data: sharedExpensesList = [] } = useQuery({
+    queryKey: ['sharedExpenses', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return base44.entities.SharedExpense.list();
+    },
+    enabled: !!user?.email,
+  });
+
+  // Build maps from shared expense id to is_settled and is_pending status
+  const sharedExpenseStatusMap = useMemo(() => {
+    const map = {};
+    for (const se of sharedExpensesList) {
+      map[se.id] = { is_settled: !!se.is_settled, is_pending: !!se.is_pending };
+    }
+    return map;
+  }, [sharedExpensesList]);
+
+  const settledSharedExpenseIds = useMemo(() => {
+    const ids = new Set();
+    for (const se of sharedExpensesList) {
+      if (se.is_settled) ids.add(se.id);
+    }
+    return ids;
+  }, [sharedExpensesList]);
+
   // Fetch recurring expenses
   const { data: recurringExpenses = [] } = useQuery({
     queryKey: ['recurringExpenses', user?.email, settings?.current_household_id, isHouseholdMode],
@@ -712,7 +739,16 @@ export default function Expenses() {
 
   // Filter and sort expenses
   const filteredExpenses = useMemo(() => {
-    let result = [...expenses];
+    let result = expenses.map(e => {
+      if (!e.source_shared_expense_id) return e;
+      const seStatus = sharedExpenseStatusMap[e.source_shared_expense_id];
+      return {
+        ...e,
+        is_settled: seStatus?.is_settled || false,
+        // Fix stale is_pending: if the SharedExpense is no longer pending, clear the expense's is_pending too
+        is_pending: seStatus ? (e.is_pending && seStatus.is_pending) : e.is_pending,
+      };
+    });
 
     // Text search
     if (filters.search) {
@@ -770,7 +806,7 @@ export default function Expenses() {
     });
 
     return result;
-  }, [expenses, filters]);
+  }, [expenses, filters, sharedExpenseStatusMap]);
 
   const clearFilters = () => {
     setFilters({

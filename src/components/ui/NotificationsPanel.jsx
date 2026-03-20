@@ -142,6 +142,7 @@ export default function NotificationsPanel({ user }) {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['debts'] });
+      queryClient.invalidateQueries({ queryKey: ['sharedExpenses'] });
       toast.success('אישרת! ממתין לשאר המשתתפים...');
     }
   });
@@ -152,6 +153,7 @@ export default function NotificationsPanel({ user }) {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['debts'] });
+      queryClient.invalidateQueries({ queryKey: ['sharedExpenses'] });
       queryClient.invalidateQueries({ queryKey: ['alwaysApproved'] });
       toast.success('אישרת ותמיד תאשר ממשתמש זה!');
     }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
-import { Pencil, Trash2, CreditCard, Banknote, Building2, ArrowRightLeft, Users, Clock, Send, ChevronDown, ChevronRight, Tag, CalendarDays, FileText, Wallet } from 'lucide-react';
+import { Pencil, Trash2, CreditCard, Banknote, Building2, ArrowRightLeft, Users, Clock, Send, ChevronDown, ChevronRight, Tag, CalendarDays, FileText, Wallet, CheckCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useLanguage } from '@/components/i18n/LanguageContext';
 import { useCurrency } from '@/lib/CurrencyContext';
@@ -50,7 +50,9 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
       {/* Row */}
       <div
         className={`group flex items-center px-3 py-2 bg-white border transition-all duration-200 cursor-pointer ${
-          isExpanded
+          expense.is_settled
+            ? 'opacity-60 border-green-200 bg-green-50/30 rounded-lg'
+            : isExpanded
             ? 'border-b-0 rounded-t-lg border-slate-200 shadow-sm'
             : isPendingAwaitingMyApproval
             ? 'border-amber-200 bg-amber-50 rounded-lg hover:border-amber-300 hover:shadow-sm'
@@ -77,7 +79,11 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
             {expense.is_shared && (
               <>
                 <span className="text-slate-300">|</span>
-                {isPendingAwaitingMyApproval ? (
+                {expense.is_settled ? (
+                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap border bg-green-50 border-green-200 text-green-700">
+                    <CheckCircle className="h-3 w-3" />
+                  </div>
+                ) : isPendingAwaitingMyApproval ? (
                   <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap border bg-amber-50 border-amber-200 text-amber-700">
                     <Clock className="h-3 w-3" />
                   </div>

@@ -74,16 +74,22 @@ export default function Debts() {
 
   const userEmail = user?.email?.trim();
 
-  // Settle debt mutation — only creditor (payer) can invoke this
+  // Settle debt mutation — bilateral: settles all shared expenses between current user and other party
   const settleDebtMutation = useMutation({
-    mutationFn: async (borrowerEmail: string) => {
-      // Find all shared expenses paid by the current user that involve the borrower
+    mutationFn: async (otherEmail: string) => {
+      // Find all shared expenses between the current user and the other party (both directions)
       const expensesToSettle = (sharedExpenses as any[]).filter((expense: any) => {
         if (expense.is_pending || expense.is_settled) return false;
-        if (expense.paid_by_user_id?.trim() !== userEmail) return false;
         const splits = (allSplits as any[]).filter((s: any) => s.shared_expense_id === expense.id);
         const splitUserIds = splits.map((s: any) => s.user_id?.trim());
-        return splitUserIds.includes(borrowerEmail.trim());
+        const payerId = expense.paid_by_user_id?.trim();
+
+        // Direction 1: I paid, other person is a participant
+        if (payerId === userEmail && splitUserIds.includes(otherEmail.trim())) return true;
+        // Direction 2: Other person paid, I am a participant
+        if (payerId === otherEmail.trim() && splitUserIds.includes(userEmail)) return true;
+
+        return false;
       });
 
       for (const expense of expensesToSettle) {
@@ -94,6 +100,8 @@ export default function Debts() {
       const name = settleTarget?.name || '';
       toast.success((t as any).settle_debt_success?.replace('{name}', name) || `Debt with ${name} settled`);
       queryClient.invalidateQueries({ queryKey: ['sharedExpenses'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['debts'] });
       setSettleTarget(null);
     },
     onError: () => {
@@ -469,6 +477,7 @@ export default function Debts() {
   const selectedUserExpenses = selectedUser
     ? (sharedExpenses as any[])
         .filter((expense: any) => {
+          if (expense.is_settled) return false;
           const splits = (allSplits as any[]).filter((s: any) => s.shared_expense_id === expense.id);
           const userIds = splits.map((s: any) => s.user_id?.trim());
           return userIds.includes(userEmail) && userIds.includes(selectedUser.email);
@@ -593,17 +602,34 @@ export default function Debts() {
                 {debtsIOwe.map((debt) => (
                   <div
                     key={debt.email}
-                    onClick={() => setSelectedUser({ email: debt.email, name: debt.name })}
-                    className="flex items-center justify-between p-4 bg-red-50 border border-red-100 rounded-xl cursor-pointer hover:bg-red-100 transition-colors"
+                    className="flex items-center justify-between p-4 bg-red-50 border border-red-100 rounded-xl"
                   >
-                    <div>
+                    <div
+                      className="flex-1 cursor-pointer"
+                      onClick={() => setSelectedUser({ email: debt.email, name: debt.name })}
+                    >
                       <div className="font-semibold text-slate-900">
                         {debt.name}
                       </div>
                       <div className="text-sm text-slate-500">{t.you_owe}</div>
                     </div>
-                    <div className="text-xl font-bold text-red-600">
-                      {currencySymbol}{debt.amount.toFixed(2)}
+                    <div className="flex items-center gap-3">
+                      <div className="text-xl font-bold text-red-600">
+                        {currencySymbol}{debt.amount.toFixed(2)}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-700 border-red-300 hover:bg-red-100 hover:border-red-400 flex items-center gap-1.5 shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSettleTarget({ email: debt.email, name: debt.name });
+                        }}
+                        disabled={settleDebtMutation.isPending}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        {(t as any).mark_as_settled || 'Mark as Settled'}
+                      </Button>
                     </div>
                   </div>
                 ))}

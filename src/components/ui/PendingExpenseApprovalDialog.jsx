@@ -336,6 +336,7 @@ export default function PendingExpenseApprovalDialog({ expense, user, open, onOp
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['debts'] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['sharedExpenses'] });
       queryClient.invalidateQueries({ queryKey: ['alwaysApproved'] });
       onOpenChange(false);
     } catch (err) {

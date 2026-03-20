@@ -38,6 +38,7 @@ export default function Login() {
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);
+      else window.location.href = '/';
     }
     setLoading(false);
   };
