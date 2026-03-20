@@ -12,22 +12,24 @@ import { useLanguage } from '@/components/i18n/LanguageContext';
 import { fetchExchangeRate } from '@/api/exchangeRate';
 import { useCurrency } from '@/lib/CurrencyContext';
 
-export default function EditExpenseDialog({ 
-  expense, 
-  categories, 
-  open, 
-  onOpenChange, 
+const SUPPORTED_CURRENCIES = ['ILS', 'USD', 'EUR'];
+
+export default function EditExpenseDialog({
+  expense,
+  categories,
+  open,
+  onOpenChange,
   onSave,
   isLoading,
   isShared = false
 }) {
   const { t, dir } = useLanguage();
   const { currencyCode, currencySymbol } = useCurrency();
-  const SUPPORTED_CURRENCIES = ['ILS', 'USD', 'EUR'];
 
   const [selectedCurrency, setSelectedCurrency] = useState(currencyCode);
   const [rateStatus, setRateStatus] = useState('idle');
   const [exchangeRate, setExchangeRate] = useState(null);
+  const fetchGenRef = React.useRef(0);
 
   const [formData, setFormData] = useState({
     amount: '',
@@ -39,31 +41,38 @@ export default function EditExpenseDialog({
   });
 
   useEffect(() => {
-    if (expense) {
-      const isForeign = expense.original_currency && expense.original_currency !== currencyCode;
-      setFormData({
-        amount: isForeign
-          ? (expense.original_amount?.toString() || '')
-          : (expense.amount?.toString() || ''),
-        date: expense.date ? parseISO(expense.date) : new Date(),
-        category_id: expense.category_id || '',
-        description: expense.description || '',
-        merchant: expense.merchant || '',
-        payment_method: expense.payment_method || '',
-      });
-      const initialCurrency = expense.original_currency || currencyCode;
-      setSelectedCurrency(initialCurrency);
-      if (isForeign) {
-        setRateStatus('loading');
-        setExchangeRate(null);
-        fetchExchangeRate(initialCurrency, currencyCode)
-          .then(rate => { setExchangeRate(rate); setRateStatus('ready'); })
-          .catch(() => setRateStatus('error'));
-      } else {
-        setRateStatus('idle');
-        setExchangeRate(null);
-      }
+    if (!expense) {
+      // Reset when expense is null
+      setSelectedCurrency(currencyCode);
+      setRateStatus('idle');
+      setExchangeRate(null);
+      return;
     }
+    let cancelled = false;
+    const isForeign = expense.original_currency && expense.original_currency !== currencyCode;
+    setFormData({
+      amount: isForeign
+        ? (expense.original_amount?.toString() || '')
+        : (expense.amount?.toString() || ''),
+      date: expense.date ? parseISO(expense.date) : new Date(),
+      category_id: expense.category_id || '',
+      description: expense.description || '',
+      merchant: expense.merchant || '',
+      payment_method: expense.payment_method || '',
+    });
+    const initialCurrency = expense.original_currency || currencyCode;
+    setSelectedCurrency(initialCurrency);
+    if (isForeign) {
+      setRateStatus('loading');
+      setExchangeRate(null);
+      fetchExchangeRate(initialCurrency, currencyCode)
+        .then(rate => { if (!cancelled) { setExchangeRate(rate); setRateStatus('ready'); } })
+        .catch(() => { if (!cancelled) setRateStatus('error'); });
+    } else {
+      setRateStatus('idle');
+      setExchangeRate(null);
+    }
+    return () => { cancelled = true; };
   }, [expense, currencyCode]);
 
   const handleCurrencyChange = (currency) => {
@@ -72,25 +81,28 @@ export default function EditExpenseDialog({
       setRateStatus('idle');
       setExchangeRate(null);
     } else {
+      const gen = ++fetchGenRef.current;
       setRateStatus('loading');
       setExchangeRate(null);
       fetchExchangeRate(currency, currencyCode)
-        .then(rate => { setExchangeRate(rate); setRateStatus('ready'); })
-        .catch(() => setRateStatus('error'));
+        .then(rate => { if (gen === fetchGenRef.current) { setExchangeRate(rate); setRateStatus('ready'); } })
+        .catch(() => { if (gen === fetchGenRef.current) setRateStatus('error'); });
     }
   };
 
   const retryFetch = () => {
+    const gen = ++fetchGenRef.current;
     setRateStatus('loading');
     fetchExchangeRate(selectedCurrency, currencyCode)
-      .then(rate => { setExchangeRate(rate); setRateStatus('ready'); })
-      .catch(() => setRateStatus('error'));
+      .then(rate => { if (gen === fetchGenRef.current) { setExchangeRate(rate); setRateStatus('ready'); } })
+      .catch(() => { if (gen === fetchGenRef.current) setRateStatus('error'); });
   };
 
   const handleSave = async () => {
     const category = categories.find(c => c.id === formData.category_id);
     const isForeign = selectedCurrency !== currencyCode;
     const originalAmount = parseFloat(formData.amount);
+    if (!Number.isFinite(originalAmount)) return;
     if (isForeign && !exchangeRate) return;
     const convertedAmount = isForeign ? originalAmount * exchangeRate : originalAmount;
 
@@ -164,7 +176,7 @@ export default function EditExpenseDialog({
             )}
             {rateStatus === 'ready' && exchangeRate && (
               <p className="text-xs text-slate-500">
-                {t.currency_rate_info_edit
+                {(t.currency_rate_info_edit || '')
                   .replace('{from}', selectedCurrency)
                   .replace('{rate}', exchangeRate.toFixed(4))
                   .replace('{toSymbol}', currencySymbol)
