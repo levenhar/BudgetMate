@@ -14,6 +14,92 @@ import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/components/i18n/LanguageContext';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { fetchExchangeRate } from '@/api/exchangeRate';
+
+const SUPPORTED_CURRENCIES = ['ILS', 'USD', 'EUR'];
+
+/**
+ * Manages the exchange rate state machine for a single form tab.
+ * Returns { selectedCurrency, rateStatus, exchangeRate, selectCurrency, retryFetch, resetRate }
+ */
+function useCurrencyRate(defaultCurrency) {
+  const [selectedCurrency, setSelectedCurrency] = React.useState(defaultCurrency);
+  const [rateStatus, setRateStatus] = React.useState('idle'); // 'idle'|'loading'|'ready'|'error'
+  const [exchangeRate, setExchangeRate] = React.useState(null);
+
+  const doFetch = React.useCallback(async (from, to, errorMsg) => {
+    setRateStatus('loading');
+    setExchangeRate(null);
+    try {
+      const rate = await fetchExchangeRate(from, to);
+      setExchangeRate(rate);
+      setRateStatus('ready');
+    } catch {
+      setRateStatus('error');
+      if (errorMsg) toast.error(errorMsg);
+    }
+  }, []);
+
+  const selectCurrency = React.useCallback((currency, defaultCurr, errorMsg) => {
+    setSelectedCurrency(currency);
+    if (currency === defaultCurr) {
+      setRateStatus('idle');
+      setExchangeRate(null);
+    } else {
+      doFetch(currency, defaultCurr, errorMsg);
+    }
+  }, [doFetch]);
+
+  const retryFetch = React.useCallback((defaultCurr, errorMsg) => {
+    doFetch(selectedCurrency, defaultCurr, errorMsg);
+  }, [doFetch, selectedCurrency]);
+
+  const resetRate = React.useCallback((defaultCurr) => {
+    setSelectedCurrency(defaultCurr);
+    setRateStatus('idle');
+    setExchangeRate(null);
+  }, []);
+
+  return { selectedCurrency, rateStatus, exchangeRate, selectCurrency, retryFetch, resetRate };
+}
+
+/**
+ * Renders the rate info line, spinner, or error+retry below the amount field.
+ */
+function CurrencyRateInfo({ rateStatus, exchangeRate, fromCurrency, toCurrency, toSymbol, amount, t, onRetry }) {
+  if (rateStatus === 'idle') return null;
+
+  if (rateStatus === 'loading') {
+    return (
+      <p className="text-xs text-slate-400 flex items-center gap-1">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        {t.currency_rate_loading}
+      </p>
+    );
+  }
+
+  if (rateStatus === 'error') {
+    return (
+      <p className="text-xs text-red-500 flex items-center gap-1">
+        {t.currency_rate_error}
+        <button type="button" onClick={onRetry} className="underline ml-1">
+          {t.currency_rate_retry}
+        </button>
+      </p>
+    );
+  }
+
+  // ready
+  const total = amount && exchangeRate ? (parseFloat(amount) * exchangeRate).toFixed(2) : '—';
+  const info = t.currency_rate_info
+    .replace('{from}', fromCurrency)
+    .replace('{rate}', exchangeRate?.toFixed(4) ?? '')
+    .replace('{toSymbol}', toSymbol)
+    .replace('{totalSymbol}', toSymbol)
+    .replace('{total}', total);
+
+  return <p className="text-xs text-slate-500">{info}</p>;
+}
 
 export default function UnifiedExpenseDialog({ 
   open, 
@@ -31,7 +117,7 @@ export default function UnifiedExpenseDialog({
   householdId
 }) {
   const { t, dir } = useLanguage();
-  const { currencySymbol } = useCurrency();
+  const { currencySymbol, currencyCode } = useCurrency();
   const [activeTab, setActiveTab] = useState(defaultTab);
 
   useEffect(() => {
@@ -135,6 +221,10 @@ export default function UnifiedExpenseDialog({
   const [recurringEndDateOpen, setRecurringEndDateOpen] = useState(false);
   const [sharedDateOpen, setSharedDateOpen] = useState(false);
 
+  const expenseRate  = useCurrencyRate(currencyCode);
+  const recurringRate = useCurrencyRate(currencyCode);
+  const sharedRate   = useCurrencyRate(currencyCode);
+
   const resetExpenseForm = () => {
     setExpenseForm({
       amount: '',
@@ -146,6 +236,7 @@ export default function UnifiedExpenseDialog({
       installments: 1,
       showMore: false
     });
+    expenseRate.resetRate(currencyCode);
   };
 
   const resetRecurringForm = () => {
@@ -159,6 +250,7 @@ export default function UnifiedExpenseDialog({
       description: '',
       is_active: true
     });
+    recurringRate.resetRate(currencyCode);
   };
 
   const resetSharedForm = () => {
@@ -174,6 +266,7 @@ export default function UnifiedExpenseDialog({
     });
     setUserSearch('');
     setSearchResults([]);
+    sharedRate.resetRate(currencyCode);
   };
 
   // Shared expense functions
@@ -307,8 +400,12 @@ export default function UnifiedExpenseDialog({
 
     const category = categories.find(c => c.id === expenseForm.categoryId);
     try {
+      const isForeign = expenseRate.selectedCurrency !== currencyCode;
+      const originalAmount = parseFloat(expenseForm.amount);
+      const convertedAmount = isForeign ? originalAmount * expenseRate.exchangeRate : originalAmount;
+
       await onSubmitExpense({
-        amount: parseFloat(expenseForm.amount),
+        amount: convertedAmount,
         date: format(expenseForm.date, 'yyyy-MM-dd'),
         category_id: expenseForm.categoryId,
         category_name: category?.name || '',
@@ -316,6 +413,11 @@ export default function UnifiedExpenseDialog({
         merchant: expenseForm.merchant || undefined,
         payment_method: expenseForm.paymentMethod || undefined,
         installments: expenseForm.installments,
+        ...(isForeign && {
+          original_currency: expenseRate.selectedCurrency,
+          original_amount: originalAmount,
+          exchange_rate: expenseRate.exchangeRate,
+        }),
       });
       resetExpenseForm();
     } catch (err) {
@@ -329,16 +431,25 @@ export default function UnifiedExpenseDialog({
 
     const category = categories.find(c => c.id === recurringForm.category_id);
     try {
+      const isForeign = recurringRate.selectedCurrency !== currencyCode;
+      const originalAmount = parseFloat(recurringForm.amount);
+      const convertedAmount = isForeign ? originalAmount * recurringRate.exchangeRate : originalAmount;
+
       await onSubmitRecurring({
         name: recurringForm.name,
-        amount: parseFloat(recurringForm.amount),
+        amount: convertedAmount,
         category_id: recurringForm.category_id,
         category_name: category?.name || '',
         frequency: recurringForm.frequency,
         start_date: format(recurringForm.start_date, 'yyyy-MM-dd'),
         end_date: recurringForm.end_date ? format(recurringForm.end_date, 'yyyy-MM-dd') : null,
         description: recurringForm.description || undefined,
-        is_active: recurringForm.is_active
+        is_active: recurringForm.is_active,
+        ...(isForeign && {
+          original_currency: recurringRate.selectedCurrency,
+          original_amount: originalAmount,
+          exchange_rate: recurringRate.exchangeRate,
+        }),
       });
       resetRecurringForm();
     } catch (err) {
@@ -361,6 +472,8 @@ export default function UnifiedExpenseDialog({
     }
 
     const totalAmount = parseFloat(sharedForm.amount);
+    const isForeign = sharedRate.selectedCurrency !== currencyCode;
+    const convertedTotal = isForeign ? totalAmount * sharedRate.exchangeRate : totalAmount;
 
     let finalSplits = sharedForm.splits;
     if (!finalSplits || finalSplits.length === 0) {
@@ -399,7 +512,7 @@ export default function UnifiedExpenseDialog({
     // Pass all participants to the mutation - it will determine pending status
     try {
       await onSubmitShared({
-        total_amount: totalAmount,
+        total_amount: convertedTotal,
         date: format(sharedForm.date, 'yyyy-MM-dd'),
         category_id: sharedForm.categoryId,
         category_name: category?.name || '',
@@ -409,6 +522,11 @@ export default function UnifiedExpenseDialog({
         household_id: isHouseholdMode ? householdId : null,
         splits: finalSplits,
         participants: sharedForm.participants,
+        ...(isForeign && {
+          original_currency: sharedRate.selectedCurrency,
+          original_amount: totalAmount,
+          exchange_rate: sharedRate.exchangeRate,
+        }),
       });
       resetSharedForm();
     } catch (err) {
@@ -460,7 +578,31 @@ export default function UnifiedExpenseDialog({
                     dir="ltr"
                   />
                 </div>
+                <Select
+                  value={expenseRate.selectedCurrency}
+                  onValueChange={(v) => expenseRate.selectCurrency(v, currencyCode, t.currency_rate_error)}
+                >
+                  <SelectTrigger className="w-20 h-14 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SUPPORTED_CURRENCIES.map(c => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
+              <CurrencyRateInfo
+                rateStatus={expenseRate.rateStatus}
+                exchangeRate={expenseRate.exchangeRate}
+                fromCurrency={expenseRate.selectedCurrency}
+                toCurrency={currencyCode}
+                toSymbol={currencySymbol}
+                amount={expenseForm.amount}
+                t={t}
+                onRetry={() => expenseRate.retryFetch(currencyCode, t.currency_rate_error)}
+              />
 
               <div className="flex gap-3">
                 <Select value={expenseForm.categoryId || undefined} onValueChange={(v) => setExpenseForm({ ...expenseForm, categoryId: v })} required>
@@ -560,7 +702,10 @@ export default function UnifiedExpenseDialog({
               <Button 
                 type="submit" 
                 className="w-full h-12 text-base font-medium bg-slate-900 hover:bg-slate-800"
-                disabled={!expenseForm.amount || !expenseForm.categoryId || isSubmittingExpense}
+                disabled={
+                  !expenseForm.amount || !expenseForm.categoryId || isSubmittingExpense ||
+                  expenseRate.rateStatus === 'loading' || expenseRate.rateStatus === 'error'
+                }
               >
                 {isSubmittingExpense ? (
                    <Loader2 className="h-5 w-5 animate-spin" />
@@ -589,16 +734,41 @@ export default function UnifiedExpenseDialog({
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
+                <div className="space-y-2 col-span-2">
                   <Label className="text-start block">{t.amount_label}</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={recurringForm.amount}
-                    onChange={(e) => setRecurringForm({ ...recurringForm, amount: e.target.value })}
-                    className={`text-lg font-semibold ${dir === 'rtl' ? 'text-right' : ''}`}
-                    dir="ltr"
-                    required
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={recurringForm.amount}
+                      onChange={(e) => setRecurringForm({ ...recurringForm, amount: e.target.value })}
+                      className={`flex-1 text-lg font-semibold ${dir === 'rtl' ? 'text-right' : ''}`}
+                      dir="ltr"
+                      required
+                    />
+                    <Select
+                      value={recurringRate.selectedCurrency}
+                      onValueChange={(v) => recurringRate.selectCurrency(v, currencyCode, t.currency_rate_error)}
+                    >
+                      <SelectTrigger className="w-20 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUPPORTED_CURRENCIES.map(c => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <CurrencyRateInfo
+                    rateStatus={recurringRate.rateStatus}
+                    exchangeRate={recurringRate.exchangeRate}
+                    fromCurrency={recurringRate.selectedCurrency}
+                    toCurrency={currencyCode}
+                    toSymbol={currencySymbol}
+                    amount={recurringForm.amount}
+                    t={t}
+                    onRetry={() => recurringRate.retryFetch(currencyCode, t.currency_rate_error)}
                   />
                 </div>
 
@@ -723,7 +893,11 @@ export default function UnifiedExpenseDialog({
               <Button 
                 type="submit" 
                 className="w-full h-12 text-base font-medium bg-slate-900 hover:bg-slate-800"
-                disabled={!recurringForm.name || !recurringForm.amount || !recurringForm.category_id || isSubmittingRecurring}
+                disabled={
+                  !recurringForm.name || !recurringForm.amount || !recurringForm.category_id ||
+                  isSubmittingRecurring ||
+                  recurringRate.rateStatus === 'loading' || recurringRate.rateStatus === 'error'
+                }
               >
                 {isSubmittingRecurring ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -742,16 +916,41 @@ export default function UnifiedExpenseDialog({
             <form onSubmit={handleSubmitShared} className="space-y-4" dir={dir}>
               {/* Amount & Category */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
+                <div className="space-y-2 col-span-2">
                   <Label className="text-start block">{t.total_amount_label}</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={sharedForm.amount}
-                    onChange={(e) => setSharedForm({ ...sharedForm, amount: e.target.value })}
-                    className={`text-lg font-semibold ${dir === 'rtl' ? 'text-right' : ''}`}
-                    dir="ltr"
-                    required
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={sharedForm.amount}
+                      onChange={(e) => setSharedForm({ ...sharedForm, amount: e.target.value })}
+                      className={`flex-1 text-lg font-semibold ${dir === 'rtl' ? 'text-right' : ''}`}
+                      dir="ltr"
+                      required
+                    />
+                    <Select
+                      value={sharedRate.selectedCurrency}
+                      onValueChange={(v) => sharedRate.selectCurrency(v, currencyCode, t.currency_rate_error)}
+                    >
+                      <SelectTrigger className="w-20 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUPPORTED_CURRENCIES.map(c => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <CurrencyRateInfo
+                    rateStatus={sharedRate.rateStatus}
+                    exchangeRate={sharedRate.exchangeRate}
+                    fromCurrency={sharedRate.selectedCurrency}
+                    toCurrency={currencyCode}
+                    toSymbol={currencySymbol}
+                    amount={sharedForm.amount}
+                    t={t}
+                    onRetry={() => sharedRate.retryFetch(currencyCode, t.currency_rate_error)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -948,7 +1147,10 @@ export default function UnifiedExpenseDialog({
               <Button 
                 type="submit" 
                 className="w-full h-12 text-base font-medium bg-slate-900 hover:bg-slate-800"
-                disabled={isSubmittingShared || sharedForm.participants.length === 0}
+                disabled={
+                  isSubmittingShared || sharedForm.participants.length === 0 ||
+                  sharedRate.rateStatus === 'loading' || sharedRate.rateStatus === 'error'
+                }
               >
                 {isSubmittingShared ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
