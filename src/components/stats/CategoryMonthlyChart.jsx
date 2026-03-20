@@ -1,9 +1,11 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { useLanguage } from '@/components/i18n/LanguageContext';
 
 export default function CategoryMonthlyChart({ data, categoryName }) {
   const { currencySymbol } = useCurrency();
+  const { t } = useLanguage();
 
   if (!data || data.length === 0) {
     return null;
@@ -29,7 +31,7 @@ export default function CategoryMonthlyChart({ data, categoryName }) {
     <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-4">
       {categoryName && (
         <p className="text-sm font-semibold text-slate-700 mb-4">
-          {categoryName} — monthly trend
+          {categoryName} — {t.monthly_trend || 'Monthly trend'}
         </p>
       )}
       <div className="h-48">

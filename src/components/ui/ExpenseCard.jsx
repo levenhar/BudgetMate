@@ -205,10 +205,10 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
                 <Users className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
                 <span className="text-slate-500">{t.shared || 'Shared'}:</span>
                 {expense.paid_by_user_id && expense.paid_by_user_id !== currentUserEmail && (
-                  <span className="text-slate-600">Paid by {expense.paid_by_user_id}</span>
+                  <span className="text-slate-600">{t.paid_by || 'Paid by'} {expense.paid_by_user_id}</span>
                 )}
                 {(!expense.paid_by_user_id || expense.paid_by_user_id === currentUserEmail) && (
-                  <span className="text-slate-600">Paid by you</span>
+                  <span className="text-slate-600">{t.paid_by_you || 'Paid by you'}</span>
                 )}
               </div>
             )}

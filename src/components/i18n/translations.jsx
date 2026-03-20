@@ -227,6 +227,9 @@ export const translations = {
       awaiting_your_approval: 'ממתין לאישורך',
       awaiting_approvals: 'ממתין לאישורים',
       shared: 'משותף',
+      paid_by: 'שולם על ידי',
+      paid_by_you: 'שולם על ידך',
+      monthly_trend: 'מגמה חודשית',
       // Dashboard
       transaction: 'עסקה',
       pct_used: '% בשימוש',
@@ -620,6 +623,9 @@ export const translations = {
       awaiting_your_approval: 'Awaiting your approval',
       awaiting_approvals: 'Awaiting approvals',
       shared: 'Shared',
+      paid_by: 'Paid by',
+      paid_by_you: 'Paid by you',
+      monthly_trend: 'Monthly trend',
       // Dashboard
       transaction: 'transaction',
       pct_used: '% used',
