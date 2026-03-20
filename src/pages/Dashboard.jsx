@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/components/i18n/LanguageContext';
 import { useCurrency } from '@/lib/CurrencyContext';
-import { TrendingUp, TrendingDown, Receipt, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, Receipt, Wallet } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { endOfMonth } from 'date-fns';
@@ -186,7 +186,7 @@ export default function Dashboard() {
                   )}
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
-                  <Target className="h-5 w-5 text-violet-600" />
+                  <Wallet className="h-5 w-5 text-violet-600" />
                 </div>
               </div>
             </CardContent>
