@@ -45,3 +45,5 @@ test*
 base_data/*
 scripts/*
 docs/*.worktrees/
+docs/*
+worktrees/*

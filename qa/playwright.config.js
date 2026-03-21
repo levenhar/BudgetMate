@@ -1,4 +1,4 @@
-// tests/qa/playwright.config.js
+// qa/playwright.config.js
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -36,9 +36,9 @@ export default defineConfig({
     { name: 'shared-c',    testMatch: 'shared-c.spec.js' },
   ],
 
-  outputDir: '../../test-results/qa',
+  outputDir: '../test-results/qa',
   reporter: [
     ['list'],
-    ['html', { outputFolder: '../../playwright-report/qa', open: 'never' }],
+    ['html', { outputFolder: '../playwright-report/qa', open: 'never' }],
   ],
 });

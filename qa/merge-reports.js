@@ -1,4 +1,4 @@
-// tests/qa/merge-reports.js
+// qa/merge-reports.js
 import fs from 'fs';
 import path from 'path';
 import os from 'os';

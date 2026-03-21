@@ -56,11 +56,11 @@ jobs:
         run: wait-on http://localhost:5173 --timeout 30000
 
       - name: Run QA tests
-        run: npx playwright test --config tests/qa/playwright.config.js --reporter list
+        run: npx playwright test --config qa/playwright.config.js --reporter list
         continue-on-error: true   # Don't fail the job if tests find bugs — that's expected
 
       - name: Merge bug reports
-        run: node tests/qa/merge-reports.js
+        run: node qa/merge-reports.js
 
       - name: Upload test artifacts
         uses: actions/upload-artifact@v4
@@ -144,7 +144,7 @@ jobs:
             - Fix bugs autonomously if they are: CSS/styling issues, missing validation, calculation logic errors
             - SKIP bugs that require: new database columns, conflicting changes, or ambiguous expected behavior
               (write a comment in the source file: "// TODO QA-FIX-BLOCKED: <reason>")
-            - Never modify test files in tests/qa/
+            - Never modify test files in qa/
             - Never modify supabase/migrations/
             - Run npm run build after all fixes and ensure it passes
             - Commit all changes with: "fix: implement QA-detected fixes $(date +%Y-%m-%d)"
