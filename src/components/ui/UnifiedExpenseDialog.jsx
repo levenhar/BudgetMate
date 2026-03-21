@@ -787,8 +787,8 @@ export default function UnifiedExpenseDialog({
 
                 <div className="space-y-2">
                   <Label className="text-start block">{t.frequency_label}</Label>
-                  <Select 
-                    value={recurringForm.frequency} 
+                  <Select
+                    value={recurringForm.frequency}
                     onValueChange={(v) => setRecurringForm({ ...recurringForm, frequency: v })}
                   >
                     <SelectTrigger dir={dir}>
@@ -802,35 +802,35 @@ export default function UnifiedExpenseDialog({
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label className="text-start block">{t.category_label}</Label>
-                <Select 
-                  value={recurringForm.category_id || undefined} 
-                  onValueChange={(v) => setRecurringForm({ ...recurringForm, category_id: v })}
-                  required
-                >
-                  <SelectTrigger className="w-full" dir={dir}>
-                    <SelectValue placeholder={t.choose_category} />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[200px]" dir={dir}>
-                    {categories.length === 0 ? (
-                      <div className="p-4 text-center text-sm text-slate-500">
-                        {t.no_categories}
-                      </div>
-                    ) : (
-                      categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id} className="cursor-pointer">
-                          <div className="flex items-center gap-2">
-                            <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
-                            <span>{cat.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label className="text-start block">{t.category_label}</Label>
+                  <Select
+                    value={recurringForm.category_id || undefined}
+                    onValueChange={(v) => setRecurringForm({ ...recurringForm, category_id: v })}
+                    required
+                  >
+                    <SelectTrigger className="w-full" dir={dir}>
+                      <SelectValue placeholder={t.choose_category} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[200px]" dir={dir}>
+                      {categories.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-slate-500">
+                          {t.no_categories}
+                        </div>
+                      ) : (
+                        categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id} className="cursor-pointer">
+                            <div className="flex items-center gap-2">
+                              <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                              <span>{cat.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1087,36 +1087,37 @@ export default function UnifiedExpenseDialog({
                 </div>
               </div>
 
-              {/* Who Paid */}
-              <div className="space-y-2">
-                <Label className="text-start block">{t.who_paid_label}</Label>
-                <Select value={sharedForm.paidByUserId || undefined} onValueChange={(v) => setSharedForm({ ...sharedForm, paidByUserId: v })} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t.choose_who_paid} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allParticipants.filter(p => p.email).map((p) => (
-                      <SelectItem key={p.email} value={p.email}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Who Paid + Split Method */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-start block">{t.who_paid_label}</Label>
+                  <Select value={sharedForm.paidByUserId || undefined} onValueChange={(v) => setSharedForm({ ...sharedForm, paidByUserId: v })} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t.choose_who_paid} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allParticipants.filter(p => p.email).map((p) => (
+                        <SelectItem key={p.email} value={p.email}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/* Split Method */}
-              <div className="space-y-2">
-                <Label className="text-start block">{t.split_method_label}</Label>
-                <Select value={sharedForm.splitMethod} onValueChange={(v) => setSharedForm({ ...sharedForm, splitMethod: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="equal">{t.split_equal}</SelectItem>
-                    <SelectItem value="custom_amount">{t.split_custom_amount}</SelectItem>
-                    <SelectItem value="custom_percent">{t.split_custom_percent}</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label className="text-start block">{t.split_method_label}</Label>
+                  <Select value={sharedForm.splitMethod} onValueChange={(v) => setSharedForm({ ...sharedForm, splitMethod: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="equal">{t.split_equal}</SelectItem>
+                      <SelectItem value="custom_amount">{t.split_custom_amount}</SelectItem>
+                      <SelectItem value="custom_percent">{t.split_custom_percent}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Splits Table */}
