@@ -148,7 +148,7 @@ jobs:
             - Never modify supabase/migrations/
             - Run npm run build after all fixes and ensure it passes
             - Commit all changes with: "fix: implement QA-detected fixes $(date +%Y-%m-%d)"
-            - Push to the current branch when done
+            - Do NOT merge to main. Do NOT open a PR. Just commit and push to the current branch.
 
       - name: Create Pull Request
         # Use gh CLI to create the PR — avoids the peter-evans action's push conflict
