@@ -1,0 +1,178 @@
+# .github/workflows/weekly-qa.yml
+name: Weekly QA
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # Every Monday 6:00 UTC
+  workflow_dispatch:        # Manual trigger
+
+permissions:
+  contents: write           # needed to commit bug report + create branch
+  pull-requests: write      # needed to create fix PR
+
+jobs:
+  qa-run:
+    name: Run QA Agents
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Install wait-on
+        run: npm install -g wait-on
+
+      - name: Create .env.local for dev server
+        run: |
+          echo "VITE_SUPABASE_URL=$VITE_SUPABASE_URL" >> .env.local
+          echo "VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY" >> .env.local
+          echo "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY" >> .env.local
+
+      - name: Start dev server
+        run: npm run dev &
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Wait for dev server
+        run: wait-on http://localhost:5173 --timeout 30000
+
+      - name: Run QA tests
+        run: npx playwright test --config tests/qa/playwright.config.js --reporter list
+        continue-on-error: true   # Don't fail the job if tests find bugs — that's expected
+
+      - name: Merge bug reports
+        run: node tests/qa/merge-reports.js
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-results-${{ github.run_id }}
+          path: |
+            docs/qa/
+            playwright-report/qa/
+            test-results/qa/
+          retention-days: 30
+
+      - name: Commit bug report to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/qa/
+          git diff --cached --quiet || git commit -m "chore: weekly QA bug report $(date +%Y-%m-%d)"
+          git push
+
+      - name: Set bug report path output
+        id: report
+        run: echo "path=docs/qa/bug-report-$(date +%Y-%m-%d).md" >> $GITHUB_OUTPUT
+
+    outputs:
+      bug_report_path: ${{ steps.report.outputs.path }}
+
+  fix-pipeline:
+    name: Implement Fixes
+    needs: qa-run
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    env:
+      # Pass Supabase creds in case any fix verification step needs them
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history for branch creation
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Pull latest (bug report was just committed)
+        run: git pull origin main
+
+      - name: Create fix branch
+        run: |
+          BRANCH="qa-fixes-$(date +%Y-%m-%d)"
+          git checkout -b "$BRANCH"
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
+      - name: Run Claude Code to implement fixes
+        # claude-code-action@beta commits directly to the current branch.
+        # Do NOT push manually after this step — the action handles commits.
+        uses: anthropic-ai/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are implementing bug fixes for BudgetMate, a React/Supabase budget app.
+
+            Read the bug report at ${{ needs.qa-run.outputs.bug_report_path }}.
+
+            For each bug, ordered by severity (CRITICAL first, then HIGH, MEDIUM, LOW):
+            1. Read the relevant source files in src/
+            2. Implement the minimal fix
+            3. Verify the fix makes sense (run npm run build to check no TypeScript/lint errors)
+
+            Rules:
+            - Fix bugs autonomously if they are: CSS/styling issues, missing validation, calculation logic errors
+            - SKIP bugs that require: new database columns, conflicting changes, or ambiguous expected behavior
+              (write a comment in the source file: "// TODO QA-FIX-BLOCKED: <reason>")
+            - Never modify test files in tests/qa/
+            - Never modify supabase/migrations/
+            - Run npm run build after all fixes and ensure it passes
+            - Commit all changes with: "fix: implement QA-detected fixes $(date +%Y-%m-%d)"
+            - Push to the current branch when done
+
+      - name: Create Pull Request
+        # Use gh CLI to create the PR — avoids the peter-evans action's push conflict
+        # since claude-code-action already pushed the branch.
+        run: |
+          gh pr create \
+            --title "fix: QA-detected bugs $(date +%Y-%m-%d)" \
+            --body "## Automated QA Fix PR
+
+          This PR was automatically generated by the weekly QA workflow.
+
+          **Bug report:** \`${{ needs.qa-run.outputs.bug_report_path }}\`
+
+          **Review checklist:**
+          - [ ] Review each fix against the original bug report
+          - [ ] Run \`npm run dev\` and manually verify the fixed behaviors
+          - [ ] Run \`npm run build\` to confirm no errors
+          - [ ] Merge when satisfied
+
+          ⚠️ Bugs marked \`TODO QA-FIX-BLOCKED\` in source files require manual attention.
+
+          🤖 Generated by [Claude Code Action](https://github.com/anthropic-ai/claude-code-action)" \
+            --label "automated-qa,bug-fix" \
+            --base main \
+            --head "$BRANCH" || echo "PR already exists or no changes to submit"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

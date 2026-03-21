@@ -10,7 +10,9 @@
         "lint:fix": "eslint . --fix",
         "typecheck": "tsc -p ./jsconfig.json",
         "preview": "vite preview",
-        "seed:users": "node scripts/create-test-users.js"
+        "seed:users": "node scripts/create-test-users.js",
+        "test:qa": "playwright test --config tests/qa/playwright.config.js",
+        "qa:merge": "node tests/qa/merge-reports.js"
     },
     "dependencies": {
         "@hello-pangea/dnd": "^17.0.0",
