@@ -44,4 +44,4 @@ supabase/*
 test*
 base_data/*
 scripts/*
-docs/*
+docs/*.worktrees/
