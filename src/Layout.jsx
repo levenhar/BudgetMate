@@ -140,6 +140,7 @@ function LayoutInner({ children, currentPageName }) {
       toast.success(installments > 1 ? `${installments} תשלומים נוספו בהצלחה!` : 'ההוצאה נוספה בהצלחה!');
       setShowAddExpense(false);
     },
+    onError: () => toast.error('שגיאה בהוספת הוצאה'),
   });
 
   const createRecurringMutation = useMutation({
@@ -153,6 +154,7 @@ function LayoutInner({ children, currentPageName }) {
       toast.success('הוצאה קבועה נוספה בהצלחה');
       setShowAddExpense(false);
     },
+    onError: () => toast.error('שגיאה בהוספת הוצאה קבועה'),
   });
 
   const createSharedExpenseMutation = useMutation({
@@ -273,6 +275,7 @@ function LayoutInner({ children, currentPageName }) {
       toast.success('הוצאה משותפת נוצרה בהצלחה!');
       setShowAddExpense(false);
     },
+    onError: () => toast.error('שגיאה בהוספת הוצאה משותפת'),
   });
 
   const userPicture = user?.data?.picture || user?.picture;
@@ -548,9 +551,9 @@ function LayoutInner({ children, currentPageName }) {
         open={showAddExpense}
         onOpenChange={setShowAddExpense}
         categories={categories}
-        onSubmitExpense={(data) => createExpenseMutation.mutate(data)}
-        onSubmitRecurring={(data) => createRecurringMutation.mutate(data)}
-        onSubmitShared={(data) => createSharedExpenseMutation.mutate(data)}
+        onSubmitExpense={(data) => createExpenseMutation.mutateAsync(data)}
+        onSubmitRecurring={(data) => createRecurringMutation.mutateAsync(data)}
+        onSubmitShared={(data) => createSharedExpenseMutation.mutateAsync(data)}
         isSubmittingExpense={createExpenseMutation.isPending}
         isSubmittingRecurring={createRecurringMutation.isPending}
         isSubmittingShared={createSharedExpenseMutation.isPending}
