@@ -27,6 +27,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.webp
+*.mp4
+*.mp3
 
 .env
 .vercel
@@ -35,3 +44,4 @@ supabase/*
 test*
 base_data/*
 scripts/*
+docs/*

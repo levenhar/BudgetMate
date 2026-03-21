@@ -10,7 +10,13 @@
       "mcp__supabase__get_project",
       "mcp__supabase__*",
       "mcp__claude_ai_Gmail__gmail_get_profile",
-      "mcp__vercel__deploy_to_vercel"
+      "mcp__vercel__deploy_to_vercel",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_fill_form",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_type",
+      "mcp__plugin_playwright_playwright__browser_press_key",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot"
     ],
     "ask": [
       "Bash(git push:*)",
