@@ -18,12 +18,10 @@ export const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 export async function createTestUser(email, password, fullName) {
   // Delete if exists from prior run (fetch up to 1000 users to avoid 50-user page limit)
   try {
-    const { data, error } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
-    if (!error && data?.users) {
-      const existing = data.users.find(u => u.email === email);
-      if (existing) {
-        await adminClient.auth.admin.deleteUser(existing.id);
-      }
+    const { data: listData, error: listError } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+    if (!listError && listData?.users) {
+      const existing = listData.users.find(u => u.email === email);
+      if (existing) await adminClient.auth.admin.deleteUser(existing.id);
     }
   } catch (_) { /* ignore */ }
 
