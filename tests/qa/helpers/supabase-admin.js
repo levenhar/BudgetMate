@@ -35,20 +35,22 @@ export async function createTestUser(email, password, fullName) {
 
   const userId = data.user.id;
 
-  await adminClient.from('user_profiles').upsert({
+  const { error: profileError } = await adminClient.from('user_profiles').upsert({
     id: userId,
     user_email: email,
     full_name: fullName,
     status: 'active',
     created_by: email,
   }, { onConflict: 'id' });
+  if (profileError) throw new Error(`createTestUser profile upsert (${email}): ${profileError.message}`);
 
-  await adminClient.from('user_settings').upsert({
+  const { error: settingsError } = await adminClient.from('user_settings').upsert({
     user_email: email,
     mode: 'personal',
     currency: 'USD',
     created_by: email,
   }, { onConflict: 'user_email' });
+  if (settingsError) throw new Error(`createTestUser settings upsert (${email}): ${settingsError.message}`);
 
   return userId;
 }
@@ -128,7 +130,9 @@ export async function seedDebt(userEmail) {
 
 export async function createHousehold(ownerEmail, memberEmails) {
   // Delete any prior QA household
-  await adminClient.from('households').delete().eq('name', 'QA Household');
+  await adminClient.from('households').delete()
+    .eq('name', 'QA Household')
+    .eq('owner_email', ownerEmail);
 
   const { data, error } = await adminClient.from('households').insert({
     name: 'QA Household',
@@ -142,7 +146,8 @@ export async function createHousehold(ownerEmail, memberEmails) {
 }
 
 export async function setHouseholdMode(userEmail, householdId) {
-  await adminClient.from('user_settings')
+  const { error } = await adminClient.from('user_settings')
     .update({ mode: 'household', current_household_id: householdId })
     .eq('user_email', userEmail);
+  if (error) throw new Error(`setHouseholdMode(${userEmail}): ${error.message}`);
 }
