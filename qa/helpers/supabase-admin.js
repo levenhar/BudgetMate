@@ -25,10 +25,18 @@ async function findUserByEmail(email) {
   while (true) {
     const { data, error } = await adminClient.auth.admin.listUsers({ page, perPage: 1000 });
     if (error) throw error;
-    const found = data?.users?.find(u => u.email === email);
+    const users = data?.users ?? [];
+    const found = users.find(u => u.email === email);
     if (found) return found;
-    if (!data?.nextPage) return null;
-    page = data.nextPage;
+    // nextPage is present in newer SDK versions; fall back to counting returned users
+    // to detect whether there are more pages.
+    if (data?.nextPage) {
+      page = data.nextPage;
+    } else if (users.length === 1000) {
+      page++; // full page returned — there may be more
+    } else {
+      return null; // partial page = last page
+    }
   }
 }
 
