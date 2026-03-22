@@ -16,53 +16,41 @@ export const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 });
 
 /**
- * Look up an auth user's ID by email using a SQL function via PostgREST RPC.
- * Bypasses the GoTrue listUsers endpoint which throws "Database error finding users"
- * on some Supabase projects. The function `get_auth_user_id_by_email` must exist
- * in the public schema (created via migration or MCP).
+ * Permanent QA users — created once in Supabase, never deleted.
+ * Password: QAtest!2026
+ * To recreate: Supabase Dashboard → Authentication → Users → Add user.
+ */
+const QA_USER_EMAILS = [
+  'qa-user-a@budgetmate.test',
+  'qa-user-b@budgetmate.test',
+  'qa-user-c@budgetmate.test',
+];
+
+/**
+ * Get an auth user's UUID by email via a SQL RPC.
+ * Avoids the GoTrue admin API (listUsers / updateUser) which is unreliable
+ * on this project. The function `get_auth_user_id_by_email` must exist in Supabase.
  */
 async function getAuthUserIdByEmail(email) {
   const { data, error } = await adminClient.rpc('get_auth_user_id_by_email', { p_email: email });
   if (error) throw new Error(`getAuthUserIdByEmail(${email}): ${error.message}`);
-  return data ?? null; // uuid string or null if not found
+  if (!data) throw new Error(
+    `QA user not found: ${email}\n` +
+    `Create it in Supabase Dashboard → Authentication → Users with password "QAtest!2026".`
+  );
+  return data;
 }
 
-export async function createTestUser(email, password, fullName) {
-  // Pre-cleanup: remove any leftover DB rows for this email
+/**
+ * Seed DB rows for a permanent QA user.
+ * Auth user must already exist — this only manages user_profiles + user_settings.
+ */
+export async function seedTestUser(email, fullName) {
+  // Clean any leftover rows from previous runs
   await adminClient.from('user_settings').delete().eq('user_email', email);
   await adminClient.from('user_profiles').delete().eq('user_email', email);
 
-  let userId;
-
-  // Attempt creation first — avoids listUsers which throws "Database error" on some projects.
-  const { data: created, error: createError } = await adminClient.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { full_name: fullName },
-  });
-
-  if (!createError) {
-    userId = created.user.id;
-  } else if (createError.message?.includes('already been registered') || createError.message?.includes('already registered')) {
-    // User already exists — look up ID via SQL RPC (PostgREST, avoids broken listUsers)
-    const existingId = await getAuthUserIdByEmail(email);
-    if (!existingId) {
-      throw new Error(
-        `createTestUser(${email}): email is registered but not found in auth.users via RPC.\n` +
-        `Check the user status in Supabase Dashboard → Authentication → Users.`
-      );
-    }
-    const { data: updated, error: updateErr } = await adminClient.auth.admin.updateUser(existingId, {
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: fullName },
-    });
-    if (updateErr) throw new Error(`createTestUser update(${email}): ${updateErr.message}`);
-    userId = updated.user.id;
-  } else {
-    throw new Error(`createTestUser(${email}): ${createError.message}`);
-  }
+  const userId = await getAuthUserIdByEmail(email);
 
   const { error: profileError } = await adminClient.from('user_profiles').upsert({
     id: userId,
@@ -71,24 +59,21 @@ export async function createTestUser(email, password, fullName) {
     status: 'active',
     created_by: email,
   }, { onConflict: 'id' });
-  if (profileError) throw new Error(`createTestUser profile upsert (${email}): ${profileError.message}`);
+  if (profileError) throw new Error(`seedTestUser profile (${email}): ${profileError.message}`);
 
-  await adminClient.from('user_settings').delete().eq('user_email', email);
   const { error: settingsError } = await adminClient.from('user_settings').insert({
     user_email: email,
     mode: 'personal',
     currency: 'USD',
     created_by: email,
   });
-  if (settingsError) throw new Error(`createTestUser settings insert (${email}): ${settingsError.message}`);
+  if (settingsError) throw new Error(`seedTestUser settings (${email}): ${settingsError.message}`);
 
   return userId;
 }
 
 export async function deleteTestUser(email) {
-  // Only clean up DB rows — do NOT delete auth users.
-  // Supabase tombstones deleted emails, preventing re-creation in subsequent runs.
-  // Auth users are reused across runs via updateUser in createTestUser.
+  // Only clean DB rows — auth users are permanent and never deleted.
   try {
     await adminClient.from('user_settings').delete().eq('user_email', email);
     await adminClient.from('user_profiles').delete().eq('user_email', email);

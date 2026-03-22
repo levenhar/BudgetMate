@@ -4,18 +4,17 @@ import path from 'path';
 import os from 'os';
 import {
   adminClient,
-  createTestUser, createHousehold, setHouseholdMode,
+  seedTestUser, createHousehold, setHouseholdMode,
   seedCategory, seedBudget, seedRecurringExpense,
   seedSavingsGoal, seedDebt,
 } from './helpers/supabase-admin.js';
 import { writeSignal } from './helpers/signals.js';
 
-// Use .test domain — .local emails were tombstoned in Supabase from prior deletion runs.
-// Auth users are now NEVER deleted between runs (only DB rows are cleaned up).
+// Permanent QA users — auth accounts exist in Supabase, never deleted.
+// Password: QAtest!2026  (set once in Supabase Dashboard, not managed here)
 const USER_A = 'qa-user-a@budgetmate.test';
 const USER_B = 'qa-user-b@budgetmate.test';
 const USER_C = 'qa-user-c@budgetmate.test';
-const PASSWORD = 'QAtest!2026';
 
 export default async function globalSetup() {
   // Verify Supabase connectivity before doing anything
@@ -29,12 +28,12 @@ export default async function globalSetup() {
   }
   console.log('[setup] Supabase connection OK.');
 
-  console.log('[setup] Creating test accounts...');
+  console.log('[setup] Seeding test accounts...');
 
-  // Sequential to avoid Supabase auth race conditions during cleanup/create
-  const idA = await createTestUser(USER_A, PASSWORD, 'QA User A');
-  const idB = await createTestUser(USER_B, PASSWORD, 'QA User B');
-  const idC = await createTestUser(USER_C, PASSWORD, 'QA User C');
+  // Seed DB rows for permanent QA users (auth accounts already exist in Supabase)
+  const idA = await seedTestUser(USER_A, 'QA User A');
+  const idB = await seedTestUser(USER_B, 'QA User B');
+  const idC = await seedTestUser(USER_C, 'QA User C');
 
   console.log('[setup] Creating household...');
   const householdId = await createHousehold(USER_A, [USER_B, USER_C]);
@@ -67,9 +66,9 @@ export default async function globalSetup() {
 
   const session = {
     users: {
-      a: { email: USER_A, password: PASSWORD, id: idA },
-      b: { email: USER_B, password: PASSWORD, id: idB },
-      c: { email: USER_C, password: PASSWORD, id: idC },
+      a: { email: USER_A, password: 'QAtest!2026', id: idA },
+      b: { email: USER_B, password: 'QAtest!2026', id: idB },
+      c: { email: USER_C, password: 'QAtest!2026', id: idC },
     },
     householdId,
     seedData: {
