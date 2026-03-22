@@ -41,8 +41,24 @@ export async function createTestUser(email, password, fullName) {
       email_confirm: true,
       user_metadata: { full_name: fullName },
     });
-    if (error) throw new Error(`createTestUser(${email}): ${error.message}`);
-    userId = data.user.id;
+
+    if (error?.message?.includes('already been registered') || error?.message?.includes('already registered')) {
+      // listUsers returned stale data (user pending deletion) — re-fetch and update instead
+      const { data: list2 } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+      const stale = list2?.users?.find(u => u.email === email);
+      if (!stale) throw new Error(`createTestUser(${email}): ${error.message} (user not found on re-fetch)`);
+      const { data: updated, error: updateErr } = await adminClient.auth.admin.updateUser(stale.id, {
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: fullName },
+      });
+      if (updateErr) throw new Error(`createTestUser re-update(${email}): ${updateErr.message}`);
+      userId = updated.user.id;
+    } else if (error) {
+      throw new Error(`createTestUser(${email}): ${error.message}`);
+    } else {
+      userId = data.user.id;
+    }
   }
 
   const { error: profileError } = await adminClient.from('user_profiles').upsert({
