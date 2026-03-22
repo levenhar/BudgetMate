@@ -3,6 +3,7 @@ import { writeFileSync } from 'fs';
 import path from 'path';
 import os from 'os';
 import {
+  adminClient,
   createTestUser, createHousehold, setHouseholdMode,
   seedCategory, seedBudget, seedRecurringExpense,
   seedSavingsGoal, seedDebt,
@@ -17,6 +18,17 @@ const USER_C = 'qa-user-c@budgetmate.test';
 const PASSWORD = 'QAtest!2026';
 
 export default async function globalSetup() {
+  // Verify Supabase connectivity before doing anything
+  console.log('[setup] Verifying Supabase connection...');
+  const { error: pingError } = await adminClient.from('user_profiles').select('id').limit(1);
+  if (pingError) {
+    throw new Error(
+      `[setup] Cannot reach Supabase: ${pingError.message}\n` +
+      `Check VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local`
+    );
+  }
+  console.log('[setup] Supabase connection OK.');
+
   console.log('[setup] Creating test accounts...');
 
   // Sequential to avoid Supabase auth race conditions during cleanup/create
