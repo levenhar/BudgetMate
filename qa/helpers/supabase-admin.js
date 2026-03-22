@@ -16,34 +16,9 @@ export const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 });
 
 /**
- * Paginate through ALL pages of listUsers to find a user by email.
- * The SDK's listUsers({ perPage: 1000 }) only returns page 1 — projects with
- * >1000 users (or soft-deleted users on later pages) would not be found otherwise.
- */
-async function findUserByEmail(email) {
-  let page = 1;
-  while (true) {
-    const { data, error } = await adminClient.auth.admin.listUsers({ page, perPage: 1000 });
-    if (error) throw error;
-    const users = data?.users ?? [];
-    const found = users.find(u => u.email === email);
-    if (found) return found;
-    // nextPage is present in newer SDK versions; fall back to counting returned users
-    // to detect whether there are more pages.
-    if (data?.nextPage) {
-      page = data.nextPage;
-    } else if (users.length === 1000) {
-      page++; // full page returned — there may be more
-    } else {
-      return null; // partial page = last page
-    }
-  }
-}
-
-/**
- * Fallback: scan all users via the raw Supabase Admin Auth REST API.
- * The JS SDK's listUsers may omit soft-deleted (tombstoned) users in some Supabase
- * versions; the raw endpoint includes them. Paginates until found or exhausted.
+ * Find a user by email via the raw Supabase Admin Auth REST API.
+ * Avoids the SDK's listUsers which can throw "Database error finding users"
+ * on some Supabase projects. Also handles soft-deleted (tombstoned) users.
  */
 async function fetchUserByEmailDirect(email) {
   try {
@@ -75,51 +50,36 @@ export async function createTestUser(email, password, fullName) {
   await adminClient.from('user_settings').delete().eq('user_email', email);
   await adminClient.from('user_profiles').delete().eq('user_email', email);
 
-  // Find existing auth user across ALL pages (not just page 1)
-  const existing = await findUserByEmail(email);
-
   let userId;
-  if (existing) {
-    // Update existing user (handles both active and soft-deleted users)
-    const { data, error } = await adminClient.auth.admin.updateUser(existing.id, {
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: fullName },
-    });
-    if (error) throw new Error(`createTestUser update(${email}): ${error.message}`);
-    userId = data.user.id;
-  } else {
-    const { data, error } = await adminClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: fullName },
-    });
 
-    if (error?.message?.includes('already been registered') || error?.message?.includes('already registered')) {
-      // listUsers didn't return the user but Supabase knows it exists.
-      // This happens when a user is soft-deleted and the SDK filters them out.
-      // Try the raw REST endpoint which returns soft-deleted records too.
-      const tombstoned = await fetchUserByEmailDirect(email);
-      if (!tombstoned) {
-        throw new Error(
-          `createTestUser(${email}): email is permanently tombstoned in Supabase.\n` +
-          `Go to Supabase Dashboard → Authentication → Users, restore or remove the deleted record,\n` +
-          `or change USER_A/USER_B/USER_C in global-setup.js + QA_USERS in auth.js to fresh addresses.`
-        );
-      }
-      const { data: updated, error: updateErr } = await adminClient.auth.admin.updateUser(tombstoned.id, {
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: fullName },
-      });
-      if (updateErr) throw new Error(`createTestUser resurrect(${email}): ${updateErr.message}`);
-      userId = updated.user.id;
-    } else if (error) {
-      throw new Error(`createTestUser(${email}): ${error.message}`);
-    } else {
-      userId = data.user.id;
+  // Attempt creation first — avoids listUsers which throws "Database error" on some projects.
+  const { data: created, error: createError } = await adminClient.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  });
+
+  if (!createError) {
+    userId = created.user.id;
+  } else if (createError.message?.includes('already been registered') || createError.message?.includes('already registered')) {
+    // User already exists — find via raw REST API (works for active + soft-deleted users)
+    const existing = await fetchUserByEmailDirect(email);
+    if (!existing) {
+      throw new Error(
+        `createTestUser(${email}): email is registered but unreachable via REST API.\n` +
+        `Go to Supabase Dashboard → Authentication → Users and check the user status.`
+      );
     }
+    const { data: updated, error: updateErr } = await adminClient.auth.admin.updateUser(existing.id, {
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: fullName },
+    });
+    if (updateErr) throw new Error(`createTestUser update(${email}): ${updateErr.message}`);
+    userId = updated.user.id;
+  } else {
+    throw new Error(`createTestUser(${email}): ${createError.message}`);
   }
 
   const { error: profileError } = await adminClient.from('user_profiles').upsert({
