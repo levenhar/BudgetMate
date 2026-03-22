@@ -20,11 +20,7 @@ async function deleteAuthUserByEmail(email) {
     const { data } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
     if (data?.users) {
       const existing = data.users.find(u => u.email === email);
-      if (existing) {
-        await adminClient.auth.admin.deleteUser(existing.id);
-        // Wait for Supabase auth to propagate the deletion
-        await new Promise(r => setTimeout(r, 1000));
-      }
+      if (existing) await adminClient.auth.admin.deleteUser(existing.id);
     }
   } catch (_) { /* ignore */ }
 }
@@ -46,7 +42,7 @@ export async function createTestUser(email, password, fullName) {
   // If "already registered", force-delete and retry once
   if (error?.message?.includes('already been registered') || error?.message?.includes('already registered')) {
     await deleteAuthUserByEmail(email);
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 500));
     ({ data, error } = await adminClient.auth.admin.createUser({
       email,
       password,
