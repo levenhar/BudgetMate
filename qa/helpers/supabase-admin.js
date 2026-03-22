@@ -15,45 +15,35 @@ export const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-async function deleteAuthUserByEmail(email) {
-  try {
-    const { data } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
-    if (data?.users) {
-      const existing = data.users.find(u => u.email === email);
-      if (existing) await adminClient.auth.admin.deleteUser(existing.id);
-    }
-  } catch (_) { /* ignore */ }
-}
-
 export async function createTestUser(email, password, fullName) {
-  // Pre-cleanup: remove any leftover DB rows and auth user for this email
+  // Pre-cleanup: remove any leftover DB rows for this email
   await adminClient.from('user_settings').delete().eq('user_email', email);
   await adminClient.from('user_profiles').delete().eq('user_email', email);
-  await deleteAuthUserByEmail(email);
 
-  // Create new auth user
-  let { data, error } = await adminClient.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { full_name: fullName },
-  });
+  // Check if auth user already exists
+  const { data: listData } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+  const existing = listData?.users?.find(u => u.email === email);
 
-  // If "already registered", force-delete and retry once
-  if (error?.message?.includes('already been registered') || error?.message?.includes('already registered')) {
-    await deleteAuthUserByEmail(email);
-    await new Promise(r => setTimeout(r, 500));
-    ({ data, error } = await adminClient.auth.admin.createUser({
+  let userId;
+  if (existing) {
+    // Update existing user instead of delete+recreate — avoids auth propagation race
+    const { data, error } = await adminClient.auth.admin.updateUser(existing.id, {
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: fullName },
+    });
+    if (error) throw new Error(`createTestUser update(${email}): ${error.message}`);
+    userId = data.user.id;
+  } else {
+    const { data, error } = await adminClient.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
       user_metadata: { full_name: fullName },
-    }));
+    });
+    if (error) throw new Error(`createTestUser(${email}): ${error.message}`);
+    userId = data.user.id;
   }
-
-  if (error) throw new Error(`createTestUser(${email}): ${error.message}`);
-
-  const userId = data.user.id;
 
   const { error: profileError } = await adminClient.from('user_profiles').upsert({
     id: userId,
