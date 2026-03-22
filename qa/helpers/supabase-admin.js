@@ -83,11 +83,12 @@ export async function createTestUser(email, password, fullName) {
 }
 
 export async function deleteTestUser(email) {
+  // Only clean up DB rows — do NOT delete auth users.
+  // Supabase tombstones deleted emails, preventing re-creation in subsequent runs.
+  // Auth users are reused across runs via updateUser in createTestUser.
   try {
-    const { data, error } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
-    if (error || !data?.users) return;
-    const user = data.users.find(u => u.email === email);
-    if (user) await adminClient.auth.admin.deleteUser(user.id);
+    await adminClient.from('user_settings').delete().eq('user_email', email);
+    await adminClient.from('user_profiles').delete().eq('user_email', email);
   } catch (_) { /* ignore */ }
 }
 
