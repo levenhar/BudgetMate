@@ -127,7 +127,7 @@ jobs:
       - name: Run Claude Code to implement fixes
         # claude-code-action@beta commits directly to the current branch.
         # Do NOT push manually after this step — the action handles commits.
-        uses: anthropic-ai/claude-code-action@beta
+        uses: anthropics/claude-code-action@v1
         with:
           claude_access_token: ${{ secrets.CLAUDE_ACCESS_TOKEN }}
           prompt: |
