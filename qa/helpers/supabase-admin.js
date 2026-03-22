@@ -44,13 +44,14 @@ export async function createTestUser(email, password, fullName) {
   }, { onConflict: 'id' });
   if (profileError) throw new Error(`createTestUser profile upsert (${email}): ${profileError.message}`);
 
-  const { error: settingsError } = await adminClient.from('user_settings').upsert({
+  await adminClient.from('user_settings').delete().eq('user_email', email);
+  const { error: settingsError } = await adminClient.from('user_settings').insert({
     user_email: email,
     mode: 'personal',
     currency: 'USD',
     created_by: email,
-  }, { onConflict: 'user_email' });
-  if (settingsError) throw new Error(`createTestUser settings upsert (${email}): ${settingsError.message}`);
+  });
+  if (settingsError) throw new Error(`createTestUser settings insert (${email}): ${settingsError.message}`);
 
   return userId;
 }
