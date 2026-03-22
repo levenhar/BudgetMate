@@ -21,9 +21,9 @@ export async function signOut(page) {
 }
 
 export const QA_USERS = {
-  a: { email: 'qa-user-a@budgetmate.local', password: 'QAtest!2026' },
-  b: { email: 'qa-user-b@budgetmate.local', password: 'QAtest!2026' },
-  c: { email: 'qa-user-c@budgetmate.local', password: 'QAtest!2026' },
+  a: { email: 'qa-user-a@budgetmate.test', password: 'QAtest!2026' },
+  b: { email: 'qa-user-b@budgetmate.test', password: 'QAtest!2026' },
+  c: { email: 'qa-user-c@budgetmate.test', password: 'QAtest!2026' },
 };
 
 export const BASE_URL_EXPORT = BASE_URL;
