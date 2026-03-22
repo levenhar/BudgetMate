@@ -16,33 +16,15 @@ export const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 });
 
 /**
- * Find a user by email via the raw Supabase Admin Auth REST API.
- * Avoids the SDK's listUsers which can throw "Database error finding users"
- * on some Supabase projects. Also handles soft-deleted (tombstoned) users.
+ * Look up an auth user's ID by email using a SQL function via PostgREST RPC.
+ * Bypasses the GoTrue listUsers endpoint which throws "Database error finding users"
+ * on some Supabase projects. The function `get_auth_user_id_by_email` must exist
+ * in the public schema (created via migration or MCP).
  */
-async function fetchUserByEmailDirect(email) {
-  try {
-    let page = 1;
-    while (true) {
-      const url = `${SUPABASE_URL}/auth/v1/admin/users?page=${page}&per_page=1000`;
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
-          apikey: SERVICE_ROLE_KEY,
-        },
-      });
-      if (!res.ok) return null;
-      const json = await res.json();
-      const users = json?.users ?? [];
-      const found = users.find(u => u.email === email);
-      if (found) return found;
-      // GoTrue returns `next_page` (snake_case) in the raw REST response
-      if (!json.next_page || users.length < 1000) return null;
-      page = json.next_page;
-    }
-  } catch {
-    return null;
-  }
+async function getAuthUserIdByEmail(email) {
+  const { data, error } = await adminClient.rpc('get_auth_user_id_by_email', { p_email: email });
+  if (error) throw new Error(`getAuthUserIdByEmail(${email}): ${error.message}`);
+  return data ?? null; // uuid string or null if not found
 }
 
 export async function createTestUser(email, password, fullName) {
@@ -63,15 +45,15 @@ export async function createTestUser(email, password, fullName) {
   if (!createError) {
     userId = created.user.id;
   } else if (createError.message?.includes('already been registered') || createError.message?.includes('already registered')) {
-    // User already exists — find via raw REST API (works for active + soft-deleted users)
-    const existing = await fetchUserByEmailDirect(email);
-    if (!existing) {
+    // User already exists — look up ID via SQL RPC (PostgREST, avoids broken listUsers)
+    const existingId = await getAuthUserIdByEmail(email);
+    if (!existingId) {
       throw new Error(
-        `createTestUser(${email}): email is registered but unreachable via REST API.\n` +
-        `Go to Supabase Dashboard → Authentication → Users and check the user status.`
+        `createTestUser(${email}): email is registered but not found in auth.users via RPC.\n` +
+        `Check the user status in Supabase Dashboard → Authentication → Users.`
       );
     }
-    const { data: updated, error: updateErr } = await adminClient.auth.admin.updateUser(existing.id, {
+    const { data: updated, error: updateErr } = await adminClient.auth.admin.updateUser(existingId, {
       password,
       email_confirm: true,
       user_metadata: { full_name: fullName },
