@@ -9,9 +9,11 @@ import {
 } from './helpers/supabase-admin.js';
 import { writeSignal } from './helpers/signals.js';
 
-const USER_A = 'qa-user-a@budgetmate.local';
-const USER_B = 'qa-user-b@budgetmate.local';
-const USER_C = 'qa-user-c@budgetmate.local';
+// Use .test domain — .local emails were tombstoned in Supabase from prior deletion runs.
+// Auth users are now NEVER deleted between runs (only DB rows are cleaned up).
+const USER_A = 'qa-user-a@budgetmate.test';
+const USER_B = 'qa-user-b@budgetmate.test';
+const USER_C = 'qa-user-c@budgetmate.test';
 const PASSWORD = 'QAtest!2026';
 
 export default async function globalSetup() {
