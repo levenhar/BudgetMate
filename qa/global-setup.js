@@ -17,11 +17,10 @@ const PASSWORD = 'QAtest!2026';
 export default async function globalSetup() {
   console.log('[setup] Creating test accounts...');
 
-  const [idA, idB, idC] = await Promise.all([
-    createTestUser(USER_A, PASSWORD, 'QA User A'),
-    createTestUser(USER_B, PASSWORD, 'QA User B'),
-    createTestUser(USER_C, PASSWORD, 'QA User C'),
-  ]);
+  // Sequential to avoid Supabase auth race conditions during cleanup/create
+  const idA = await createTestUser(USER_A, PASSWORD, 'QA User A');
+  const idB = await createTestUser(USER_B, PASSWORD, 'QA User B');
+  const idC = await createTestUser(USER_C, PASSWORD, 'QA User C');
 
   console.log('[setup] Creating household...');
   const householdId = await createHousehold(USER_A, [USER_B, USER_C]);
