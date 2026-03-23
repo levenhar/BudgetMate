@@ -134,9 +134,9 @@
 **Steps to Reproduce:**
 1. Create $300 equal split expense
 **Expected:** Expense created
-**Actual:** locator.waitFor: Timeout 10000ms exceeded.
+**Actual:** locator.fill: Timeout 15000ms exceeded.
 Call log:
-[2m  - waiting for locator('[role="dialog"]') to be visible[22m
+[2m  - waiting for locator('[role="dialog"]').locator('input[placeholder*="description" i]').first()[22m
 
 **Console Errors:** None
 **Notes:** None
@@ -164,9 +164,9 @@ Call log:
 **Steps to Reproduce:**
 1. Create $100 custom split expense
 **Expected:** Expense created
-**Actual:** locator.waitFor: Timeout 10000ms exceeded.
+**Actual:** locator.fill: Timeout 15000ms exceeded.
 Call log:
-[2m  - waiting for locator('[role="dialog"]') to be visible[22m
+[2m  - waiting for locator('[role="dialog"]').locator('input[placeholder*="description" i]').first()[22m
 
 **Console Errors:** None
 **Notes:** None
@@ -194,9 +194,9 @@ Call log:
 **Steps to Reproduce:**
 1. Create EUR shared expense
 **Expected:** Expense created
-**Actual:** locator.waitFor: Timeout 10000ms exceeded.
+**Actual:** locator.fill: Timeout 15000ms exceeded.
 Call log:
-[2m  - waiting for locator('[role="dialog"]') to be visible[22m
+[2m  - waiting for locator('[role="dialog"]').locator('input[placeholder*="description" i]').first()[22m
 
 **Console Errors:** None
 **Notes:** None
@@ -210,9 +210,9 @@ Call log:
 **Steps to Reproduce:**
 1. Create partial rejection shared expense
 **Expected:** Expense created
-**Actual:** locator.fill: Timeout 15000ms exceeded.
+**Actual:** locator.waitFor: Timeout 10000ms exceeded.
 Call log:
-[2m  - waiting for locator('[role="dialog"]').locator('input[placeholder*="description" i]').first()[22m
+[2m  - waiting for locator('[role="dialog"]') to be visible[22m
 
 **Console Errors:** None
 **Notes:** None
@@ -352,14 +352,14 @@ Call log:
 
 ---
 
-### BUG-026 · MEDIUM · Statistics / Empty State
+### BUG-026 · MEDIUM · Statistics / Date Filter
 
 **Agent:** statistics
 **Route:** http://localhost:5173/Statistics
 **Steps to Reproduce:**
-1. Filter statistics to year 2020 (no data)
-**Expected:** Empty state message or empty chart shown
-**Actual:** No empty state indicator when no data exists for selected range
+1. Navigate to Statistics
+**Expected:** Date range filter controls visible
+**Actual:** No date range controls found
 **Console Errors:** None
 **Notes:** None
 
