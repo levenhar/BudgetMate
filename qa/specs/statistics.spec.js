@@ -1,6 +1,6 @@
 // tests/qa/specs/statistics.spec.js
 import { test, expect } from '@playwright/test';
-import { signIn, QA_USERS, openAddExpenseDialog } from '../helpers/auth.js';
+import { signIn, QA_USERS, openAddExpenseDialog, expandMoreOptions } from '../helpers/auth.js';
 import { reportBug, markComplete } from '../helpers/bug-report.js';
 import { readSession } from '../helpers/signals.js';
 
@@ -29,8 +29,9 @@ test.describe('Statistics Agent', () => {
         await openAddExpenseDialog(page);
         const dialog = page.locator('[role="dialog"]');
         await dialog.locator('input[type="number"]').first().fill(String(50 + i * 10));
-        await dialog.locator('input[placeholder*="description" i]').first().fill(`Stats ${cat.name} ${i}`);
-        await dialog.locator('button').filter({ hasText: /save|add|submit/i }).click();
+        await expandMoreOptions(page);
+        await dialog.locator('input[placeholder*="description" i], input[placeholder*="optional" i]').first().fill(`Stats ${cat.name} ${i}`);
+        await dialog.locator('button[type="submit"]').click();
         await page.waitForTimeout(1000);
       }
     }

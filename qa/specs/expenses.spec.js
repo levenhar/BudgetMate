@@ -1,6 +1,6 @@
 // tests/qa/specs/expenses.spec.js
 import { test, expect } from '@playwright/test';
-import { signIn, QA_USERS, openAddExpenseDialog } from '../helpers/auth.js';
+import { signIn, QA_USERS, openAddExpenseDialog, expandMoreOptions } from '../helpers/auth.js';
 import { reportBug, markComplete } from '../helpers/bug-report.js';
 
 const AGENT = 'expenses';
@@ -14,20 +14,14 @@ test.describe('Expenses Agent', () => {
   test('create expense - basic', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
     await page.goto(`${BASE}/Expenses`);
-
-    // Open add-expense dialog (FAB or button)
     await openAddExpenseDialog(page);
-
     const dialog = page.locator('[role="dialog"]');
-
-    await dialog.locator('input[placeholder*="amount" i], input[type="number"]').first().fill('50');
-    await dialog.locator('input[placeholder*="description" i], input[name="description"]').first().fill('QA Test Expense');
-
-    // Submit
-    await dialog.locator('button[type="submit"], button').filter({ hasText: /save|add|submit/i }).click();
+    await dialog.locator('input[type="number"]').first().fill('50');
+    await expandMoreOptions(page);
+    await dialog.locator('input[placeholder*="description" i], input[placeholder*="optional" i]').first().fill('QA Test Expense');
+    await dialog.locator('button[type="submit"]').click();
     await page.waitForTimeout(1500);
 
-    // Verify expense appears in list
     const expenseList = page.locator('[data-testid="expense-list"], .expense-list, main');
     const hasExpense = await expenseList.getByText('QA Test Expense').count();
     if (hasExpense === 0) {
@@ -49,9 +43,9 @@ test.describe('Expenses Agent', () => {
     await openAddExpenseDialog(page);
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('input[type="number"]').first().fill('0');
-    await dialog.locator('button').filter({ hasText: /save|add|submit/i }).click();
+    await dialog.locator('button[type="submit"]').click({ timeout: 5000 }).catch(() => {});
     await page.waitForTimeout(1000);
-    // Expect either validation error or the dialog stays open
+    // Expect either validation error or the dialog stays open (button may be disabled)
     const stillOpen = await dialog.isVisible();
     const hasError = await page.locator('text=/required|invalid|must be/i').count();
     if (!stillOpen && hasError === 0) {
@@ -72,8 +66,9 @@ test.describe('Expenses Agent', () => {
     await openAddExpenseDialog(page);
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('input[type="number"]').first().fill('999999');
-    await dialog.locator('input[placeholder*="description" i]').first().fill('Large amount test');
-    await dialog.locator('button').filter({ hasText: /save|add|submit/i }).click();
+    await expandMoreOptions(page);
+    await dialog.locator('input[placeholder*="description" i], input[placeholder*="optional" i]').first().fill('Large amount test');
+    await dialog.locator('button[type="submit"]').click();
     await page.waitForTimeout(1500);
     const hasEntry = await page.getByText('Large amount test').count();
     if (hasEntry === 0) {
@@ -94,8 +89,9 @@ test.describe('Expenses Agent', () => {
     await openAddExpenseDialog(page);
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('input[type="number"]').first().fill('10');
-    await dialog.locator('input[placeholder*="description" i]').first().fill('Test <>&"\'{}[]');
-    await dialog.locator('button').filter({ hasText: /save|add|submit/i }).click();
+    await expandMoreOptions(page);
+    await dialog.locator('input[placeholder*="description" i], input[placeholder*="optional" i]').first().fill('Test <>&"\'{}[]');
+    await dialog.locator('button[type="submit"]').click();
     await page.waitForTimeout(1500);
     // Just verify no crash
     const crashed = await page.locator('text=/error|crash|undefined/i').count();
@@ -104,7 +100,7 @@ test.describe('Expenses Agent', () => {
         severity: 'HIGH',
         feature: 'Expenses / Special Characters',
         route: `${BASE}/Expenses`,
-        steps: ['Add expense with description containing <>&"\'{} characters'],
+        steps: ['Add expense with description containing <>&"\'{}[]'],
         expected: 'Expense created without errors',
         actual: 'Error text visible on page after submission',
       });
@@ -137,7 +133,7 @@ test.describe('Expenses Agent', () => {
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible();
     await dialog.locator('input[type="number"]').first().fill('75');
-    await dialog.locator('button').filter({ hasText: /save|update/i }).click();
+    await dialog.locator('button[type="submit"]').click();
     await page.waitForTimeout(1500);
 
     // Delete
@@ -167,8 +163,9 @@ test.describe('Expenses Agent', () => {
     const dialog = page.locator('[role="dialog"]');
 
     // Look for currency selector
-    const currencySelect = dialog.locator('select, [role="combobox"]').filter({ hasText: /USD|currency/i }).first();
-    if (await currencySelect.count() === 0) {
+    const currencySelect = dialog.locator('select').filter({ hasText: /USD|currency/i }).first();
+    const currencyCombo = dialog.locator('[role="combobox"]').filter({ hasText: /USD/i }).first();
+    if (await currencySelect.count() === 0 && await currencyCombo.count() === 0) {
       reportBug(AGENT, {
         severity: 'HIGH',
         feature: 'Expenses / Multi-Currency',
@@ -180,8 +177,16 @@ test.describe('Expenses Agent', () => {
       return;
     }
 
-    // Select EUR
-    await currencySelect.selectOption({ label: /EUR/i });
+    // Select EUR — use string label, not regex (Playwright requirement)
+    if (await currencySelect.count() > 0) {
+      await currencySelect.selectOption('EUR');
+    } else {
+      await currencyCombo.click();
+      await page.waitForTimeout(400);
+      const eurOption = page.getByRole('option', { name: /EUR/i }).first();
+      if (await eurOption.count() > 0) await eurOption.click();
+      else await page.keyboard.press('Escape');
+    }
     await page.waitForTimeout(500);
 
     // Verify live rate appears
@@ -198,8 +203,9 @@ test.describe('Expenses Agent', () => {
     }
 
     await dialog.locator('input[type="number"]').first().fill('100');
-    await dialog.locator('input[placeholder*="description" i]').first().fill('Foreign currency test');
-    await dialog.locator('button').filter({ hasText: /save|add|submit/i }).click();
+    await expandMoreOptions(page);
+    await dialog.locator('input[placeholder*="description" i], input[placeholder*="optional" i]').first().fill('Foreign currency test');
+    await dialog.locator('button[type="submit"]').click();
     await page.waitForTimeout(1500);
 
     // Verify currency badge appears on expense card

@@ -1,6 +1,6 @@
 // tests/qa/specs/budget.spec.js
 import { test, expect } from '@playwright/test';
-import { signIn, QA_USERS, openAddExpenseDialog } from '../helpers/auth.js';
+import { signIn, QA_USERS, openAddExpenseDialog, expandMoreOptions } from '../helpers/auth.js';
 import { reportBug, markComplete } from '../helpers/bug-report.js';
 
 const AGENT = 'budget';
@@ -33,7 +33,7 @@ test.describe('Budget Agent', () => {
 
     // Fill budget amount
     await dialog.locator('input[type="number"]').first().fill('200');
-    await dialog.locator('button').filter({ hasText: /save|create|add/i }).click();
+    await dialog.locator('button[type="submit"]').click();
     await page.waitForTimeout(1500);
 
     const budgetText = page.locator('text=/200/').first();
@@ -57,8 +57,9 @@ test.describe('Budget Agent', () => {
     await openAddExpenseDialog(page);
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('input[type="number"]').first().fill('500'); // exceeds 200 budget
-    await dialog.locator('input[placeholder*="description" i]').first().fill('Over budget test');
-    await dialog.locator('button').filter({ hasText: /save|add|submit/i }).click();
+    await expandMoreOptions(page);
+    await dialog.locator('input[placeholder*="description" i], input[placeholder*="optional" i]').first().fill('Over budget test');
+    await dialog.locator('button[type="submit"]').click();
     await page.waitForTimeout(1500);
 
     await page.goto(`${BASE}/Budget`);
@@ -102,7 +103,7 @@ test.describe('Budget Agent', () => {
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible();
     await dialog.locator('input[type="number"]').first().fill('300');
-    await dialog.locator('button').filter({ hasText: /save|update/i }).click();
+    await dialog.locator('button[type="submit"]').click();
     await page.waitForTimeout(1500);
     const updated = await page.locator('text=/300/').count();
     if (updated === 0) {
