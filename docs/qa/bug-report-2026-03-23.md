@@ -1,8 +1,8 @@
 # BudgetMate QA Bug Report — 2026-03-23
 
 ## Summary
-- Total bugs: 16
-- CRITICAL: 1 | HIGH: 10 | MEDIUM: 3 | LOW: 2
+- Total bugs: 17
+- CRITICAL: 1 | HIGH: 10 | MEDIUM: 3 | LOW: 3
 - Agents run: 10
 - Features tested: Dashboard, Expenses, Budget, Goals, Debts, Recurring Expenses, Statistics, Settings, Shared Expenses (3-user household)
 
@@ -41,8 +41,8 @@
 **Route:** http://localhost:5173/Budget
 **Steps to Reproduce:**
 1. Navigate to Budget page
-**Expected:** Add Budget button visible
-**Actual:** No add button found on Budget page
+**Expected:** Set/Add Budget button visible
+**Actual:** No add budget button found on Budget page
 **Console Errors:** None
 **Notes:** None
 
@@ -194,7 +194,20 @@
 
 ---
 
-### BUG-015 · LOW · Dashboard / Goals Widget
+### BUG-015 · LOW · Dashboard / Budget Progress
+
+**Agent:** budget
+**Route:** http://localhost:5173
+**Steps to Reproduce:**
+1. Navigate to Dashboard after adding budget and expenses
+**Expected:** Budget progress indicator visible on dashboard
+**Actual:** No budget progress found on dashboard
+**Console Errors:** None
+**Notes:** None
+
+---
+
+### BUG-016 · LOW · Dashboard / Goals Widget
 
 **Agent:** goals
 **Route:** http://localhost:5173
@@ -207,7 +220,7 @@
 
 ---
 
-### BUG-016 · LOW · Dashboard / Debt Summary
+### BUG-017 · LOW · Dashboard / Debt Summary
 
 **Agent:** debts
 **Route:** http://localhost:5173
