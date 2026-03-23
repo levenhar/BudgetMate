@@ -21,11 +21,21 @@ async function createSharedExpense(page, { amount, splitMethod = 'equal', descri
   await dialog.locator('input[placeholder*="description" i]').first().fill(description);
 
   if (currency && currency !== 'USD') {
-    const currencyEl = dialog.locator('select, [role="combobox"]').filter({ hasText: /USD|currency/i }).first();
-    if (await currencyEl.count() > 0) await currencyEl.selectOption({ label: new RegExp(currency, 'i') });
+    // Try <select> first; fall back to Radix combobox click pattern
+    const selectEl = dialog.locator('select').filter({ hasText: /USD|currency/i }).first();
+    const comboEl = dialog.locator('[role="combobox"]').filter({ hasText: /USD|currency/i }).first();
+    if (await selectEl.count() > 0) {
+      await selectEl.selectOption({ label: new RegExp(currency, 'i') });
+    } else if (await comboEl.count() > 0) {
+      await comboEl.click();
+      await page.waitForTimeout(400);
+      const option = page.getByRole('option', { name: new RegExp(currency, 'i') }).first();
+      if (await option.count() > 0) await option.click();
+      else await page.keyboard.press('Escape');
+    }
   }
 
-  await dialog.locator('button').filter({ hasText: /save|add|submit/i }).click();
+  await dialog.locator('button').filter({ hasText: /save|add|submit/i }).first().click();
   await page.waitForTimeout(2000);
 }
 
@@ -36,7 +46,13 @@ test.describe('Shared-A Agent', () => {
   test('3-way equal split — create and verify', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
 
-    await createSharedExpense(page, { amount: 300, description: 'Equal Split Dinner', splitMethod: 'equal' });
+    try {
+      await createSharedExpense(page, { amount: 300, description: 'Equal Split Dinner', splitMethod: 'equal' });
+    } catch (e) {
+      reportBug(AGENT, { severity: 'HIGH', feature: 'Shared / Equal Split Create',
+        route: `${BASE}/Expenses`, steps: ['Create $300 equal split expense'],
+        expected: 'Expense created', actual: e.message });
+    }
     writeSignal('shared-a', { a_created_equal_split: true });
 
     // Wait for B and C to approve
@@ -65,7 +81,13 @@ test.describe('Shared-A Agent', () => {
   test('custom split — create and verify', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
 
-    await createSharedExpense(page, { amount: 100, description: 'Custom Split Lunch', splitMethod: 'custom' });
+    try {
+      await createSharedExpense(page, { amount: 100, description: 'Custom Split Lunch', splitMethod: 'custom' });
+    } catch (e) {
+      reportBug(AGENT, { severity: 'HIGH', feature: 'Shared / Custom Split Create',
+        route: `${BASE}/Expenses`, steps: ['Create $100 custom split expense'],
+        expected: 'Expense created', actual: e.message });
+    }
     writeSignal('shared-a', { a_created_custom_split: true });
 
     try {
@@ -92,7 +114,13 @@ test.describe('Shared-A Agent', () => {
 
   test('multi-currency shared expense', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
-    await createSharedExpense(page, { amount: 90, description: 'EUR Split', currency: 'EUR' });
+    try {
+      await createSharedExpense(page, { amount: 90, description: 'EUR Split', currency: 'EUR' });
+    } catch (e) {
+      reportBug(AGENT, { severity: 'HIGH', feature: 'Shared / Multi-Currency Create',
+        route: `${BASE}/Expenses`, steps: ['Create EUR shared expense'],
+        expected: 'Expense created', actual: e.message });
+    }
     writeSignal('shared-a', { a_created_multicurrency_split: true });
 
     try {
@@ -116,7 +144,13 @@ test.describe('Shared-A Agent', () => {
 
   test('partial rejection scenario', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
-    await createSharedExpense(page, { amount: 60, description: 'Partial Rejection Test' });
+    try {
+      await createSharedExpense(page, { amount: 60, description: 'Partial Rejection Test' });
+    } catch (e) {
+      reportBug(AGENT, { severity: 'HIGH', feature: 'Shared / Partial Rejection Create',
+        route: `${BASE}/Expenses`, steps: ['Create partial rejection shared expense'],
+        expected: 'Expense created', actual: e.message });
+    }
     writeSignal('shared-a', { a_created_partial_rejection_expense: true });
 
     try {
