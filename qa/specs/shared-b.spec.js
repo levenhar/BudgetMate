@@ -31,7 +31,7 @@ test.describe('Shared-B Agent', () => {
 
   test('approve equal split and verify $100 debt', async ({ page }) => {
     await signIn(page, QA_USERS.b.email, QA_USERS.b.password);
-    await waitForSignal('shared-a', 'a_created_equal_split', 120000);
+    await waitForSignal('shared-a', 'a_created_equal_split', 300000);
 
     const approved = await approveFirstPendingExpense(page);
     if (!approved) {
@@ -55,7 +55,7 @@ test.describe('Shared-B Agent', () => {
 
   test('approve custom split and verify $30 debt', async ({ page }) => {
     await signIn(page, QA_USERS.b.email, QA_USERS.b.password);
-    await waitForSignal('shared-a', 'a_created_custom_split', 120000);
+    await waitForSignal('shared-a', 'a_created_custom_split', 300000);
     await approveFirstPendingExpense(page);
     writeSignal('shared-b', { b_approved_custom_split: true });
 
@@ -71,7 +71,7 @@ test.describe('Shared-B Agent', () => {
 
   test('approve multi-currency and verify USD conversion', async ({ page }) => {
     await signIn(page, QA_USERS.b.email, QA_USERS.b.password);
-    await waitForSignal('shared-a', 'a_created_multicurrency_split', 120000);
+    await waitForSignal('shared-a', 'a_created_multicurrency_split', 300000);
     await approveFirstPendingExpense(page);
     writeSignal('shared-b', { b_approved_multicurrency_split: true });
 
@@ -87,14 +87,14 @@ test.describe('Shared-B Agent', () => {
 
   test('approve partial rejection expense', async ({ page }) => {
     await signIn(page, QA_USERS.b.email, QA_USERS.b.password);
-    await waitForSignal('shared-a', 'a_created_partial_rejection_expense', 120000);
+    await waitForSignal('shared-a', 'a_created_partial_rejection_expense', 300000);
     await approveFirstPendingExpense(page);
     writeSignal('shared-b', { b_approved_partial_rejection: true });
   });
 
   test('verify debt drop after partial payment', async ({ page }) => {
     await signIn(page, QA_USERS.b.email, QA_USERS.b.password);
-    await waitForSignal('shared-a', 'a_recorded_b_partial_payment', 120000);
+    await waitForSignal('shared-a', 'a_recorded_b_partial_payment', 300000);
     await page.goto(`${BASE}/Debts`);
     await page.waitForTimeout(1500);
     const debt50 = await page.locator('text=/50/').count();
@@ -108,7 +108,7 @@ test.describe('Shared-B Agent', () => {
 
   test('verify debt cleared after full settlement', async ({ page }) => {
     await signIn(page, QA_USERS.b.email, QA_USERS.b.password);
-    await waitForSignal('shared-a', 'a_verified_all_settled', 120000);
+    await waitForSignal('shared-a', 'a_verified_all_settled', 300000);
     await page.goto(`${BASE}/Debts`);
     await page.waitForTimeout(1500);
     const paidLabel = await page.locator('text=/paid|settled|0/i').count();

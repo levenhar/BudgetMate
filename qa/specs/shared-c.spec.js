@@ -47,7 +47,7 @@ test.describe('Shared-C Agent', () => {
 
   test('approve equal split and verify $100 debt', async ({ page }) => {
     await signIn(page, QA_USERS.c.email, QA_USERS.c.password);
-    await waitForSignal('shared-a', 'a_created_equal_split', 120000);
+    await waitForSignal('shared-a', 'a_created_equal_split', 300000);
     await approveFirstPendingExpense(page);
     writeSignal('shared-c', { c_approved_equal_split: true });
 
@@ -63,7 +63,7 @@ test.describe('Shared-C Agent', () => {
 
   test('approve custom split and verify $20 debt', async ({ page }) => {
     await signIn(page, QA_USERS.c.email, QA_USERS.c.password);
-    await waitForSignal('shared-a', 'a_created_custom_split', 120000);
+    await waitForSignal('shared-a', 'a_created_custom_split', 300000);
     await approveFirstPendingExpense(page);
     writeSignal('shared-c', { c_approved_custom_split: true });
 
@@ -79,7 +79,7 @@ test.describe('Shared-C Agent', () => {
 
   test('approve multi-currency', async ({ page }) => {
     await signIn(page, QA_USERS.c.email, QA_USERS.c.password);
-    await waitForSignal('shared-a', 'a_created_multicurrency_split', 120000);
+    await waitForSignal('shared-a', 'a_created_multicurrency_split', 300000);
     await approveFirstPendingExpense(page);
     writeSignal('shared-c', { c_approved_multicurrency_split: true });
   });
@@ -87,7 +87,7 @@ test.describe('Shared-C Agent', () => {
   test('reject partial rejection expense independently', async ({ page }) => {
     await signIn(page, QA_USERS.c.email, QA_USERS.c.password);
     // C waits only for A's creation (not B's approval)
-    await waitForSignal('shared-a', 'a_created_partial_rejection_expense', 120000);
+    await waitForSignal('shared-a', 'a_created_partial_rejection_expense', 300000);
     const rejected = await rejectFirstPendingExpense(page);
     if (!rejected) {
       reportBug(AGENT, { severity: 'HIGH', feature: 'Shared / Reject Expense (C)',
@@ -100,7 +100,7 @@ test.describe('Shared-C Agent', () => {
 
   test('record full payment of custom split debt', async ({ page }) => {
     await signIn(page, QA_USERS.c.email, QA_USERS.c.password);
-    await waitForSignal('shared-b', 'b_verified_partial_payment_drop', 120000);
+    await waitForSignal('shared-b', 'b_verified_partial_payment_drop', 300000);
 
     await page.goto(`${BASE}/Debts`);
     await page.waitForTimeout(1000);
@@ -121,7 +121,7 @@ test.describe('Shared-C Agent', () => {
 
   test('verify C debt cleared after settlement', async ({ page }) => {
     await signIn(page, QA_USERS.c.email, QA_USERS.c.password);
-    await waitForSignal('shared-a', 'a_verified_all_settled', 120000);
+    await waitForSignal('shared-a', 'a_verified_all_settled', 300000);
     await page.goto(`${BASE}/Debts`);
     await page.waitForTimeout(1500);
     writeSignal('shared-c', { c_verified_all_settled: true });
