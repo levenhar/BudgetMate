@@ -15,15 +15,15 @@ test.describe('Budget Agent', () => {
     await page.goto(`${BASE}/Budget`);
     await page.waitForTimeout(1000);
 
-    const addBtn = page.locator('button').filter({ hasText: /add|new|\+/i }).first();
+    const addBtn = page.getByRole('button', { name: /set budget|add budget|new budget/i });
     if (await addBtn.count() === 0) {
       reportBug(AGENT, {
         severity: 'HIGH',
         feature: 'Budget / Create',
         route: `${BASE}/Budget`,
         steps: ['Navigate to Budget page'],
-        expected: 'Add Budget button visible',
-        actual: 'No add button found on Budget page',
+        expected: 'Set/Add Budget button visible',
+        actual: 'No add budget button found on Budget page',
       });
       return;
     }
@@ -54,7 +54,7 @@ test.describe('Budget Agent', () => {
     // Create a budget with a very low limit, then add an expense that exceeds it
     // Navigate to expenses and add expense > budget amount
     await page.goto(`${BASE}/Expenses`);
-    const addBtn = page.locator('button').filter({ hasText: /add|new|\+/i }).first();
+    const addBtn = page.getByRole('button', { name: /add expense/i });
     await addBtn.click();
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('input[type="number"]').first().fill('500'); // exceeds 200 budget
@@ -80,7 +80,7 @@ test.describe('Budget Agent', () => {
   test('dashboard reflects budget progress', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
     await page.goto(BASE);
-    const progressEl = page.locator('[role="progressbar"], [class*="progress"], text=/budget/i').first();
+    const progressEl = page.locator('[role="progressbar"], [class*="progress"]').first();
     if (await progressEl.count() === 0) {
       reportBug(AGENT, {
         severity: 'LOW',

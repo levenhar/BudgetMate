@@ -26,7 +26,7 @@ test.describe('Statistics Agent', () => {
     for (const cat of categories) {
       for (let i = 0; i < 2; i++) {
         await page.goto(`${BASE}/Expenses`);
-        const addBtn = page.locator('button').filter({ hasText: /add|new|\+/i }).first();
+        const addBtn = page.getByRole('button', { name: /add expense/i });
         await addBtn.click();
         const dialog = page.locator('[role="dialog"]');
         await dialog.locator('input[type="number"]').first().fill(String(50 + i * 10));
@@ -73,8 +73,17 @@ test.describe('Statistics Agent', () => {
       return;
     }
 
-    // Set to 2020 range
-    await dateInput.fill('2020-01-01');
+    // Set to 2020 range — may be a combobox (Radix Select), not a plain input
+    try {
+      await dateInput.click();
+      await page.waitForTimeout(500);
+      const option2020 = page.getByRole('option', { name: /2020/ }).first();
+      if (await option2020.count() > 0) {
+        await option2020.click();
+      } else {
+        await page.keyboard.press('Escape');
+      }
+    } catch (_) { /* date filter interaction failed — continue to check empty state */ }
     await page.waitForTimeout(1500);
 
     const emptyState = page.locator('text=/no data|no expenses|empty/i').first();

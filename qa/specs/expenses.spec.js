@@ -16,7 +16,7 @@ test.describe('Expenses Agent', () => {
     await page.goto(`${BASE}/Expenses`);
 
     // Open add-expense dialog (FAB or button)
-    const addBtn = page.locator('button').filter({ hasText: /add|new|\+/i }).first();
+    const addBtn = page.getByRole('button', { name: /add expense/i });
     await expect(addBtn).toBeVisible({ timeout: 10000 });
     await addBtn.click();
 
@@ -49,7 +49,7 @@ test.describe('Expenses Agent', () => {
   test('create expense - $0 amount edge case', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
     await page.goto(`${BASE}/Expenses`);
-    const addBtn = page.locator('button').filter({ hasText: /add|new|\+/i }).first();
+    const addBtn = page.getByRole('button', { name: /add expense/i });
     await addBtn.click();
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('input[type="number"]').first().fill('0');
@@ -73,7 +73,7 @@ test.describe('Expenses Agent', () => {
   test('create expense - large amount (999999)', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
     await page.goto(`${BASE}/Expenses`);
-    const addBtn = page.locator('button').filter({ hasText: /add|new|\+/i }).first();
+    const addBtn = page.getByRole('button', { name: /add expense/i });
     await addBtn.click();
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('input[type="number"]').first().fill('999999');
@@ -96,7 +96,7 @@ test.describe('Expenses Agent', () => {
   test('create expense - special characters in description', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
     await page.goto(`${BASE}/Expenses`);
-    const addBtn = page.locator('button').filter({ hasText: /add|new|\+/i }).first();
+    const addBtn = page.getByRole('button', { name: /add expense/i });
     await addBtn.click();
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('input[type="number"]').first().fill('10');
@@ -169,7 +169,7 @@ test.describe('Expenses Agent', () => {
   test('multi-currency expense entry', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
     await page.goto(`${BASE}/Expenses`);
-    const addBtn = page.locator('button').filter({ hasText: /add|new|\+/i }).first();
+    const addBtn = page.getByRole('button', { name: /add expense/i });
     await addBtn.click();
     const dialog = page.locator('[role="dialog"]');
 

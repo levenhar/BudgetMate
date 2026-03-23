@@ -9,7 +9,7 @@ const BASE = 'http://localhost:5173';
 
 async function createSharedExpense(page, { amount, splitMethod = 'equal', description, currency }) {
   await page.goto(`${BASE}/Expenses`);
-  const addBtn = page.locator('button').filter({ hasText: /add|new|\+/i }).first();
+  const addBtn = page.getByRole('button', { name: /add expense/i });
   await addBtn.click();
   const dialog = page.locator('[role="dialog"]');
   await expect(dialog).toBeVisible();
