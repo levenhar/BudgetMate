@@ -27,3 +27,14 @@ export const QA_USERS = {
 };
 
 export const BASE_URL_EXPORT = BASE_URL;
+
+/**
+ * Open the Add Expense dialog via the custom DOM event that Layout listens for.
+ * More reliable than clicking the FAB button, which may be hidden or translated.
+ */
+export async function openAddExpenseDialog(page, tab = 'expense') {
+  await page.evaluate((t) => {
+    window.dispatchEvent(new CustomEvent('open-add-expense', { detail: { tab: t } }));
+  }, tab);
+  await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 10000 });
+}

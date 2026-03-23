@@ -1,6 +1,6 @@
 // tests/qa/specs/statistics.spec.js
 import { test, expect } from '@playwright/test';
-import { signIn, QA_USERS } from '../helpers/auth.js';
+import { signIn, QA_USERS, openAddExpenseDialog } from '../helpers/auth.js';
 import { reportBug, markComplete } from '../helpers/bug-report.js';
 import { readSession } from '../helpers/signals.js';
 
@@ -26,8 +26,7 @@ test.describe('Statistics Agent', () => {
     for (const cat of categories) {
       for (let i = 0; i < 2; i++) {
         await page.goto(`${BASE}/Expenses`);
-        const addBtn = page.getByRole('button', { name: /add expense/i });
-        await addBtn.click();
+        await openAddExpenseDialog(page);
         const dialog = page.locator('[role="dialog"]');
         await dialog.locator('input[type="number"]').first().fill(String(50 + i * 10));
         await dialog.locator('input[placeholder*="description" i]').first().fill(`Stats ${cat.name} ${i}`);

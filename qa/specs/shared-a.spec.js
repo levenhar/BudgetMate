@@ -1,6 +1,6 @@
 // tests/qa/specs/shared-a.spec.js
 import { test, expect } from '@playwright/test';
-import { signIn, QA_USERS } from '../helpers/auth.js';
+import { signIn, QA_USERS, openAddExpenseDialog } from '../helpers/auth.js';
 import { reportBug, markComplete } from '../helpers/bug-report.js';
 import { writeSignal, waitForSignal, readSession } from '../helpers/signals.js';
 
@@ -9,10 +9,8 @@ const BASE = 'http://localhost:5173';
 
 async function createSharedExpense(page, { amount, splitMethod = 'equal', description, currency }) {
   await page.goto(`${BASE}/Expenses`);
-  const addBtn = page.getByRole('button', { name: /add expense/i });
-  await addBtn.click();
+  await openAddExpenseDialog(page);
   const dialog = page.locator('[role="dialog"]');
-  await expect(dialog).toBeVisible();
 
   // Click the "Shared" tab
   const sharedTab = dialog.locator('[role="tab"], button').filter({ hasText: /shared/i }).first();

@@ -1,6 +1,6 @@
 // tests/qa/specs/expenses.spec.js
 import { test, expect } from '@playwright/test';
-import { signIn, QA_USERS } from '../helpers/auth.js';
+import { signIn, QA_USERS, openAddExpenseDialog } from '../helpers/auth.js';
 import { reportBug, markComplete } from '../helpers/bug-report.js';
 
 const AGENT = 'expenses';
@@ -16,12 +16,9 @@ test.describe('Expenses Agent', () => {
     await page.goto(`${BASE}/Expenses`);
 
     // Open add-expense dialog (FAB or button)
-    const addBtn = page.getByRole('button', { name: /add expense/i });
-    await expect(addBtn).toBeVisible({ timeout: 10000 });
-    await addBtn.click();
+    await openAddExpenseDialog(page);
 
     const dialog = page.locator('[role="dialog"]');
-    await expect(dialog).toBeVisible();
 
     await dialog.locator('input[placeholder*="amount" i], input[type="number"]').first().fill('50');
     await dialog.locator('input[placeholder*="description" i], input[name="description"]').first().fill('QA Test Expense');
@@ -49,8 +46,7 @@ test.describe('Expenses Agent', () => {
   test('create expense - $0 amount edge case', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
     await page.goto(`${BASE}/Expenses`);
-    const addBtn = page.getByRole('button', { name: /add expense/i });
-    await addBtn.click();
+    await openAddExpenseDialog(page);
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('input[type="number"]').first().fill('0');
     await dialog.locator('button').filter({ hasText: /save|add|submit/i }).click();
@@ -73,8 +69,7 @@ test.describe('Expenses Agent', () => {
   test('create expense - large amount (999999)', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
     await page.goto(`${BASE}/Expenses`);
-    const addBtn = page.getByRole('button', { name: /add expense/i });
-    await addBtn.click();
+    await openAddExpenseDialog(page);
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('input[type="number"]').first().fill('999999');
     await dialog.locator('input[placeholder*="description" i]').first().fill('Large amount test');
@@ -96,8 +91,7 @@ test.describe('Expenses Agent', () => {
   test('create expense - special characters in description', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
     await page.goto(`${BASE}/Expenses`);
-    const addBtn = page.getByRole('button', { name: /add expense/i });
-    await addBtn.click();
+    await openAddExpenseDialog(page);
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('input[type="number"]').first().fill('10');
     await dialog.locator('input[placeholder*="description" i]').first().fill('Test <>&"\'{}[]');
@@ -169,8 +163,7 @@ test.describe('Expenses Agent', () => {
   test('multi-currency expense entry', async ({ page }) => {
     await signIn(page, QA_USERS.a.email, QA_USERS.a.password);
     await page.goto(`${BASE}/Expenses`);
-    const addBtn = page.getByRole('button', { name: /add expense/i });
-    await addBtn.click();
+    await openAddExpenseDialog(page);
     const dialog = page.locator('[role="dialog"]');
 
     // Look for currency selector

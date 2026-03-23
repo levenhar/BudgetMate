@@ -1,6 +1,6 @@
 // tests/qa/specs/budget.spec.js
 import { test, expect } from '@playwright/test';
-import { signIn, QA_USERS } from '../helpers/auth.js';
+import { signIn, QA_USERS, openAddExpenseDialog } from '../helpers/auth.js';
 import { reportBug, markComplete } from '../helpers/bug-report.js';
 
 const AGENT = 'budget';
@@ -54,8 +54,7 @@ test.describe('Budget Agent', () => {
     // Create a budget with a very low limit, then add an expense that exceeds it
     // Navigate to expenses and add expense > budget amount
     await page.goto(`${BASE}/Expenses`);
-    const addBtn = page.getByRole('button', { name: /add expense/i });
-    await addBtn.click();
+    await openAddExpenseDialog(page);
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('input[type="number"]').first().fill('500'); // exceeds 200 budget
     await dialog.locator('input[placeholder*="description" i]').first().fill('Over budget test');
