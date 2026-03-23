@@ -145,8 +145,9 @@ jobs:
             - Fix bugs autonomously if they are: CSS/styling issues, missing validation, calculation logic errors
             - SKIP bugs that require: new database columns, conflicting changes, or ambiguous expected behavior
               (write a comment in the source file: "// TODO QA-FIX-BLOCKED: <reason>")
-            - Never modify test files in qa/
-            - Never modify supabase/migrations/
+            - NEVER touch ANY file inside the qa/ directory (specs, helpers, config, setup — all off limits)
+            - NEVER modify supabase/migrations/
+            - Only edit files under src/, public/, or root config files (vite.config.*, tailwind.config.*, etc)
             - Run npm run build after all fixes and ensure it passes
             - Commit all changes with: "fix: implement QA-detected fixes $(date +%Y-%m-%d)"
             - Do NOT merge to main. Do NOT open a PR. Just commit and push to the current branch.
