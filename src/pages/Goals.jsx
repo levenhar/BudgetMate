@@ -196,6 +196,17 @@ export default function Goals() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6" dir={dir}>
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">{t.goals || 'Savings Goals'}</h1>
+        </div>
+        <Button onClick={openAddDialog} className="bg-slate-900 hover:bg-slate-800">
+          <Plus className="h-5 w-5 me-2" />
+          {t.add_goal || 'Add Goal'}
+        </Button>
+      </div>
+
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="border-0 shadow-sm">

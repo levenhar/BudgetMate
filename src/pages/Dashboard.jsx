@@ -78,6 +78,27 @@ export default function Dashboard() {
     enabled: !!user?.email,
   });
 
+  const { data: savingsGoals = [] } = useQuery({
+    queryKey: ['savingsGoals', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      if (isHouseholdMode) {
+        return base44.entities.SavingsGoal.filter({ household_id: settings.current_household_id });
+      }
+      return base44.entities.SavingsGoal.filter({ user_email: user.email });
+    },
+    enabled: !!user?.email,
+  });
+
+  const { data: allDebts = [] } = useQuery({
+    queryKey: ['debts', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return base44.entities.Debt.list();
+    },
+    enabled: !!user?.email,
+  });
+
   const isLoading = expensesLoading || categoriesLoading || budgetsLoading || recurringLoading;
 
   // Current month expenses
@@ -133,6 +154,19 @@ export default function Dashboard() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
+  // Goals summary
+  const activeGoals = savingsGoals.length;
+  const totalGoalSaved = savingsGoals.reduce((s, g) => s + (g.current_amount || 0), 0);
+  const totalGoalTarget = savingsGoals.reduce((s, g) => s + (g.target_amount || 0), 0);
+
+  // Debt summary (amounts user owes others)
+  const userEmail = user?.email?.trim();
+  const totalIOwe = allDebts
+    .filter(d => d.from_user_id?.trim() === userEmail)
+    .reduce((s, d) => s + (d.amount || 0), 0);
+  const totalOwedToMe = allDebts
+    .filter(d => d.to_user_id?.trim() === userEmail)
+    .reduce((s, d) => s + (d.amount || 0), 0);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -265,6 +299,48 @@ export default function Dashboard() {
                   </div>
                 );
               })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Goals Summary */}
+      {savingsGoals.length > 0 && (
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-6">
+            <h3 className="font-semibold text-slate-900 mb-4">{t.goals || 'Savings Goals'}</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs text-slate-500">{t.active_goals || 'Active Goals'}</p>
+                <p className="text-xl font-bold text-slate-900 mt-1">{activeGoals}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">{t.total_saved || 'Total Saved'}</p>
+                <p className="text-xl font-bold text-slate-900 mt-1">{fmt(totalGoalSaved)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">{t.total_target || 'Total Target'}</p>
+                <p className="text-xl font-bold text-slate-900 mt-1">{fmt(totalGoalTarget)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Debt Summary */}
+      {(totalIOwe > 0 || totalOwedToMe > 0) && (
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-6">
+            <h3 className="font-semibold text-slate-900 mb-4">{t.debts || 'Debts'}</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-slate-500">{t.owed_to_me || 'Owed to Me'}</p>
+                <p className="text-xl font-bold text-green-600 mt-1">{fmt(totalOwedToMe)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">{t.i_owe || 'I Owe'}</p>
+                <p className="text-xl font-bold text-red-600 mt-1">{fmt(totalIOwe)}</p>
+              </div>
             </div>
           </CardContent>
         </Card>

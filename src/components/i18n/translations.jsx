@@ -717,7 +717,7 @@ export const translations = {
       add_recurring_expense: 'Add Recurring Expense',
       total_amount_label: 'Total Amount',
       date_label: 'Date',
-      description_placeholder: 'E.g.: Dinner',
+      description_placeholder: 'Description (e.g.: Dinner)',
       participants_label: 'Participants',
       search_participant: 'Search Participant...',
       no_participants_found: 'No Participants Found',

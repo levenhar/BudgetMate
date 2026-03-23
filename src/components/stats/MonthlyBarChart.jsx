@@ -32,7 +32,7 @@ export default function MonthlyBarChart({ data }) {
   const maxTotal = Math.max(...data.map(d => d.total), 0);
 
   return (
-    <div className="h-80">
+    <div className="h-80" aria-label="Monthly Bar Chart">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>

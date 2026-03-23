@@ -57,7 +57,7 @@ export default function CategoryPieChart({ data, selectedMonth }) {
   };
 
   return (
-    <div className="h-80">
+    <div className="h-80" aria-label="Category Pie Chart">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie

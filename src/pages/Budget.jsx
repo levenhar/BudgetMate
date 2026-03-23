@@ -450,12 +450,10 @@ export default function Budget() {
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{t.budget}</h1>
             <p className="text-slate-500 mt-1 text-sm sm:text-base">{t.no_budget_desc}</p>
           </div>
-          {!hasBudget && (
-            <Button onClick={() => setShowDialog(true)} className="bg-slate-900 hover:bg-slate-800 shrink-0">
-              <Plus className="h-5 w-5 ms-2" />
-              {t.set_budget}
-            </Button>
-          )}
+          <Button onClick={() => setShowDialog(true)} className="bg-slate-900 hover:bg-slate-800 shrink-0">
+            <Plus className="h-5 w-5 ms-2" />
+            {hasBudget ? t.edit_budget : t.set_budget}
+          </Button>
         </div>
 
         {hasBudget ? (
