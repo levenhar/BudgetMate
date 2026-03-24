@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Loader2, TrendingUp, TrendingDown, Users, Receipt, CheckCircle, Pencil, Trash2 } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Users, Receipt, CheckCircle, Pencil, Trash2, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -31,6 +33,10 @@ export default function Debts() {
   const [expenseToDelete, setExpenseToDelete] = useState<any | null>(null);
   const [editingExpense, setEditingExpense] = useState<any | null>(null);
   const [editingExpenseSplits, setEditingExpenseSplits] = useState<any[] | null>(null);
+  const [showAddDebt, setShowAddDebt] = useState(false);
+  const [addDebtForm, setAddDebtForm] = useState({ personName: '', amount: '' });
+  const [payDebtTarget, setPayDebtTarget] = useState<any | null>(null);
+  const [payAmount, setPayAmount] = useState('');
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -68,6 +74,51 @@ export default function Debts() {
       return base44.entities.SharedExpenseSplit.list();
     },
     enabled: !!user?.email,
+  });
+
+  const { data: manualDebts = [], refetch: refetchManualDebts } = useQuery({
+    queryKey: ['manualDebts', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return base44.entities.Debt.filter({ from_user_id: user.email });
+    },
+    enabled: !!user?.email,
+  });
+
+  const createDebtMutation = useMutation({
+    mutationFn: async ({ personName, amount }: { personName: string; amount: number }) => {
+      return base44.entities.Debt.create({
+        from_user_id: user!.email,
+        from_user_name: user!.email,
+        to_user_id: personName,
+        to_user_name: personName,
+        amount,
+      });
+    },
+    onSuccess: () => {
+      toast.success('Debt recorded');
+      queryClient.invalidateQueries({ queryKey: ['manualDebts'] });
+      setShowAddDebt(false);
+      setAddDebtForm({ personName: '', amount: '' });
+    },
+    onError: () => toast.error('Failed to record debt'),
+  });
+
+  const payDebtMutation = useMutation({
+    mutationFn: async ({ debt, payment }: { debt: any; payment: number }) => {
+      const remaining = debt.amount - payment;
+      if (remaining <= 0) {
+        return base44.entities.Debt.delete(debt.id);
+      }
+      return base44.entities.Debt.update(debt.id, { amount: remaining });
+    },
+    onSuccess: () => {
+      toast.success('Payment recorded');
+      queryClient.invalidateQueries({ queryKey: ['manualDebts'] });
+      setPayDebtTarget(null);
+      setPayAmount('');
+    },
+    onError: () => toast.error('Failed to record payment'),
   });
 
   const isLoading = loadingExpenses || loadingSplits;
@@ -502,9 +553,15 @@ export default function Debts() {
   return (
     <div className="min-h-screen bg-slate-50" dir={dir}>
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">{t.debts}</h1>
-          <p className="text-slate-500 mt-1">{t.debts_subtitle}</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">{t.debts}</h1>
+            <p className="text-slate-500 mt-1">{t.debts_subtitle}</p>
+          </div>
+          <Button onClick={() => setShowAddDebt(true)} className="bg-slate-900 hover:bg-slate-800 shrink-0">
+            <Plus className="h-5 w-5 ms-2" />
+            {(t as any).add_debt || 'Add Debt'}
+          </Button>
         </div>
 
         {/* Net Balance */}
@@ -643,7 +700,110 @@ export default function Debts() {
             )}
           </CardContent>
         </Card>
+
+        {/* Manual Debts */}
+        {manualDebts.length > 0 && (
+          <Card className="mt-6 border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingDown className="h-5 w-5 text-orange-500" />
+                {(t as any).manual_debts || 'Recorded Debts'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {(manualDebts as any[]).map((debt: any) => (
+                  <div key={debt.id} className="flex items-center justify-between p-4 bg-orange-50 border border-orange-100 rounded-xl">
+                    <div>
+                      <div className="font-semibold text-slate-900">{debt.to_user_name}</div>
+                      <div className="text-sm text-slate-500">{(t as any).you_owe || 'You owe'}</div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-xl font-bold text-orange-600">{currencySymbol}{Number(debt.amount).toFixed(2)}</div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-orange-700 border-orange-300 hover:bg-orange-100 shrink-0"
+                        onClick={() => { setPayDebtTarget(debt); setPayAmount(''); }}
+                      >
+                        {(t as any).pay || 'Pay'}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {/* Add Debt Dialog */}
+      <Dialog open={showAddDebt} onOpenChange={setShowAddDebt}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{(t as any).add_debt || 'Add Debt'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <Label>{(t as any).person_name || 'Person Name'}</Label>
+              <Input
+                placeholder={(t as any).person_name || 'Person Name'}
+                value={addDebtForm.personName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAddDebtForm({ ...addDebtForm, personName: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>{(t as any).amount || 'Amount'}</Label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={addDebtForm.amount}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAddDebtForm({ ...addDebtForm, amount: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDebt(false)}>{(t as any).cancel || 'Cancel'}</Button>
+            <Button
+              className="bg-slate-900 hover:bg-slate-800"
+              disabled={!addDebtForm.personName || !addDebtForm.amount || createDebtMutation.isPending}
+              onClick={() => createDebtMutation.mutate({ personName: addDebtForm.personName, amount: parseFloat(addDebtForm.amount) })}
+            >
+              {(t as any).save || 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pay Debt Dialog */}
+      <Dialog open={!!payDebtTarget} onOpenChange={(open) => { if (!open) setPayDebtTarget(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{(t as any).record_payment || 'Record Payment'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <Label>{(t as any).amount || 'Amount'}</Label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={payAmount}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPayAmount(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayDebtTarget(null)}>{(t as any).cancel || 'Cancel'}</Button>
+            <Button
+              className="bg-slate-900 hover:bg-slate-800"
+              disabled={!payAmount || payDebtMutation.isPending}
+              onClick={() => payDebtTarget && payDebtMutation.mutate({ debt: payDebtTarget, payment: parseFloat(payAmount) })}
+            >
+              {(t as any).save || 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Shared Expenses Detail Modal */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
