@@ -131,6 +131,13 @@ export default function Expenses() {
     enabled: !!user?.email,
   });
 
+  // Fetch all splits to build participant map for shared-with-user filter
+  const { data: splits = [] } = useQuery({
+    queryKey: ['sharedExpenseSplits', user?.email],
+    queryFn: () => base44.entities.SharedExpenseSplit.list(),
+    enabled: !!user?.email,
+  });
+
   // Build maps from shared expense id to is_settled and is_pending status
   const sharedExpenseStatusMap = useMemo(() => {
     const map = {};
