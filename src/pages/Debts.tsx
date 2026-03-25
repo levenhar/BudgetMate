@@ -585,6 +585,36 @@ export default function Debts() {
   const totalIOwe = debtsIOwe.reduce((sum, d) => sum + d.amount, 0);
   const netBalance = totalOwedToMe - totalIOwe;
 
+  // Users who have ONLY settled shared expenses with the current user (balance = 0).
+  // Shown in a separate section so the user can still click through to see/delete settled expenses.
+  const settledUserMap: Record<string, string> = {};
+  if (userEmail) {
+    for (const expense of sharedExpenses as any[]) {
+      if (!expense.is_settled) continue;
+      const splits = (allSplits as any[]).filter((s: any) => s.shared_expense_id === expense.id);
+      const payerId = expense.paid_by_user_id?.trim();
+      const splitUserIds = splits.map((s: any) => s.user_id?.trim());
+
+      const collectOther = (otherEmail: string) => {
+        if (!otherEmail || otherEmail === userEmail) return;
+        if (!settledUserMap[otherEmail]) {
+          const split = splits.find((s: any) => s.user_id?.trim() === otherEmail);
+          settledUserMap[otherEmail] = split?.user_name || otherEmail;
+        }
+      };
+
+      if (payerId === userEmail) {
+        splits.forEach((s: any) => collectOther(s.user_id?.trim()));
+      } else if (splitUserIds.includes(userEmail)) {
+        collectOther(payerId);
+      }
+    }
+  }
+  // Only show users who have zero active balance (not already in the owed/owe cards)
+  const settledOnlyUsers = Object.entries(settledUserMap)
+    .filter(([email]) => !balanceByUser[email] || Math.abs(balanceByUser[email].amount) <= 0.005)
+    .map(([email, name]) => ({ email, name }));
+
   // Expenses involving both current user and the selected user (including settled so they can be deleted)
   const selectedUserExpenses = selectedUser
     ? (sharedExpenses as any[])
@@ -703,7 +733,7 @@ export default function Debts() {
         </Card>
 
         {/* Users I Owe */}
-        <Card className="border-0 shadow-sm">
+        <Card className="mb-6 border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingDown className="h-5 w-5 text-red-600" />
@@ -762,6 +792,36 @@ export default function Debts() {
             )}
           </CardContent>
         </Card>
+
+        {/* Settled — zero-balance users with settled shared expenses */}
+        {settledOnlyUsers.length > 0 && (
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-slate-400" />
+                {(t as any).settled_history || 'Settled'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {settledOnlyUsers.map((u) => (
+                  <div
+                    key={u.email}
+                    data-testid={`settled-user-${u.email}`}
+                    className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={() => setSelectedUser({ email: u.email, name: u.name })}
+                  >
+                    <div>
+                      <div className="font-semibold text-slate-700">{u.name}</div>
+                      <div className="text-sm text-slate-400">{(t as any).all_settled || 'All settled'}</div>
+                    </div>
+                    <CheckCircle className="h-5 w-5 text-green-400" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
       </div>
 
