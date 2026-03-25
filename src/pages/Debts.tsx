@@ -478,7 +478,6 @@ export default function Debts() {
     ? (sharedExpenses as any[])
         .filter((expense: any) => {
           if (expense.is_settled) return false;
-          if (expense.is_pending) return false;
           const splits = (allSplits as any[]).filter((s: any) => s.shared_expense_id === expense.id);
           const splitUserIds = splits.map((s: any) => s.user_id?.trim());
           const payerId = expense.paid_by_user_id?.trim();
