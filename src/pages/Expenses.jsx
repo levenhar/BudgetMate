@@ -859,22 +859,21 @@ export default function Expenses() {
 
   const totalFiltered = filteredExpenses.filter(e => !e.is_pending).reduce((sum, e) => sum + e.amount, 0);
 
-  // Collect unique shared users from all expenses (excluding self)
+  // Build dropdown options from splitParticipantsMap — surfaces all co-participants
+  // including those from expenses where the current user was the payer.
   const sharedUsers = useMemo(() => {
     const userMap = new Map();
-    expenses.forEach(e => {
-      if (!e.is_shared) return;
-      const otherId = e.paid_by_user_id && e.paid_by_user_id !== user?.email
-        ? e.paid_by_user_id
-        : e.user_email && e.user_email !== user?.email
-        ? e.user_email
-        : null;
-      if (otherId && !userMap.has(otherId)) {
-        userMap.set(otherId, { email: otherId, name: otherId });
+    for (const [, participants] of splitParticipantsMap) {
+      for (const userId of participants) {
+        if (userId === user?.email) continue; // skip self
+        if (!userMap.has(userId)) {
+          const split = splits.find(s => s.user_id === userId);
+          userMap.set(userId, { email: userId, name: split?.user_name || userId });
+        }
       }
-    });
+    }
     return Array.from(userMap.values());
-  }, [expenses, user?.email]);
+  }, [splitParticipantsMap, splits, user?.email]);
   
   // Filter recurring expenses by category and date range
   const activeRecurring = recurringExpenses.filter(r => {
