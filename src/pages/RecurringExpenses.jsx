@@ -366,6 +366,13 @@ export default function RecurringExpenses() {
               {recurringExpenses.length > 0 ? `${recurringExpenses.length} ${t.recurring_expenses}` : t.no_recurring_desc}
             </p>
           </div>
+          <Button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-add-expense', { detail: { tab: 'recurring' } }))}
+            className="bg-slate-900 hover:bg-slate-800 shrink-0"
+          >
+            <Plus className="h-5 w-5 ms-2" />
+            {t.add_recurring_expense || 'Add Recurring'}
+          </Button>
         </div>
 
         {/* Installment Expenses */}

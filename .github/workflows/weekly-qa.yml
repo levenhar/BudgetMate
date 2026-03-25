@@ -149,8 +149,15 @@ jobs:
             - NEVER modify supabase/migrations/
             - Only edit files under src/, public/, or root config files (vite.config.*, tailwind.config.*, etc)
             - Run npm run build after all fixes and ensure it passes
-            - Commit all changes with: "fix: implement QA-detected fixes $(date +%Y-%m-%d)"
-            - Do NOT merge to main. Do NOT open a PR. Just commit and push to the current branch.
+            - Stage and commit all changes with: git add -A && git commit -m "fix: implement QA-detected fixes $(date +%Y-%m-%d)"
+            - Do NOT push. Do NOT open a PR. Just commit locally — the workflow will push the branch.
+
+      - name: Push fix branch
+        run: |
+          COMMITS=$(git log origin/main..HEAD --oneline | wc -l)
+          if [ "$COMMITS" -gt 0 ]; then
+            git push origin "$BRANCH"
+          fi
 
       - name: Create Pull Request
         run: |

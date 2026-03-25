@@ -653,10 +653,6 @@ export default function Budget() {
             <DollarSign className="h-12 w-12 sm:h-16 sm:w-16 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg sm:text-xl font-semibold text-slate-900 mb-2">{t.no_budget_defined}</h3>
             <p className="text-slate-500 mb-6 text-sm sm:text-base">{t.no_budget_desc}</p>
-            <Button onClick={() => setShowDialog(true)} className="bg-slate-900 hover:bg-slate-800">
-              <Plus className="h-5 w-5 ms-2" />
-              {t.set_budget}
-            </Button>
           </Card>
         )}
       </div>
