@@ -167,11 +167,11 @@ export default function Debts() {
       queryClient.invalidateQueries({ queryKey: ['sharedExpenseSplits'] });
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['debts'] });
-      toast.success('הוצאה משותפת נמחקה בהצלחה');
+      toast.success((t as any).shared_expense_deleted || 'Shared expense deleted successfully');
       setExpenseToDelete(null);
     },
     onError: () => {
-      toast.error('שגיאה במחיקת ההוצאה המשותפת');
+      toast.error((t as any).shared_expense_delete_error || 'Error deleting shared expense');
     },
   });
 
@@ -413,12 +413,12 @@ export default function Debts() {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['debts'] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success('הוצאה משותפת עודכנה בהצלחה!');
+      toast.success((t as any).shared_expense_updated || 'Shared expense updated successfully');
       setEditingExpense(null);
       setEditingExpenseSplits(null);
     },
     onError: () => {
-      toast.error('שגיאה בעדכון ההוצאה המשותפת');
+      toast.error((t as any).shared_expense_update_error || 'Error updating shared expense');
     },
   });
 
@@ -745,7 +745,7 @@ export default function Debts() {
                       <div className="mt-2">
                         <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1 w-fit">
                           <CheckCircle className="h-3 w-3" />
-                          {(t as any).mark_as_settled || 'Settled'}
+                          {(t as any).settled || 'Settled'}
                         </span>
                       </div>
                     )}
@@ -797,13 +797,13 @@ export default function Debts() {
       <AlertDialog open={!!expenseToDelete} onOpenChange={(open) => !open && setExpenseToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>מחיקת הוצאה משותפת</AlertDialogTitle>
+            <AlertDialogTitle>{t.delete_shared_expense_title}</AlertDialogTitle>
             <AlertDialogDescription>
-              האם אתה בטוח שברצונך למחוק הוצאה זו? הפעולה תמחק את ההוצאה עבור כל המשתתפים ולא ניתן לבטלה.
+              {t.delete_shared_expense_desc}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
               onClick={() => {
@@ -815,7 +815,7 @@ export default function Debts() {
               {deleteSharedExpenseMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                'מחק'
+                t.delete
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
