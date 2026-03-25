@@ -506,25 +506,80 @@ export default function Debts() {
     },
   });
 
-  // Compute net balance per user from the Debt records table.
-  // Debt records are the single source of truth: created when shared expenses are approved,
-  // cleared when debts are settled, and reversed when settled expenses are deleted.
+  // Compute net balance per user from active (unsettled, non-pending) shared expenses
   const balanceByUser: Record<string, { amount: number; name: string; email: string }> = {};
 
-  if (userEmail) {
+  if (userEmail && (sharedExpenses as any[]).length > 0) {
+    for (const expense of sharedExpenses as any[]) {
+      if (expense.is_pending) continue;
+      if (expense.is_settled) continue;
+
+      const splits = (allSplits as any[]).filter((s: any) => s.shared_expense_id === expense.id);
+      const pendingUsers: string[] = expense.pending_with_users || [];
+
+      if (expense.paid_by_user_id?.trim() === userEmail) {
+        for (const split of splits) {
+          const splitUserId = split.user_id?.trim();
+          if (!splitUserId || splitUserId === userEmail) continue;
+          if (pendingUsers.map((u: string) => u.trim()).includes(splitUserId)) continue;
+          if (!balanceByUser[splitUserId]) {
+            balanceByUser[splitUserId] = { amount: 0, name: split.user_name || splitUserId, email: splitUserId };
+          }
+          balanceByUser[splitUserId].amount += split.share_amount;
+        }
+      } else {
+        const mySplit = splits.find((s: any) => s.user_id?.trim() === userEmail);
+        if (!mySplit) continue;
+        if (pendingUsers.map((u: string) => u.trim()).includes(userEmail)) continue;
+        const payerId = expense.paid_by_user_id?.trim();
+        if (!payerId) continue;
+        const payerSplit = splits.find((s: any) => s.user_id?.trim() === payerId);
+        const payerName = payerSplit?.user_name || payerId;
+        if (!balanceByUser[payerId]) {
+          balanceByUser[payerId] = { amount: 0, name: payerName, email: payerId };
+        }
+        balanceByUser[payerId].amount -= mySplit.share_amount;
+      }
+    }
+  }
+
+  // Also include standalone Debt records that are NOT covered by any SharedExpense.
+  // These are reverse debts created when a settled expense is deleted:
+  // the original payer received the settlement payment, then the expense was removed,
+  // so they now owe the participants back.
+  if (userEmail && (allDebts as any[]).length > 0) {
     for (const debt of allDebts as any[]) {
       const fromTrimmed = debt.from_user_id?.trim();
       const toTrimmed = debt.to_user_id?.trim();
       if (!fromTrimmed || !toTrimmed || !debt.amount) continue;
+      if (fromTrimmed !== userEmail && toTrimmed !== userEmail) continue;
 
+      // A Debt record is "covered" if there is a SharedExpense (settled or active) that
+      // accounts for it. Covered debts are already handled by the SharedExpense loop above
+      // (active ones) or represent stale records for old settled expenses (skip them).
+      const covered = (sharedExpenses as any[]).some((expense: any) => {
+        if (expense.is_pending) return false;
+        const splits = (allSplits as any[]).filter((s: any) => s.shared_expense_id === expense.id);
+        const splitUserIds = splits.map((s: any) => s.user_id?.trim());
+        const payerId = expense.paid_by_user_id?.trim();
+        if (toTrimmed === userEmail) {
+          // Debt says fromTrimmed owes me — covered if expense where I paid and fromTrimmed is participant
+          return payerId === userEmail && splitUserIds.includes(fromTrimmed);
+        } else {
+          // Debt says I owe toTrimmed — covered if expense where toTrimmed paid and I'm participant
+          return payerId === toTrimmed && splitUserIds.includes(userEmail);
+        }
+      });
+
+      if (covered) continue;
+
+      // Standalone Debt record (reverse debt from deleted-settled expense)
       if (toTrimmed === userEmail) {
-        // fromTrimmed owes me
         if (!balanceByUser[fromTrimmed]) {
           balanceByUser[fromTrimmed] = { amount: 0, name: debt.from_user_name || fromTrimmed, email: fromTrimmed };
         }
         balanceByUser[fromTrimmed].amount += debt.amount;
-      } else if (fromTrimmed === userEmail) {
-        // I owe toTrimmed
+      } else {
         if (!balanceByUser[toTrimmed]) {
           balanceByUser[toTrimmed] = { amount: 0, name: debt.to_user_name || toTrimmed, email: toTrimmed };
         }
