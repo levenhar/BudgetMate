@@ -70,7 +70,16 @@ export default function Debts() {
     enabled: !!user?.email,
   });
 
-  const isLoading = loadingExpenses || loadingSplits;
+  const { data: allDebts = [], isLoading: loadingDebts } = useQuery({
+    queryKey: ['debts'],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return base44.entities.Debt.list();
+    },
+    enabled: !!user?.email,
+  });
+
+  const isLoading = loadingExpenses || loadingSplits || loadingDebts;
 
   const userEmail = user?.email?.trim();
 
@@ -94,6 +103,20 @@ export default function Debts() {
 
       for (const expense of expensesToSettle) {
         await base44.entities.SharedExpense.update(expense.id, { is_settled: true });
+      }
+
+      // Clear all Debt records between the two users — the debt is now paid in real life
+      const currentDebts = await base44.entities.Debt.list();
+      const debtsToDelete = (currentDebts as any[]).filter((d: any) => {
+        const from = d.from_user_id?.trim();
+        const to = d.to_user_id?.trim();
+        return (
+          (from === userEmail && to === otherEmail.trim()) ||
+          (from === otherEmail.trim() && to === userEmail)
+        );
+      });
+      for (const debt of debtsToDelete) {
+        await base44.entities.Debt.delete(debt.id);
       }
     },
     onSuccess: () => {
@@ -133,27 +156,88 @@ export default function Debts() {
         await base44.entities.SharedExpenseSplit.delete(split.id);
       }
 
-      // Reverse debts caused by this expense
+      // Update Debt records based on whether the expense was settled
       if (shared) {
-        for (const split of splits) {
-          if (split.user_id === shared.paid_by_user_id) continue;
+        const paidByUserIdTrimmed = shared.paid_by_user_id?.trim();
+        const payerSplit = splits.find((s: any) => s.user_id?.trim() === paidByUserIdTrimmed);
+        const payerName = payerSplit?.user_name || paidByUserIdTrimmed;
 
-          const allDebts = await base44.entities.Debt.list();
-          const splitUserIdTrimmed = split.user_id.trim();
-          const paidByUserIdTrimmed = shared.paid_by_user_id.trim();
+        if (shared.is_settled) {
+          // The expense was already settled: the participant physically paid the payer.
+          // Deleting this expense means the payer now owes the participant their share back.
+          for (const split of splits) {
+            const splitUserIdTrimmed = split.user_id?.trim();
+            if (!splitUserIdTrimmed || splitUserIdTrimmed === paidByUserIdTrimmed) continue;
 
-          const existingDebt = allDebts.find(
-            (d: any) =>
-              d.from_user_id?.trim() === splitUserIdTrimmed &&
-              d.to_user_id?.trim() === paidByUserIdTrimmed,
-          );
+            const currentDebts = await base44.entities.Debt.list();
 
-          if (existingDebt) {
-            const newAmount = existingDebt.amount - split.share_amount;
-            if (newAmount <= 0.01) {
-              await base44.entities.Debt.delete(existingDebt.id);
+            // Check for an existing forward debt (participant → payer) to offset first
+            const forwardDebt = (currentDebts as any[]).find(
+              (d: any) =>
+                d.from_user_id?.trim() === splitUserIdTrimmed &&
+                d.to_user_id?.trim() === paidByUserIdTrimmed,
+            );
+            // Check for an existing reverse debt (payer → participant) to accumulate
+            const reverseDebt = (currentDebts as any[]).find(
+              (d: any) =>
+                d.from_user_id?.trim() === paidByUserIdTrimmed &&
+                d.to_user_id?.trim() === splitUserIdTrimmed,
+            );
+
+            if (forwardDebt) {
+              // Offset: participant was still owed money by payer (unusual, but handle gracefully)
+              const remainder = forwardDebt.amount - split.share_amount;
+              if (remainder <= 0.01) {
+                await base44.entities.Debt.delete(forwardDebt.id);
+                if (Math.abs(remainder) > 0.01) {
+                  // Remaining amount flips: payer now owes participant
+                  await base44.entities.Debt.create({
+                    from_user_id: paidByUserIdTrimmed,
+                    from_user_name: payerName,
+                    to_user_id: splitUserIdTrimmed,
+                    to_user_name: split.user_name,
+                    amount: Math.abs(remainder),
+                  });
+                }
+              } else {
+                await base44.entities.Debt.update(forwardDebt.id, { amount: remainder });
+              }
+            } else if (reverseDebt) {
+              // Accumulate: payer already owes participant more
+              await base44.entities.Debt.update(reverseDebt.id, {
+                amount: reverseDebt.amount + split.share_amount,
+              });
             } else {
-              await base44.entities.Debt.update(existingDebt.id, { amount: newAmount });
+              // Create new reverse debt: payer owes participant their share back
+              await base44.entities.Debt.create({
+                from_user_id: paidByUserIdTrimmed,
+                from_user_name: payerName,
+                to_user_id: splitUserIdTrimmed,
+                to_user_name: split.user_name,
+                amount: split.share_amount,
+              });
+            }
+          }
+        } else {
+          // Non-settled expense: reverse the original debt (participant no longer owes payer)
+          for (const split of splits) {
+            const splitUserIdTrimmed = split.user_id?.trim();
+            if (!splitUserIdTrimmed || splitUserIdTrimmed === paidByUserIdTrimmed) continue;
+
+            const currentDebts = await base44.entities.Debt.list();
+            const existingDebt = (currentDebts as any[]).find(
+              (d: any) =>
+                d.from_user_id?.trim() === splitUserIdTrimmed &&
+                d.to_user_id?.trim() === paidByUserIdTrimmed,
+            );
+
+            if (existingDebt) {
+              const newAmount = existingDebt.amount - split.share_amount;
+              if (newAmount <= 0.01) {
+                await base44.entities.Debt.delete(existingDebt.id);
+              } else {
+                await base44.entities.Debt.update(existingDebt.id, { amount: newAmount });
+              }
             }
           }
         }
@@ -422,45 +506,29 @@ export default function Debts() {
     },
   });
 
-  // Compute net balance per user directly from shared expenses
+  // Compute net balance per user from the Debt records table.
+  // Debt records are the single source of truth: created when shared expenses are approved,
+  // cleared when debts are settled, and reversed when settled expenses are deleted.
   const balanceByUser: Record<string, { amount: number; name: string; email: string }> = {};
 
-  if (userEmail && (sharedExpenses as any[]).length > 0) {
-    for (const expense of sharedExpenses as any[]) {
-      // Only approved shared expenses (all participants have accepted) contribute to debts
-      // Skip pending and settled expenses
-      if (expense.is_pending) continue;
-      if (expense.is_settled) continue;
+  if (userEmail) {
+    for (const debt of allDebts as any[]) {
+      const fromTrimmed = debt.from_user_id?.trim();
+      const toTrimmed = debt.to_user_id?.trim();
+      if (!fromTrimmed || !toTrimmed || !debt.amount) continue;
 
-      const splits = (allSplits as any[]).filter((s: any) => s.shared_expense_id === expense.id);
-      const pendingUsers: string[] = expense.pending_with_users || [];
-
-      if (expense.paid_by_user_id?.trim() === userEmail) {
-        // I paid — others owe me their share
-        for (const split of splits) {
-          const splitUserId = split.user_id?.trim();
-          if (!splitUserId || splitUserId === userEmail) continue;
-          // Skip if this user hasn't approved yet
-          if (pendingUsers.map((u: string) => u.trim()).includes(splitUserId)) continue;
-          if (!balanceByUser[splitUserId]) {
-            balanceByUser[splitUserId] = { amount: 0, name: split.user_name || splitUserId, email: splitUserId };
-          }
-          balanceByUser[splitUserId].amount += split.share_amount; // positive = they owe me
+      if (toTrimmed === userEmail) {
+        // fromTrimmed owes me
+        if (!balanceByUser[fromTrimmed]) {
+          balanceByUser[fromTrimmed] = { amount: 0, name: debt.from_user_name || fromTrimmed, email: fromTrimmed };
         }
-      } else {
-        // Someone else paid — I may owe them
-        const mySplit = splits.find((s: any) => s.user_id?.trim() === userEmail);
-        if (!mySplit) continue;
-        // Skip if I haven't approved yet
-        if (pendingUsers.map((u: string) => u.trim()).includes(userEmail)) continue;
-        const payerId = expense.paid_by_user_id?.trim();
-        if (!payerId) continue;
-        const payerSplit = splits.find((s: any) => s.user_id?.trim() === payerId);
-        const payerName = payerSplit?.user_name || payerId;
-        if (!balanceByUser[payerId]) {
-          balanceByUser[payerId] = { amount: 0, name: payerName, email: payerId };
+        balanceByUser[fromTrimmed].amount += debt.amount;
+      } else if (fromTrimmed === userEmail) {
+        // I owe toTrimmed
+        if (!balanceByUser[toTrimmed]) {
+          balanceByUser[toTrimmed] = { amount: 0, name: debt.to_user_name || toTrimmed, email: toTrimmed };
         }
-        balanceByUser[payerId].amount -= mySplit.share_amount; // negative = I owe them
+        balanceByUser[toTrimmed].amount -= debt.amount;
       }
     }
   }
