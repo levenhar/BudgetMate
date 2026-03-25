@@ -478,9 +478,18 @@ export default function Debts() {
     ? (sharedExpenses as any[])
         .filter((expense: any) => {
           if (expense.is_settled) return false;
+          if (expense.is_pending) return false;
           const splits = (allSplits as any[]).filter((s: any) => s.shared_expense_id === expense.id);
-          const userIds = splits.map((s: any) => s.user_id?.trim());
-          return userIds.includes(userEmail) && userIds.includes(selectedUser.email);
+          const splitUserIds = splits.map((s: any) => s.user_id?.trim());
+          const payerId = expense.paid_by_user_id?.trim();
+          const selectedEmail = selectedUser.email.trim();
+
+          // Direction 1: current user paid, selected user is a participant in splits
+          if (payerId === userEmail && splitUserIds.includes(selectedEmail)) return true;
+          // Direction 2: selected user paid, current user is a participant in splits
+          if (payerId === selectedEmail && splitUserIds.includes(userEmail)) return true;
+
+          return false;
         })
         .sort((a: any, b: any) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
     : [];
