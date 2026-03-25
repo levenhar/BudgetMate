@@ -862,13 +862,13 @@ export default function Expenses() {
   // Build dropdown options from splitParticipantsMap — surfaces all co-participants
   // including those from expenses where the current user was the payer.
   const sharedUsers = useMemo(() => {
+    const userNameIndex = new Map(splits.map(s => [s.user_id, s.user_name]));
     const userMap = new Map();
     for (const [, participants] of splitParticipantsMap) {
       for (const userId of participants) {
         if (userId === user?.email) continue; // skip self
         if (!userMap.has(userId)) {
-          const split = splits.find(s => s.user_id === userId);
-          userMap.set(userId, { email: userId, name: split?.user_name || userId });
+          userMap.set(userId, { email: userId, name: userNameIndex.get(userId) || userId });
         }
       }
     }
