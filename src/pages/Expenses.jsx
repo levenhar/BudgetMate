@@ -155,6 +155,26 @@ export default function Expenses() {
     return ids;
   }, [sharedExpensesList]);
 
+  // Map each shared_expense_id to the Set of all participant user_ids.
+  // Step 1: find which shared_expense_ids the current user participates in.
+  // Step 2: build Sets only for those IDs (scopes the map to current user's expenses).
+  const splitParticipantsMap = useMemo(() => {
+    const mySharedExpenseIds = new Set(
+      splits
+        .filter(s => s.user_id === user?.email)
+        .map(s => s.shared_expense_id)
+    );
+    const map = new Map();
+    for (const split of splits) {
+      if (!mySharedExpenseIds.has(split.shared_expense_id)) continue;
+      if (!map.has(split.shared_expense_id)) {
+        map.set(split.shared_expense_id, new Set());
+      }
+      map.get(split.shared_expense_id).add(split.user_id);
+    }
+    return map;
+  }, [splits, user?.email]);
+
   // Fetch recurring expenses
   const { data: recurringExpenses = [] } = useQuery({
     queryKey: ['recurringExpenses', user?.email, settings?.current_household_id, isHouseholdMode],
