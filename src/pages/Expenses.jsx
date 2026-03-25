@@ -131,6 +131,13 @@ export default function Expenses() {
     enabled: !!user?.email,
   });
 
+  // Fetch all splits to build participant map for shared-with-user filter
+  const { data: splits = [] } = useQuery({
+    queryKey: ['sharedExpenseSplits', user?.email],
+    queryFn: () => base44.entities.SharedExpenseSplit.list(),
+    enabled: !!user?.email,
+  });
+
   // Build maps from shared expense id to is_settled and is_pending status
   const sharedExpenseStatusMap = useMemo(() => {
     const map = {};
@@ -147,6 +154,26 @@ export default function Expenses() {
     }
     return ids;
   }, [sharedExpensesList]);
+
+  // Map each shared_expense_id to the Set of all participant user_ids.
+  // Step 1: find which shared_expense_ids the current user participates in.
+  // Step 2: build Sets only for those IDs (scopes the map to current user's expenses).
+  const splitParticipantsMap = useMemo(() => {
+    const mySharedExpenseIds = new Set(
+      splits
+        .filter(s => s.user_id === user?.email)
+        .map(s => s.shared_expense_id)
+    );
+    const map = new Map();
+    for (const split of splits) {
+      if (!mySharedExpenseIds.has(split.shared_expense_id)) continue;
+      if (!map.has(split.shared_expense_id)) {
+        map.set(split.shared_expense_id, new Set());
+      }
+      map.get(split.shared_expense_id).add(split.user_id);
+    }
+    return map;
+  }, [splits, user?.email]);
 
   // Fetch recurring expenses
   const { data: recurringExpenses = [] } = useQuery({
@@ -783,17 +810,14 @@ export default function Expenses() {
       // Show all shared expenses regardless of who paid
       result = result.filter(e => e.is_shared);
     } else if (filters.sharedWithUser) {
-      // Show shared expenses involving the specific user in any role
-      // (either they paid for the expense, or the expense is attributed to their account)
       const selectedUser = filters.sharedWithUser;
-      result = result.filter(e =>
-        e.is_shared && (
-          e.paid_by_user_id === selectedUser ||
-          e.user_email === selectedUser ||
-          (Array.isArray(e.shared_with) && e.shared_with.includes(selectedUser)) ||
-          (Array.isArray(e.participants) && e.participants.includes(selectedUser))
-        )
-      );
+      result = result.filter(e => {
+        if (!e.is_shared) return false;
+        // Expenses with is_shared=true but no source_shared_expense_id are legacy records — skip.
+        if (!e.source_shared_expense_id) return false;
+        const participants = splitParticipantsMap.get(e.source_shared_expense_id);
+        return participants?.has(selectedUser) ?? false;
+      });
     }
 
     // Sort
@@ -811,7 +835,7 @@ export default function Expenses() {
     });
 
     return result;
-  }, [expenses, filters, sharedExpenseStatusMap]);
+  }, [expenses, filters, sharedExpenseStatusMap, splitParticipantsMap]);
 
   const clearFilters = () => {
     setFilters({
@@ -835,22 +859,21 @@ export default function Expenses() {
 
   const totalFiltered = filteredExpenses.filter(e => !e.is_pending).reduce((sum, e) => sum + e.amount, 0);
 
-  // Collect unique shared users from all expenses (excluding self)
+  // Build dropdown options from splitParticipantsMap — surfaces all co-participants
+  // including those from expenses where the current user was the payer.
   const sharedUsers = useMemo(() => {
+    const userNameIndex = new Map(splits.map(s => [s.user_id, s.user_name]));
     const userMap = new Map();
-    expenses.forEach(e => {
-      if (!e.is_shared) return;
-      const otherId = e.paid_by_user_id && e.paid_by_user_id !== user?.email
-        ? e.paid_by_user_id
-        : e.user_email && e.user_email !== user?.email
-        ? e.user_email
-        : null;
-      if (otherId && !userMap.has(otherId)) {
-        userMap.set(otherId, { email: otherId, name: otherId });
+    for (const [, participants] of splitParticipantsMap) {
+      for (const userId of participants) {
+        if (userId === user?.email) continue; // skip self
+        if (!userMap.has(userId)) {
+          userMap.set(userId, { email: userId, name: userNameIndex.get(userId) || userId });
+        }
       }
-    });
+    }
     return Array.from(userMap.values());
-  }, [expenses, user?.email]);
+  }, [splitParticipantsMap, splits, user?.email]);
   
   // Filter recurring expenses by category and date range
   const activeRecurring = recurringExpenses.filter(r => {
