@@ -22,7 +22,8 @@
       "mcp__claude_ai_Gmail__gmail_search_messages",
       "mcp__plugin_playwright_playwright__browser_evaluate",
       "mcp__plugin_playwright_playwright__browser_run_code",
-      "mcp__plugin_playwright_playwright__browser_wait_for"
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "WebFetch(domain:api.github.com)"
     ],
     "ask": [
       "Bash(git push:*)",

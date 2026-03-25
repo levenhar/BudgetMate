@@ -172,13 +172,14 @@ export default function Debts() {
 
             // Create reverse SharedExpense: participant paid, original payer now owes
             const reverseExpense = await base44.entities.SharedExpense.create({
+              created_by_user_id: userEmail,
               total_amount: split.share_amount,
               date: shared.date,
               category_id: shared.category_id,
               category_name: shared.category_name,
               description: shared.description,
               paid_by_user_id: splitUserIdTrimmed,
-              split_method: 'custom',
+              split_method: 'custom_amount',
               household_id: shared.household_id || null,
               is_settled: false,
               is_pending: false,
