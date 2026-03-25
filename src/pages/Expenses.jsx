@@ -816,7 +816,7 @@ export default function Expenses() {
         // Expenses with is_shared=true but no source_shared_expense_id are legacy records — skip.
         if (!e.source_shared_expense_id) return false;
         const participants = splitParticipantsMap.get(e.source_shared_expense_id);
-        return participants?.has(selectedUser);
+        return participants?.has(selectedUser) ?? false;
       });
     }
 
