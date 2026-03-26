@@ -67,15 +67,18 @@ export default function Settings() {
     queryKey: ['userProfile', user?.email],
     queryFn: async () => {
       const existing = await base44.entities.UserProfile.filter({ user_email: user.email });
+      const pictureUrl = user.picture || null;
       if (existing.length === 0) {
         await base44.entities.UserProfile.create({
           user_email: user.email,
           full_name: user.full_name || '',
+          picture_url: pictureUrl,
           status: 'active',
         });
-      } else if (existing[0].full_name !== user.full_name) {
+      } else if (existing[0].full_name !== user.full_name || existing[0].picture_url !== pictureUrl) {
         await base44.entities.UserProfile.update(existing[0].id, {
           full_name: user.full_name || '',
+          picture_url: pictureUrl,
         });
       }
       return true;
