@@ -243,6 +243,7 @@ export const translations = {
       shared: 'משותף',
       paid_by: 'שולם על ידי',
       paid_by_you: 'שולם על ידך',
+      you: 'אתה/את',
       monthly_trend: 'מגמה חודשית',
       // Dashboard
       transaction: 'עסקה',
@@ -653,6 +654,7 @@ export const translations = {
       shared: 'Shared',
       paid_by: 'Paid by',
       paid_by_you: 'Paid by you',
+      you: 'You',
       monthly_trend: 'Monthly trend',
       // Dashboard
       transaction: 'transaction',

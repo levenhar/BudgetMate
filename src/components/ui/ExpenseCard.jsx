@@ -25,9 +25,12 @@ const paymentMethodLabels = {
 };
 
 function getInitials(name) {
-  const parts = name.trim().split(/\s+/);
+  if (!name) return '?';
+  // Strip email domain if name looks like an email
+  const display = name.includes('@') ? name.split('@')[0] : name;
+  const parts = display.trim().split(/\s+/);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
+  return display.slice(0, 2).toUpperCase();
 }
 
 export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, onApprovePending, currentUserEmail, sharedExpensePendingUsers, isExpanded, onToggleExpand, sharedParticipants = [] }) {
