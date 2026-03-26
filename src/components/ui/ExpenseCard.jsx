@@ -5,6 +5,8 @@ import { Pencil, Trash2, CreditCard, Banknote, Building2, ArrowRightLeft, Users,
 import { Button } from "@/components/ui/button";
 import { useLanguage } from '@/components/i18n/LanguageContext';
 import { useCurrency, CURRENCY_SYMBOLS } from '@/lib/CurrencyContext';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const paymentIcons = {
   cash: Banknote,
@@ -22,7 +24,16 @@ const paymentMethodLabels = {
   other: 'Other',
 };
 
-export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, onApprovePending, currentUserEmail, sharedExpensePendingUsers, isExpanded, onToggleExpand }) {
+function getInitials(name) {
+  if (!name) return '?';
+  // Strip email domain if name looks like an email
+  const display = name.includes('@') ? name.split('@')[0] : name;
+  const parts = display.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return display.slice(0, 2).toUpperCase();
+}
+
+export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, onApprovePending, currentUserEmail, sharedExpensePendingUsers, isExpanded, onToggleExpand, sharedParticipants = [] }) {
   const { t } = useLanguage();
   const { currencySymbol } = useCurrency();
   const PaymentIcon = paymentIcons[expense.payment_method] || null;
@@ -221,17 +232,36 @@ export default function ExpenseCard({ expense, categoryColor, onEdit, onDelete, 
               </div>
             )}
 
-            {/* Shared info */}
-            {expense.is_shared && (
-              <div className="flex items-center gap-2 col-span-2">
-                <Users className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                <span className="text-slate-500">{t.shared || 'Shared'}:</span>
-                {expense.paid_by_user_id && expense.paid_by_user_id !== currentUserEmail && (
-                  <span className="text-slate-600">{t.paid_by || 'Paid by'} {expense.paid_by_user_id}</span>
-                )}
-                {(!expense.paid_by_user_id || expense.paid_by_user_id === currentUserEmail) && (
-                  <span className="text-slate-600">{t.paid_by_you || 'Paid by you'}</span>
-                )}
+            {/* Shared participants */}
+            {expense.is_shared && sharedParticipants.length > 0 && (
+              <div className="flex items-start gap-2 col-span-2">
+                <Users className="h-3.5 w-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
+                <span className="text-slate-500 flex-shrink-0">{t.shared_with || 'Shared with'}:</span>
+                <TooltipProvider delayDuration={300}>
+                  <div className="flex flex-wrap gap-1">
+                    {sharedParticipants.map(p => {
+                      const isMe = p.email === currentUserEmail;
+                      const label = isMe ? (t.you || 'You') : p.name;
+                      const initials = getInitials(label);
+                      return (
+                        <Tooltip key={p.email}>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1 bg-slate-100 rounded-full px-1.5 py-0.5 cursor-default">
+                              <Avatar className="w-4 h-4">
+                                <AvatarImage src={p.picture_url || undefined} />
+                                <AvatarFallback className="text-[8px] bg-slate-300">{initials}</AvatarFallback>
+                              </Avatar>
+                              <span className="text-xs text-slate-600 leading-none">{label}</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            {isMe ? p.email : `${p.name} · ${p.email}`}
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </TooltipProvider>
               </div>
             )}
           </div>

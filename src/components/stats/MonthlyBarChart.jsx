@@ -1,6 +1,5 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { format, parseISO } from 'date-fns';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { useLanguage } from '@/components/i18n/LanguageContext';
 

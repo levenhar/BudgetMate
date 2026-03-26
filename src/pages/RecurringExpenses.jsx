@@ -12,7 +12,6 @@ import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import UnifiedExpenseDialog from '@/components/ui/UnifiedExpenseDialog';
 
 import { useLanguage } from '@/components/i18n/LanguageContext';
 import { useCurrency } from '@/lib/CurrencyContext';

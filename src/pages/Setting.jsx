@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { User, Users, Loader2, Globe, DollarSign } from 'lucide-react';
+import { User, Globe, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -67,15 +63,18 @@ export default function Settings() {
     queryKey: ['userProfile', user?.email],
     queryFn: async () => {
       const existing = await base44.entities.UserProfile.filter({ user_email: user.email });
+      const pictureUrl = user.picture || null;
       if (existing.length === 0) {
         await base44.entities.UserProfile.create({
           user_email: user.email,
           full_name: user.full_name || '',
+          picture_url: pictureUrl,
           status: 'active',
         });
-      } else if (existing[0].full_name !== user.full_name) {
+      } else if (existing[0].full_name !== user.full_name || existing[0].picture_url !== pictureUrl) {
         await base44.entities.UserProfile.update(existing[0].id, {
           full_name: user.full_name || '',
+          picture_url: pictureUrl,
         });
       }
       return true;

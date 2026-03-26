@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { Plus, Receipt, Loader2, ChevronDown, ChevronRight, Calendar } from 'lucide-react';
+import { Plus, Receipt, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { AlertTriangle } from 'lucide-react';
@@ -138,6 +138,14 @@ export default function Expenses() {
     enabled: !!user?.email,
   });
 
+  // Fetch user profiles to get picture_url for participant chips
+  const { data: userProfiles = [] } = useQuery({
+    queryKey: ['userProfiles'],
+    queryFn: () => base44.entities.UserProfile.list(),
+    enabled: !!user?.email,
+    staleTime: 5 * 60 * 1000, // profiles change rarely
+  });
+
   // Build maps from shared expense id to is_settled and is_pending status
   const sharedExpenseStatusMap = useMemo(() => {
     const map = {};
@@ -155,9 +163,17 @@ export default function Expenses() {
     return ids;
   }, [sharedExpensesList]);
 
-  // Map each shared_expense_id to the Set of all participant user_ids.
-  // Step 1: find which shared_expense_ids the current user participates in.
-  // Step 2: build Sets only for those IDs (scopes the map to current user's expenses).
+  // Map email → { name, picture_url } for participant chip rendering
+  const userProfileMap = useMemo(() =>
+    new Map(userProfiles.map(p => [p.user_email, {
+      name: p.full_name || p.user_email,
+      picture_url: p.picture_url || null,
+    }])),
+    [userProfiles]
+  );
+
+  // Map each shared_expense_id to an array of full participant objects.
+  // Only includes shared expenses the current user participates in.
   const splitParticipantsMap = useMemo(() => {
     const mySharedExpenseIds = new Set(
       splits
@@ -168,12 +184,18 @@ export default function Expenses() {
     for (const split of splits) {
       if (!mySharedExpenseIds.has(split.shared_expense_id)) continue;
       if (!map.has(split.shared_expense_id)) {
-        map.set(split.shared_expense_id, new Set());
+        map.set(split.shared_expense_id, []);
       }
-      map.get(split.shared_expense_id).add(split.user_id);
+      // split.user_id is an email address — matches userProfileMap key (p.user_email)
+      const profile = userProfileMap.get(split.user_id);
+      map.get(split.shared_expense_id).push({
+        email: split.user_id,
+        name: profile?.name || split.user_name || split.user_id,
+        picture_url: profile?.picture_url || null,
+      });
     }
     return map;
-  }, [splits, user?.email]);
+  }, [splits, user?.email, userProfileMap]);
 
   // Fetch recurring expenses
   const { data: recurringExpenses = [] } = useQuery({
@@ -816,7 +838,7 @@ export default function Expenses() {
         // Expenses with is_shared=true but no source_shared_expense_id are legacy records — skip.
         if (!e.source_shared_expense_id) return false;
         const participants = splitParticipantsMap.get(e.source_shared_expense_id);
-        return participants?.has(selectedUser) ?? false;
+        return participants?.some(p => p.email === selectedUser) ?? false;
       });
     }
 
@@ -859,21 +881,19 @@ export default function Expenses() {
 
   const totalFiltered = filteredExpenses.filter(e => !e.is_pending).reduce((sum, e) => sum + e.amount, 0);
 
-  // Build dropdown options from splitParticipantsMap — surfaces all co-participants
-  // including those from expenses where the current user was the payer.
+  // Build dropdown options from splitParticipantsMap — all co-participants except self.
   const sharedUsers = useMemo(() => {
-    const userNameIndex = new Map(splits.map(s => [s.user_id, s.user_name]));
     const userMap = new Map();
     for (const [, participants] of splitParticipantsMap) {
-      for (const userId of participants) {
-        if (userId === user?.email) continue; // skip self
-        if (!userMap.has(userId)) {
-          userMap.set(userId, { email: userId, name: userNameIndex.get(userId) || userId });
+      for (const p of participants) {
+        if (p.email === user?.email) continue;
+        if (!userMap.has(p.email)) {
+          userMap.set(p.email, { email: p.email, name: p.name });
         }
       }
     }
     return Array.from(userMap.values());
-  }, [splitParticipantsMap, splits, user?.email]);
+  }, [splitParticipantsMap, user?.email]);
   
   // Filter recurring expenses by category and date range
   const activeRecurring = recurringExpenses.filter(r => {
@@ -1073,6 +1093,11 @@ export default function Expenses() {
                    onApprovePending={expense.is_pending && expense.is_shared && expense.created_by !== user?.email
                      ? (e) => setPendingApprovalExpense(e)
                      : undefined}
+                   sharedParticipants={
+                     expense.source_shared_expense_id
+                       ? (splitParticipantsMap.get(expense.source_shared_expense_id) ?? [])
+                       : []
+                   }
                    onEdit={async (e) => {
                      // If pending and I'm the approver (not creator), open approval dialog
                      if (e.is_pending && e.is_shared && e.created_by !== user?.email) {

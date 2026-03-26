@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { LayoutDashboard, Receipt, BarChart3, Settings, Wallet, Repeat, Menu, Users, Plus, X, Target, UserCircle, LogOut } from 'lucide-react';
+import { LayoutDashboard, Receipt, BarChart3, Settings, Wallet, Repeat, Menu, Users, Plus, X, Target, LogOut } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
