@@ -88,13 +88,16 @@ Add prop:
 sharedParticipants: Array<{ email: string, name: string, picture_url: string | null }>
 ```
 
-Replace the existing "Shared info" row in the expanded panel with avatar chips:
+Replace the existing "Shared info" row in the expanded panel with avatar chips.
+
+`TooltipProvider` is not globally wrapped in the app — wrap it locally around the chips section. Tooltip shows the participant's email on hover (nice-to-have; names are already visible inline).
 
 ```jsx
 {expense.is_shared && sharedParticipants?.length > 0 && (
   <div className="flex items-center gap-2 col-span-2">
     <Users className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
     <span className="text-slate-500">{t.shared_with || 'Shared with'}:</span>
+    <TooltipProvider delayDuration={300}>
     <div className="flex flex-wrap gap-1">
       {sharedParticipants.map(p => {
         const isMe = p.email === currentUserEmail;
@@ -116,6 +119,7 @@ Replace the existing "Shared info" row in the expanded panel with avatar chips:
         );
       })}
     </div>
+    </TooltipProvider>
   </div>
 )}
 ```
