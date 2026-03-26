@@ -161,7 +161,9 @@ export default function Debts() {
         shared_expense_id: sharedExpenseId,
       });
 
-      const shared = sharedExpenses.find((e: any) => e.id === sharedExpenseId);
+      // Fetch fresh from DB (not React cache) so is_settled is always accurate
+      const freshResults = await base44.entities.SharedExpense.filter({ id: sharedExpenseId });
+      const shared = freshResults[0] ?? sharedExpenses.find((e: any) => e.id === sharedExpenseId);
 
       // Delete all participant expenses linked to this shared expense
       const allParticipantExpenses = await base44.entities.Expense.filter({
@@ -207,20 +209,26 @@ export default function Debts() {
             });
 
             // Save audit record: links the reverse expense back to the original deleted settled expense
-            await base44.entities.DeletedSettledExpense.create({
-              original_shared_expense_id: shared.id,
-              reverse_shared_expense_id: reverseExpense.id,
-              description: shared.description || shared.category_name || '',
-              total_amount: shared.total_amount,
-              date: shared.date,
-              category_name: shared.category_name || '',
-              original_paid_by_user_id: paidByUserIdTrimmed,
-              original_paid_by_user_name: payerName,
-              participant_user_id: splitUserIdTrimmed,
-              participant_user_name: split.user_name,
-              participant_share_amount: split.share_amount,
-              deleted_by_user_id: userEmail,
-            });
+            // Wrapped in try-catch so a failed audit record never blocks the core delete flow
+            try {
+              await base44.entities.DeletedSettledExpense.create({
+                original_shared_expense_id: shared.id,
+                reverse_shared_expense_id: reverseExpense.id,
+                description: shared.description || shared.category_name || '',
+                total_amount: shared.total_amount,
+                date: shared.date,
+                category_name: shared.category_name || '',
+                original_paid_by_user_id: paidByUserIdTrimmed,
+                original_paid_by_user_name: payerName,
+                participant_user_id: splitUserIdTrimmed,
+                participant_user_name: split.user_name,
+                participant_share_amount: split.share_amount,
+                deleted_by_user_id: userEmail,
+              });
+            } catch (_auditErr) {
+              // Audit record failure is non-fatal — the reverse debt was already created
+              console.warn('[deleteSharedExpense] audit record save failed:', _auditErr);
+            }
 
             // Splits: participant owes 0 (they paid), original payer owes their full share
             await base44.entities.SharedExpenseSplit.create({
