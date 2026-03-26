@@ -79,9 +79,29 @@ export default function Debts() {
     enabled: !!user?.email,
   });
 
+  const { data: deletedSettledExpenses = [] } = useQuery({
+    queryKey: ['deletedSettledExpenses', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return base44.entities.DeletedSettledExpense.list();
+    },
+    enabled: !!user?.email,
+  });
+
   const isLoading = loadingExpenses || loadingSplits || loadingDebts;
 
   const userEmail = user?.email?.trim();
+
+  // Set of reverse_shared_expense_ids — used to annotate those expense rows in the detail modal
+  const reversedExpenseIds = new Set<string>(
+    (deletedSettledExpenses as any[]).map((r: any) => r.reverse_shared_expense_id).filter(Boolean)
+  );
+  // Map from reverse_shared_expense_id → audit record (for tooltip/detail display)
+  const reversedExpenseAuditMap = new Map<string, any>(
+    (deletedSettledExpenses as any[])
+      .filter((r: any) => r.reverse_shared_expense_id)
+      .map((r: any) => [r.reverse_shared_expense_id, r])
+  );
 
   // Settle debt mutation — bilateral: settles all shared expenses between current user and other party
   const settleDebtMutation = useMutation({
@@ -141,7 +161,9 @@ export default function Debts() {
         shared_expense_id: sharedExpenseId,
       });
 
-      const shared = sharedExpenses.find((e: any) => e.id === sharedExpenseId);
+      // Fetch fresh from DB (not React cache) so is_settled is always accurate
+      const freshResults = await base44.entities.SharedExpense.filter({ id: sharedExpenseId });
+      const shared = freshResults[0] ?? sharedExpenses.find((e: any) => e.id === sharedExpenseId);
 
       // Delete all participant expenses linked to this shared expense
       const allParticipantExpenses = await base44.entities.Expense.filter({
@@ -185,6 +207,28 @@ export default function Debts() {
               is_pending: false,
               pending_with_users: [],
             });
+
+            // Save audit record: links the reverse expense back to the original deleted settled expense
+            // Wrapped in try-catch so a failed audit record never blocks the core delete flow
+            try {
+              await base44.entities.DeletedSettledExpense.create({
+                original_shared_expense_id: shared.id,
+                reverse_shared_expense_id: reverseExpense.id,
+                description: shared.description || shared.category_name || '',
+                total_amount: shared.total_amount,
+                date: shared.date,
+                category_name: shared.category_name || '',
+                original_paid_by_user_id: paidByUserIdTrimmed,
+                original_paid_by_user_name: payerName,
+                participant_user_id: splitUserIdTrimmed,
+                participant_user_name: split.user_name,
+                participant_share_amount: split.share_amount,
+                deleted_by_user_id: userEmail,
+              });
+            } catch (_auditErr) {
+              // Audit record failure is non-fatal — the reverse debt was already created
+              console.warn('[deleteSharedExpense] audit record save failed:', _auditErr);
+            }
 
             // Splits: participant owes 0 (they paid), original payer owes their full share
             await base44.entities.SharedExpenseSplit.create({
@@ -285,6 +329,7 @@ export default function Debts() {
       queryClient.invalidateQueries({ queryKey: ['sharedExpenseSplits'] });
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['debts'] });
+      queryClient.invalidateQueries({ queryKey: ['deletedSettledExpenses'] });
       toast.success((t as any).shared_expense_deleted || 'Shared expense deleted successfully');
       setExpenseToDelete(null);
     },
@@ -921,6 +966,23 @@ export default function Debts() {
                         </span>
                       </div>
                     )}
+                    {reversedExpenseIds.has(expense.id) && (() => {
+                      const audit = reversedExpenseAuditMap.get(expense.id);
+                      return (
+                        <div className="mt-2">
+                          <span
+                            className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1 w-fit"
+                            title={audit
+                              ? `${(t as any).reversed_from_deleted_tooltip || 'This debt was created because a previously settled expense was deleted'}. ${audit.description ? `"${audit.description}"` : ''}`
+                              : (t as any).reversed_from_deleted_tooltip || 'This debt was created because a previously settled expense was deleted'
+                            }
+                          >
+                            <Receipt className="h-3 w-3" />
+                            {(t as any).reversed_from_deleted || 'Reversed from deleted expense'}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })

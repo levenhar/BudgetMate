@@ -5,6 +5,7 @@ const tableMap = {
   Budget: 'budgets',
   Category: 'categories',
   Debt: 'debts',
+  DeletedSettledExpense: 'deleted_settled_expenses',
   Expense: 'expenses',
   UserProfile: 'user_profiles',
   UserSettings: 'user_settings',
