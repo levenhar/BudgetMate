@@ -143,6 +143,7 @@ export default function Expenses() {
     queryKey: ['userProfiles'],
     queryFn: () => base44.entities.UserProfile.list(),
     enabled: !!user?.email,
+    staleTime: 5 * 60 * 1000, // profiles change rarely
   });
 
   // Build maps from shared expense id to is_settled and is_pending status
@@ -185,6 +186,7 @@ export default function Expenses() {
       if (!map.has(split.shared_expense_id)) {
         map.set(split.shared_expense_id, []);
       }
+      // split.user_id is an email address — matches userProfileMap key (p.user_email)
       const profile = userProfileMap.get(split.user_id);
       map.get(split.shared_expense_id).push({
         email: split.user_id,
