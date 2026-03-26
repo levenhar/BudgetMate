@@ -1093,6 +1093,11 @@ export default function Expenses() {
                    onApprovePending={expense.is_pending && expense.is_shared && expense.created_by !== user?.email
                      ? (e) => setPendingApprovalExpense(e)
                      : undefined}
+                   sharedParticipants={
+                     expense.source_shared_expense_id
+                       ? (splitParticipantsMap.get(expense.source_shared_expense_id) ?? [])
+                       : []
+                   }
                    onEdit={async (e) => {
                      // If pending and I'm the approver (not creator), open approval dialog
                      if (e.is_pending && e.is_shared && e.created_by !== user?.email) {
