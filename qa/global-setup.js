@@ -1,5 +1,5 @@
 // tests/qa/global-setup.js
-import { writeFileSync, existsSync, statSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync, statSync } from 'fs';
 import path from 'path';
 import os from 'os';
 import {
@@ -22,9 +22,14 @@ export default async function globalSetup() {
   if (existsSync(sessionPath)) {
     const ageMs = Date.now() - statSync(sessionPath).mtimeMs;
     if (ageMs < 10 * 60 * 1000) {
-      console.log(`[setup] Session file is fresh (${Math.round(ageMs / 1000)}s old) — skipping re-seed.`);
-      writeSignal('setup', { setup_complete: true });
-      return;
+      try {
+        JSON.parse(readFileSync(sessionPath, 'utf8'));
+        console.log(`[setup] Session file is fresh (${Math.round(ageMs / 1000)}s old) — skipping re-seed.`);
+        writeSignal('setup', { setup_complete: true });
+        return;
+      } catch {
+        console.log('[setup] Session file is corrupt — falling through to full re-seed.');
+      }
     }
   }
 
