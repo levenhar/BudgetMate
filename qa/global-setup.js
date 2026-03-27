@@ -1,5 +1,5 @@
 // tests/qa/global-setup.js
-import { writeFileSync } from 'fs';
+import { writeFileSync, existsSync, statSync } from 'fs';
 import path from 'path';
 import os from 'os';
 import {
@@ -17,6 +17,16 @@ const USER_B = 'qa-user-b@budgetmate.test';
 const USER_C = 'qa-user-c@budgetmate.test';
 
 export default async function globalSetup() {
+  // ── Idempotency: skip re-seed if session file is < 10 minutes old ──────
+  const sessionPath = path.join(os.tmpdir(), 'qa-session.json');
+  if (existsSync(sessionPath)) {
+    const ageMs = Date.now() - statSync(sessionPath).mtimeMs;
+    if (ageMs < 10 * 60 * 1000) {
+      console.log('[setup] Session file is fresh (<10 min) — skipping re-seed.');
+      return;
+    }
+  }
+
   // Verify Supabase connectivity before doing anything
   console.log('[setup] Verifying Supabase connection...');
   const { error: pingError } = await adminClient.from('user_profiles').select('id').limit(1);
@@ -80,7 +90,6 @@ export default async function globalSetup() {
     },
   };
 
-  const sessionPath = path.join(os.tmpdir(), 'qa-session.json');
   writeFileSync(sessionPath, JSON.stringify(session, null, 2));
   writeSignal('setup', { setup_complete: true });
 

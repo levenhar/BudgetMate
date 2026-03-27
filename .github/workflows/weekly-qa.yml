@@ -1,5 +1,5 @@
 # .github/workflows/weekly-qa.yml
-name: Weekly QA
+name: QA
 
 on:
   workflow_dispatch:        # Manual trigger — use /qa skill for local runs
