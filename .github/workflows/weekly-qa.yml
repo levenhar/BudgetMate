@@ -2,9 +2,7 @@
 name: Weekly QA
 
 on:
-  schedule:
-    - cron: '0 6 * * 1'   # Every Monday 6:00 UTC
-  workflow_dispatch:        # Manual trigger
+  workflow_dispatch:        # Manual trigger — use /qa skill for local runs
 
 permissions:
   contents: write           # needed to commit bug report + create branch
