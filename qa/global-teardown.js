@@ -19,7 +19,7 @@ export default async function globalTeardown() {
   for (const f of [sessionFile, setupSignal]) {
     try { fs.unlinkSync(f); } catch (_) {}
   }
-  console.log('[teardown] Cleaned up tmp session files.');
+  console.log('[teardown] Cleaned up qa-session.json and qa-signal-setup.json.');
 
   console.log('[teardown] Done.');
 }

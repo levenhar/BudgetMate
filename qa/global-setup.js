@@ -23,12 +23,13 @@ export default async function globalSetup() {
     const ageMs = Date.now() - statSync(sessionPath).mtimeMs;
     if (ageMs < 10 * 60 * 1000) {
       try {
-        JSON.parse(readFileSync(sessionPath, 'utf8'));
+        const cached = JSON.parse(readFileSync(sessionPath, 'utf8'));
+        if (!cached?.users?.a?.id || !cached?.householdId) throw new Error('incomplete session');
         console.log(`[setup] Session file is fresh (${Math.round(ageMs / 1000)}s old) — skipping re-seed.`);
         writeSignal('setup', { setup_complete: true });
         return;
       } catch {
-        console.log('[setup] Session file is corrupt — falling through to full re-seed.');
+        console.log('[setup] Session file is missing or incomplete — falling through to full re-seed.');
       }
     }
   }
