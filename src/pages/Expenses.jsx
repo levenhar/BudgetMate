@@ -554,7 +554,8 @@ export default function Expenses() {
 
           if (freshShared.is_settled) {
             // Settled expense deleted: the original payer now owes each participant their share back.
-            // Create a reverse SharedExpense per participant so the debt appears in Debts page.
+            // Create a reverse SharedExpense per participant (drives Debts page balance display).
+            // No Expense records are created for either user.
             const paidByUserIdTrimmed = freshShared.paid_by_user_id?.trim();
             const payerSplit = splits.find(s => s.user_id?.trim() === paidByUserIdTrimmed);
             const payerName = payerSplit?.user_name || paidByUserIdTrimmed;
@@ -563,14 +564,16 @@ export default function Expenses() {
               const splitUserIdTrimmed = split.user_id?.trim();
               if (!splitUserIdTrimmed || splitUserIdTrimmed === paidByUserIdTrimmed) continue;
 
-              // Create reverse SharedExpense: participant is new "payer", original payer owes them
+              // Create reverse SharedExpense: participant is new "payer", original payer owes them.
+              // This is required so the balance shows correctly on the Debts page (which derives
+              // balances from SharedExpenses, not the Debt table).
               const reverseExpense = await base44.entities.SharedExpense.create({
                 created_by_user_id: user.email,
                 total_amount: split.share_amount,
                 date: freshShared.date,
                 category_id: freshShared.category_id,
                 category_name: freshShared.category_name,
-                description: 'Return of cancelled settled expense',
+                description: t.reversed_from_deleted || 'Return of cancelled settled expense',
                 paid_by_user_id: splitUserIdTrimmed,
                 split_method: 'custom_amount',
                 household_id: freshShared.household_id || null,
@@ -579,7 +582,7 @@ export default function Expenses() {
                 pending_with_users: [],
               });
 
-              // Save audit record (non-fatal)
+              // Save audit record so the badge appears on the Debts page (non-fatal)
               try {
                 await base44.entities.DeletedSettledExpense.create({
                   original_shared_expense_id: freshShared.id,
@@ -599,7 +602,7 @@ export default function Expenses() {
                 console.warn('[deleteExpense] audit record save failed:', _auditErr);
               }
 
-              // Splits for reverse: participant owes 0 (they paid), original payer owes full share
+              // Splits: participant owes 0 (they are the new "payer"), original payer owes full share
               await base44.entities.SharedExpenseSplit.create({
                 shared_expense_id: reverseExpense.id,
                 user_id: splitUserIdTrimmed,
@@ -614,52 +617,7 @@ export default function Expenses() {
                 share_amount: split.share_amount,
                 share_percent: 100,
               });
-
-              // Participant expense for the original payer
-              await base44.entities.Expense.create({
-                amount: split.share_amount,
-                date: freshShared.date,
-                category_id: freshShared.category_id,
-                category_name: freshShared.category_name,
-                description: 'Return of cancelled settled expense',
-                user_email: paidByUserIdTrimmed,
-                household_id: freshShared.household_id || null,
-                source_shared_expense_id: reverseExpense.id,
-                paid_by_user_id: splitUserIdTrimmed,
-                is_shared: true,
-                is_pending: false,
-                approval_status: 'approved',
-              });
-
-              // Update Debt table
-              const currentDebts = await base44.entities.Debt.list();
-              const oppositeDebt = currentDebts.find(d =>
-                d.from_user_id?.trim() === splitUserIdTrimmed &&
-                d.to_user_id?.trim() === paidByUserIdTrimmed
-              );
-              const sameDebt = currentDebts.find(d =>
-                d.from_user_id?.trim() === paidByUserIdTrimmed &&
-                d.to_user_id?.trim() === splitUserIdTrimmed
-              );
-
-              if (oppositeDebt) {
-                const newAmount = oppositeDebt.amount - split.share_amount;
-                if (newAmount <= 0.01) {
-                  await base44.entities.Debt.delete(oppositeDebt.id);
-                } else {
-                  await base44.entities.Debt.update(oppositeDebt.id, { amount: newAmount });
-                }
-              } else if (sameDebt) {
-                await base44.entities.Debt.update(sameDebt.id, { amount: sameDebt.amount + split.share_amount });
-              } else {
-                await base44.entities.Debt.create({
-                  from_user_id: paidByUserIdTrimmed,
-                  from_user_name: payerName,
-                  to_user_id: splitUserIdTrimmed,
-                  to_user_name: split.user_name,
-                  amount: split.share_amount,
-                });
-              }
+              // No Expense records created for either user — only the SharedExpense drives the balance.
             }
 
             // Delete all participant expenses and splits from the original settled expense

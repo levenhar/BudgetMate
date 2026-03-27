@@ -897,7 +897,9 @@ export default function Debts() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-slate-900 truncate">
-                          {expense.description || expense.category_name || t.shared}
+                          {reversedExpenseIds.has(expense.id)
+                            ? (t as any).reversed_from_deleted || 'Return of cancelled settled expense'
+                            : (expense.description || expense.category_name || t.shared)}
                         </div>
                         <div className="text-xs text-slate-400 mt-0.5">
                           {expense.date ? format(new Date(expense.date), 'MMM d, yyyy') : '—'}
