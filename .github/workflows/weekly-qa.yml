@@ -78,7 +78,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/qa/
-          git diff --cached --quiet || git commit -m "chore: weekly QA bug report $(date +%Y-%m-%d)"
+          git diff --cached --quiet || git commit -m "chore: QA bug report $(date +%Y-%m-%d)"
           git push
 
       - name: Set bug report path output

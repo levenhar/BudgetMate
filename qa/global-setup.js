@@ -22,7 +22,8 @@ export default async function globalSetup() {
   if (existsSync(sessionPath)) {
     const ageMs = Date.now() - statSync(sessionPath).mtimeMs;
     if (ageMs < 10 * 60 * 1000) {
-      console.log('[setup] Session file is fresh (<10 min) — skipping re-seed.');
+      console.log(`[setup] Session file is fresh (${Math.round(ageMs / 1000)}s old) — skipping re-seed.`);
+      writeSignal('setup', { setup_complete: true });
       return;
     }
   }
