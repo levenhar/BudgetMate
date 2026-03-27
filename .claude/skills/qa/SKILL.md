@@ -250,6 +250,7 @@ If build fails:
 
 ### 6e — Commit and push
 ```bash
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
 git add -A
 git diff --cached --quiet || git commit -m "fix: implement QA-detected fixes $(date +%Y-%m-%d)"
 
