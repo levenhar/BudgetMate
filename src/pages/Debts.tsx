@@ -913,7 +913,7 @@ export default function Debts() {
                             {iPaid ? t.you_paid : `${selectedUser?.name} ${t.they_paid}`}
                           </div>
                         </div>
-                        {isCreator && (
+                        {isCreator && !expense.is_settled && (
                           <div className="flex flex-col gap-1 ml-2">
                             <Button
                               variant="ghost"

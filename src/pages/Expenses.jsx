@@ -543,54 +543,179 @@ export default function Expenses() {
         const shared = sharedExpense.find(s => s.id === expense.source_shared_expense_id);
 
         if (shared) {
+          // Fetch fresh from DB so is_settled is always accurate
+          const freshResults = await base44.entities.SharedExpense.filter({ id: shared.id });
+          const freshShared = freshResults[0] ?? shared;
+
           // Get all splits
           const splits = await base44.entities.SharedExpenseSplit.filter({
-            shared_expense_id: shared.id
+            shared_expense_id: freshShared.id
           });
 
-          // Delete all participant expenses
-          const allParticipantExpenses = await base44.entities.Expense.filter({
-            source_shared_expense_id: shared.id
-          });
+          if (freshShared.is_settled) {
+            // Settled expense deleted: the original payer now owes each participant their share back.
+            // Create a reverse SharedExpense per participant so the debt appears in Debts page.
+            const paidByUserIdTrimmed = freshShared.paid_by_user_id?.trim();
+            const payerSplit = splits.find(s => s.user_id?.trim() === paidByUserIdTrimmed);
+            const payerName = payerSplit?.user_name || paidByUserIdTrimmed;
 
-          for (const exp of allParticipantExpenses) {
-            await base44.entities.Expense.delete(exp.id);
-          }
+            for (const split of splits) {
+              const splitUserIdTrimmed = split.user_id?.trim();
+              if (!splitUserIdTrimmed || splitUserIdTrimmed === paidByUserIdTrimmed) continue;
 
-          // Delete all splits
-          for (const split of splits) {
-            await base44.entities.SharedExpenseSplit.delete(split.id);
-          }
+              // Create reverse SharedExpense: participant is new "payer", original payer owes them
+              const reverseExpense = await base44.entities.SharedExpense.create({
+                created_by_user_id: user.email,
+                total_amount: split.share_amount,
+                date: freshShared.date,
+                category_id: freshShared.category_id,
+                category_name: freshShared.category_name,
+                description: 'Return of cancelled settled expense',
+                paid_by_user_id: splitUserIdTrimmed,
+                split_method: 'custom_amount',
+                household_id: freshShared.household_id || null,
+                is_settled: false,
+                is_pending: false,
+                pending_with_users: [],
+              });
 
-          // Reverse debts
-          for (const split of splits) {
-            if (split.user_id === shared.paid_by_user_id) continue;
+              // Save audit record (non-fatal)
+              try {
+                await base44.entities.DeletedSettledExpense.create({
+                  original_shared_expense_id: freshShared.id,
+                  reverse_shared_expense_id: reverseExpense.id,
+                  description: freshShared.description || freshShared.category_name || '',
+                  total_amount: freshShared.total_amount,
+                  date: freshShared.date,
+                  category_name: freshShared.category_name || '',
+                  original_paid_by_user_id: paidByUserIdTrimmed,
+                  original_paid_by_user_name: payerName,
+                  participant_user_id: splitUserIdTrimmed,
+                  participant_user_name: split.user_name,
+                  participant_share_amount: split.share_amount,
+                  deleted_by_user_id: user.email,
+                });
+              } catch (_auditErr) {
+                console.warn('[deleteExpense] audit record save failed:', _auditErr);
+              }
 
-            const allDebts = await base44.entities.Debt.list();
-            const splitUserIdTrimmed = split.user_id.trim();
-            const sharedPaidByUserIdTrimmed = shared.paid_by_user_id.trim();
+              // Splits for reverse: participant owes 0 (they paid), original payer owes full share
+              await base44.entities.SharedExpenseSplit.create({
+                shared_expense_id: reverseExpense.id,
+                user_id: splitUserIdTrimmed,
+                user_name: split.user_name,
+                share_amount: 0,
+                share_percent: 0,
+              });
+              await base44.entities.SharedExpenseSplit.create({
+                shared_expense_id: reverseExpense.id,
+                user_id: paidByUserIdTrimmed,
+                user_name: payerName,
+                share_amount: split.share_amount,
+                share_percent: 100,
+              });
 
-            const existingDebt = allDebts.find(d => 
-              d.from_user_id?.trim() === splitUserIdTrimmed && 
-              d.to_user_id?.trim() === sharedPaidByUserIdTrimmed
-            );
+              // Participant expense for the original payer
+              await base44.entities.Expense.create({
+                amount: split.share_amount,
+                date: freshShared.date,
+                category_id: freshShared.category_id,
+                category_name: freshShared.category_name,
+                description: 'Return of cancelled settled expense',
+                user_email: paidByUserIdTrimmed,
+                household_id: freshShared.household_id || null,
+                source_shared_expense_id: reverseExpense.id,
+                paid_by_user_id: splitUserIdTrimmed,
+                is_shared: true,
+                is_pending: false,
+                approval_status: 'approved',
+              });
 
-            if (existingDebt) {
-              const newAmount = existingDebt.amount - split.share_amount;
-              if (newAmount <= 0.01) {
-                await base44.entities.Debt.delete(existingDebt.id);
+              // Update Debt table
+              const currentDebts = await base44.entities.Debt.list();
+              const oppositeDebt = currentDebts.find(d =>
+                d.from_user_id?.trim() === splitUserIdTrimmed &&
+                d.to_user_id?.trim() === paidByUserIdTrimmed
+              );
+              const sameDebt = currentDebts.find(d =>
+                d.from_user_id?.trim() === paidByUserIdTrimmed &&
+                d.to_user_id?.trim() === splitUserIdTrimmed
+              );
+
+              if (oppositeDebt) {
+                const newAmount = oppositeDebt.amount - split.share_amount;
+                if (newAmount <= 0.01) {
+                  await base44.entities.Debt.delete(oppositeDebt.id);
+                } else {
+                  await base44.entities.Debt.update(oppositeDebt.id, { amount: newAmount });
+                }
+              } else if (sameDebt) {
+                await base44.entities.Debt.update(sameDebt.id, { amount: sameDebt.amount + split.share_amount });
               } else {
-                await base44.entities.Debt.update(existingDebt.id, {
-                  amount: newAmount
+                await base44.entities.Debt.create({
+                  from_user_id: paidByUserIdTrimmed,
+                  from_user_name: payerName,
+                  to_user_id: splitUserIdTrimmed,
+                  to_user_name: split.user_name,
+                  amount: split.share_amount,
                 });
               }
             }
+
+            // Delete all participant expenses and splits from the original settled expense
+            const allParticipantExpenses = await base44.entities.Expense.filter({
+              source_shared_expense_id: freshShared.id
+            });
+            for (const exp of allParticipantExpenses) {
+              await base44.entities.Expense.delete(exp.id);
+            }
+            for (const split of splits) {
+              await base44.entities.SharedExpenseSplit.delete(split.id);
+            }
+
+            await base44.entities.SharedExpense.delete(freshShared.id);
+            toast.success('Settled expense deleted. Return debt has been created.');
+          } else {
+            // Non-settled: delete participant expenses, splits, reverse debts, delete shared expense
+            const allParticipantExpenses = await base44.entities.Expense.filter({
+              source_shared_expense_id: freshShared.id
+            });
+
+            for (const exp of allParticipantExpenses) {
+              await base44.entities.Expense.delete(exp.id);
+            }
+
+            // Delete all splits
+            for (const split of splits) {
+              await base44.entities.SharedExpenseSplit.delete(split.id);
+            }
+
+            // Reverse debts
+            for (const split of splits) {
+              if (split.user_id === freshShared.paid_by_user_id) continue;
+
+              const allDebts = await base44.entities.Debt.list();
+              const splitUserIdTrimmed = split.user_id.trim();
+              const sharedPaidByUserIdTrimmed = freshShared.paid_by_user_id.trim();
+
+              const existingDebt = allDebts.find(d =>
+                d.from_user_id?.trim() === splitUserIdTrimmed &&
+                d.to_user_id?.trim() === sharedPaidByUserIdTrimmed
+              );
+
+              if (existingDebt) {
+                const newAmount = existingDebt.amount - split.share_amount;
+                if (newAmount <= 0.01) {
+                  await base44.entities.Debt.delete(existingDebt.id);
+                } else {
+                  await base44.entities.Debt.update(existingDebt.id, { amount: newAmount });
+                }
+              }
+            }
+
+            await base44.entities.SharedExpense.delete(freshShared.id);
+            toast.success('הוצאה משותפת נמחקה עבור כל המשתתפים');
           }
-
-          // Delete shared expense
-          await base44.entities.SharedExpense.delete(shared.id);
-
-          toast.success('הוצאה משותפת נמחקה עבור כל המשתתפים');
         }
       } else {
         await base44.entities.Expense.delete(id);
@@ -600,6 +725,9 @@ export default function Expenses() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['debts'] });
+      queryClient.invalidateQueries({ queryKey: ['sharedExpenses'] });
+      queryClient.invalidateQueries({ queryKey: ['sharedExpenseSplits'] });
+      queryClient.invalidateQueries({ queryKey: ['deletedSettledExpenses'] });
     },
     });
 
