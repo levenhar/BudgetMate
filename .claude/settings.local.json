@@ -2,6 +2,7 @@
   "permissions": {
     "allow": [
       "Bash(*)",
+      "Read(*)",
       "WebSearch",
       "Bash(playwright:*)",
       "Bash(python scrape_base44.py)",
@@ -23,7 +24,8 @@
       "mcp__plugin_playwright_playwright__browser_evaluate",
       "mcp__plugin_playwright_playwright__browser_run_code",
       "mcp__plugin_playwright_playwright__browser_wait_for",
-      "WebFetch(domain:api.github.com)"
+      "WebFetch(domain:api.github.com)",
+      "Skill(update-config)"
     ],
     "ask": [
       "Bash(git push:*)",
