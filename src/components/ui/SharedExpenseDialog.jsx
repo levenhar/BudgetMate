@@ -32,11 +32,14 @@ function getInitials(name) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function Avatar({ name, size = 'md' }) {
+function Avatar({ name, size = 'md', src = null }) {
   const sizeClass = size === 'sm' ? 'w-8 h-8 text-xs' : 'w-10 h-10 text-sm';
   return (
-    <div className={`${sizeClass} rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 ${colorFromString(name || '?')}`}>
+    <div className={`${sizeClass} rounded-full overflow-hidden flex items-center justify-center text-white font-semibold flex-shrink-0 relative ${colorFromString(name || '?')}`}>
       {getInitials(name)}
+      {src && (
+        <img src={src} alt={name} className="absolute inset-0 w-full h-full object-cover" onError={e => e.currentTarget.remove()} />
+      )}
     </div>
   );
 }
@@ -98,7 +101,7 @@ export default function SharedExpenseDialog({
     .filter(email => email !== user?.email)
     .map(email => allProfiles.find(p => p.email === email || p.user_email === email))
     .filter(Boolean)
-    .map(p => ({ email: p.email || p.user_email, name: p.full_name || p.email || p.user_email }));
+    .map(p => ({ email: p.email || p.user_email, name: p.full_name || p.email || p.user_email, picture_url: p.picture_url || null }));
 
   const toggleFavorite = useCallback(async (email) => {
     const isFav = favoriteEmails.includes(email);
@@ -459,7 +462,7 @@ export default function SharedExpenseDialog({
                               onClick={() => !alreadyAdded && addParticipant(fav)}
                               className={`relative transition-all ${alreadyAdded ? 'opacity-40 cursor-default' : 'hover:scale-110 active:scale-95'}`}
                             >
-                              <Avatar name={fav.name} size="sm" />
+                              <Avatar name={fav.name} size="sm" src={fav.picture_url} />
                               {alreadyAdded && (
                                 <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center">
                                   <span className="text-white text-[8px] font-bold">✓</span>

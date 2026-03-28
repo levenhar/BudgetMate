@@ -395,6 +395,7 @@ export default function UnifiedExpenseDialog({
             .map(p => ({
               email: p.user_email,
               name: p.full_name || p.user_email,
+              picture_url: p.picture_url || null,
               alwaysApproved: alwaysApprovedSet.has(p.user_email),
             }));
 
@@ -1162,9 +1163,12 @@ export default function UnifiedExpenseDialog({
                                 <button
                                   type="button"
                                   onClick={() => !alreadyAdded && addParticipantByEmail(fav.email, fav.name)}
-                                  className={`relative w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-semibold transition-all flex-shrink-0 ${bg} ${alreadyAdded ? 'opacity-40 cursor-default' : 'hover:scale-110 active:scale-95'}`}
+                                  className={`relative w-9 h-9 rounded-full overflow-hidden flex items-center justify-center transition-all flex-shrink-0 ${alreadyAdded ? 'opacity-40 cursor-default' : 'hover:scale-110 active:scale-95'}`}
                                 >
-                                  {initials}
+                                  <span className={`absolute inset-0 flex items-center justify-center ${bg} text-white text-xs font-semibold`}>{initials}</span>
+                                  {fav.picture_url && (
+                                    <img src={fav.picture_url} alt={fav.name} className="absolute inset-0 w-full h-full object-cover" onError={e => e.currentTarget.remove()} />
+                                  )}
                                   {alreadyAdded && (
                                     <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-[8px] font-bold">✓</span>
                                   )}
