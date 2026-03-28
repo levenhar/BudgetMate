@@ -414,6 +414,9 @@ export const translations = {
       always_approve_button: 'אשר תמיד ממשתמש זה',
       approved_always_approve: 'אישרת ותמיד תאשר מהמשתמש הזה!',
       approved_always_approve_all: 'אישרת ותמיד תאשר מהמשתמש הזה! כל המשתתפים אישרו!',
+      approve_action: 'אשר',
+      reject_action: 'דחה',
+      notifications: 'התראות',
     },
     en: {
       direction: 'ltr',
@@ -827,6 +830,9 @@ export const translations = {
       always_approve_button: 'Always approve from this user',
       approved_always_approve: 'Approved and will always approve from this user!',
       approved_always_approve_all: 'Approved and will always approve from this user! All participants approved!',
+      approve_action: 'Approve',
+      reject_action: 'Reject',
+      notifications: 'Notifications',
     },
   };
 

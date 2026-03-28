@@ -1,3 +1,4 @@
+// TODO QA-FIX-BLOCKED: BUG-028 — No "Add Debt" button: debts are auto-calculated from shared expenses (by design). Manual debt creation would require a new entity and migration.
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';

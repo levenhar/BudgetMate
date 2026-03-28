@@ -1,5 +1,22 @@
 // qa/playwright.config.js
 import { defineConfig } from '@playwright/test';
+import { readFileSync } from 'fs';
+import path from 'path';
+
+// Load .env.local so SUPABASE_SERVICE_ROLE_KEY is available to global-setup/teardown
+try {
+  const envPath = path.resolve(import.meta.dirname, '../.env.local');
+  readFileSync(envPath, 'utf8').split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) return;
+    const idx = trimmed.indexOf('=');
+    if (idx > -1) {
+      const key = trimmed.slice(0, idx);
+      const val = trimmed.slice(idx + 1);
+      if (!process.env[key]) process.env[key] = val;
+    }
+  });
+} catch { /* .env.local is optional */ }
 
 export default defineConfig({
   testDir: './specs',
