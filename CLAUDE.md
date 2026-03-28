@@ -25,8 +25,10 @@ VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
 ```
 
-## Workflow 
+## Workflow
 When creating a plan for complex features, implement the changes in the same session rather than ending at the planning stage. If the task is too large, implement the most critical piece and note remaining work.
+
+**Start with the smallest working piece** — do not produce a full plan and wait for approval. Write code, apply changes, verify build, then iterate.
 
 ## Build & Test 
 This is a TypeScript project. Always run `npm run build` and `npm run test` after making changes. All tests must pass before considering a task complete.
@@ -92,6 +94,16 @@ Routes are auto-generated from `pages.config.js`. Each file in `src/pages/` maps
 - **Icons**: Lucide React
 - **Charts**: Recharts (see `src/components/stats/`)
 - **Date handling**: date-fns (preferred) or moment.js
+
+### Domain Knowledge
+
+**SharedExpense / Debt Dependency**
+The Debts page derives all balances from `SharedExpense` records. Never delete a `SharedExpense` record without understanding its downstream effect on `Debts.tsx`. Reverse-debt records exist intentionally to balance the ledger — do not remove them.
+
+**Falsy Value Pitfalls**
+When checking optional numeric/string values, use explicit checks — not loose falsy:
+- ✅ `if (value === undefined)` / `if (value === null)`
+- ❌ `if (!value)` — will incorrectly treat `0` and `""` as missing
 
 ### Household Mode
 
