@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
-import { CalendarIcon, Plus, Loader2, Users, X } from "lucide-react";
+import { CalendarIcon, Plus, Loader2, Users, X, Star } from "lucide-react";
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/components/i18n/LanguageContext';
@@ -224,6 +225,8 @@ export default function UnifiedExpenseDialog({
   const [recurringStartDateOpen, setRecurringStartDateOpen] = useState(false);
   const [recurringEndDateOpen, setRecurringEndDateOpen] = useState(false);
   const [sharedDateOpen, setSharedDateOpen] = useState(false);
+  const [settingsId, setSettingsId] = useState(null);
+  const [favoriteEmails, setFavoriteEmails] = useState([]);
 
   // Auto-select first category when dialog opens and no category is chosen yet
   useEffect(() => {
@@ -349,6 +352,16 @@ export default function UnifiedExpenseDialog({
     if (user?.email && open && activeTab === 'shared') {
       // Load available users
       const loadUsers = async () => {
+        // Load favorites
+        try {
+          const settingsList = await base44.entities.UserSettings.filter({ user_email: user.email });
+          const settings = settingsList[0];
+          if (settings) {
+            setSettingsId(settings.id);
+            setFavoriteEmails(settings.favorite_participants || []);
+          }
+        } catch (e) {}
+
         // Load always-approved list for the current user (as requester)
         let alwaysApprovedSet = new Set();
         try {
@@ -404,6 +417,25 @@ export default function UnifiedExpenseDialog({
     newSplits[index] = { ...newSplits[index], [field]: parseFloat(value) || 0 };
     setSharedForm({ ...sharedForm, splits: newSplits });
   };
+
+  const toggleFavorite = async (email) => {
+    const isFav = favoriteEmails.includes(email);
+    const updated = isFav ? favoriteEmails.filter(e => e !== email) : [...favoriteEmails, email];
+    setFavoriteEmails(updated);
+    try {
+      if (settingsId) {
+        await base44.entities.UserSettings.update(settingsId, { favorite_participants: updated });
+      }
+    } catch (e) {
+      setFavoriteEmails(favoriteEmails);
+      toast.error('Failed to update favorites');
+    }
+  };
+
+  // Favorites: derive display objects from availableUsers
+  const favoriteUsers = favoriteEmails
+    .map(email => availableUsers.find(u => u.email === email))
+    .filter(Boolean);
 
   const handleSubmitExpense = async (e) => {
     e.preventDefault();
@@ -1041,13 +1073,15 @@ export default function UnifiedExpenseDialog({
                           (u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
                            u.email.toLowerCase().includes(userSearch.toLowerCase())))
                         .map((u) => (
-                          <button
+                          <div
                             key={u.email}
-                            type="button"
-                            onClick={() => addParticipantByEmail(u.email, u.name)}
-                            className="w-full text-start px-3 py-2 flex items-center justify-between hover:bg-slate-50 cursor-pointer"
+                            className="w-full text-start px-3 py-2 flex items-center justify-between hover:bg-slate-50"
                           >
-                            <div className="text-start flex-1">
+                            <button
+                              type="button"
+                              onClick={() => addParticipantByEmail(u.email, u.name)}
+                              className="text-start flex-1"
+                            >
                               <div className="font-medium text-sm">{u.name}</div>
                               {u.name !== u.email && <div className="text-xs text-slate-500">{u.email}</div>}
                               {!u.alwaysApproved && (
@@ -1060,9 +1094,25 @@ export default function UnifiedExpenseDialog({
                                   <span className="text-green-600">{t.approval_auto}</span>
                                 </div>
                               )}
+                            </button>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); toggleFavorite(u.email); }}
+                                className={`p-1.5 rounded-full hover:bg-slate-100 transition-colors ${favoriteEmails.includes(u.email) ? 'text-amber-400' : 'text-slate-400 hover:text-amber-400'}`}
+                                title={favoriteEmails.includes(u.email) ? 'הסר מהמועדפים' : 'הוסף למועדפים'}
+                              >
+                                <Star className="h-4 w-4" fill={favoriteEmails.includes(u.email) ? 'currentColor' : 'none'} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => addParticipantByEmail(u.email, u.name)}
+                                className="p-1.5 text-slate-400 hover:text-slate-700"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
                             </div>
-                            <Plus className="h-4 w-4 text-slate-400" />
-                          </button>
+                          </div>
                         ))}
                       {availableUsers.filter(u => !sharedForm.participants.find(p => p.email === u.email) &&
                         (u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
@@ -1092,6 +1142,45 @@ export default function UnifiedExpenseDialog({
                     </div>
                   ))}
                 </div>
+
+                {/* Favorites quick-add */}
+                {favoriteUsers.length > 0 && (
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1.5">מועדפים</p>
+                    <TooltipProvider delayDuration={300}>
+                      <div className="flex flex-wrap gap-2">
+                        {favoriteUsers.map((fav) => {
+                          const alreadyAdded = sharedForm.participants.some(p => p.email === fav.email);
+                          const initials = fav.name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+                          const colors = ['bg-violet-500','bg-blue-500','bg-emerald-500','bg-amber-500','bg-rose-500','bg-cyan-500'];
+                          let hash = 0;
+                          for (let i = 0; i < fav.email.length; i++) hash = fav.email.charCodeAt(i) + ((hash << 5) - hash);
+                          const bg = colors[Math.abs(hash) % colors.length];
+                          return (
+                            <Tooltip key={fav.email}>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={() => !alreadyAdded && addParticipantByEmail(fav.email, fav.name)}
+                                  className={`relative w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-semibold transition-all flex-shrink-0 ${bg} ${alreadyAdded ? 'opacity-40 cursor-default' : 'hover:scale-110 active:scale-95'}`}
+                                >
+                                  {initials}
+                                  {alreadyAdded && (
+                                    <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-[8px] font-bold">✓</span>
+                                  )}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom">
+                                <p className="text-xs">{fav.name}</p>
+                                {alreadyAdded && <p className="text-xs text-slate-400">כבר נוסף</p>}
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })}
+                      </div>
+                    </TooltipProvider>
+                  </div>
+                )}
               </div>
 
               {/* Who Paid + Split Method */}

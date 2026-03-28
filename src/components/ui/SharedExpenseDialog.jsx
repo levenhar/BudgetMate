@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,16 +6,44 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
-import { CalendarIcon, Plus, Loader2, Users, X } from "lucide-react";
+import { CalendarIcon, Plus, Loader2, Users, X, Star } from "lucide-react";
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { useLanguage } from '@/components/i18n/LanguageContext';
 
+// Generate a stable background color from a string
+function colorFromString(str) {
+  const colors = [
+    'bg-violet-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500',
+    'bg-rose-500', 'bg-cyan-500', 'bg-pink-500', 'bg-teal-500',
+  ];
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0][0]?.toUpperCase() || '?';
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function Avatar({ name, size = 'md' }) {
+  const sizeClass = size === 'sm' ? 'w-8 h-8 text-xs' : 'w-10 h-10 text-sm';
+  return (
+    <div className={`${sizeClass} rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 ${colorFromString(name || '?')}`}>
+      {getInitials(name)}
+    </div>
+  );
+}
+
 export default function SharedExpenseDialog({
-  open, 
-  onOpenChange, 
+  open,
+  onOpenChange,
   categories,
   onSubmit,
   isSubmitting = false,
@@ -39,20 +67,74 @@ export default function SharedExpenseDialog({
   const [userSearch, setUserSearch] = useState('');
   const [searchResults, setSearchResults] = useState([]);
 
+  // Favorites state
+  const [settingsId, setSettingsId] = useState(null);
+  const [favoriteEmails, setFavoriteEmails] = useState([]);
+  const [allProfiles, setAllProfiles] = useState([]);
+
+  // Load settings + all profiles once when dialog opens
+  useEffect(() => {
+    if (!open || !user?.email) return;
+    (async () => {
+      try {
+        const [settingsList, profiles] = await Promise.all([
+          base44.entities.UserSettings.filter({ user_email: user.email }),
+          base44.entities.User.list(),
+        ]);
+        const settings = settingsList[0];
+        if (settings) {
+          setSettingsId(settings.id);
+          setFavoriteEmails(settings.favorite_participants || []);
+        }
+        setAllProfiles(profiles);
+      } catch (e) {
+        // non-critical
+      }
+    })();
+  }, [open, user?.email]);
+
+  // Derived: favorite user objects (excluding current user)
+  const favoriteUsers = favoriteEmails
+    .filter(email => email !== user?.email)
+    .map(email => allProfiles.find(p => p.email === email || p.user_email === email))
+    .filter(Boolean)
+    .map(p => ({ email: p.email || p.user_email, name: p.full_name || p.email || p.user_email }));
+
+  const toggleFavorite = useCallback(async (email) => {
+    const isFav = favoriteEmails.includes(email);
+    const updated = isFav
+      ? favoriteEmails.filter(e => e !== email)
+      : [...favoriteEmails, email];
+    setFavoriteEmails(updated);
+    try {
+      if (settingsId) {
+        await base44.entities.UserSettings.update(settingsId, { favorite_participants: updated });
+      }
+    } catch (e) {
+      // revert on error
+      setFavoriteEmails(favoriteEmails);
+      toast.error('Failed to update favorites');
+    }
+  }, [favoriteEmails, settingsId]);
+
   // Search users
   const searchUsers = async (query) => {
     if (!query || query.length < 2) {
       setSearchResults([]);
       return;
     }
-    
-    const users = await base44.entities.User.list();
-    const filtered = users.filter(u => 
-      u.email !== user?.email &&
-      (u.full_name?.toLowerCase().includes(query.toLowerCase()) ||
-       u.email?.toLowerCase().includes(query.toLowerCase())) &&
-      !form.participants.find(p => p.email === u.email)
-    );
+
+    const users = allProfiles.length > 0 ? allProfiles : await base44.entities.User.list();
+    const filtered = users.filter(u => {
+      const email = u.email || u.user_email;
+      const name = u.full_name;
+      return (
+        email !== user?.email &&
+        (name?.toLowerCase().includes(query.toLowerCase()) ||
+         email?.toLowerCase().includes(query.toLowerCase())) &&
+        !form.participants.find(p => p.email === email)
+      );
+    });
     setSearchResults(filtered);
   };
 
@@ -61,7 +143,6 @@ export default function SharedExpenseDialog({
     if (method === 'equal') {
       return calculateDefaultSplits(newParticipants, form.amount, 'equal');
     }
-    // For custom methods: rebuild the list preserving existing amounts, seeding new entries
     const allP = [{ email: user?.email, name: user?.full_name }, ...newParticipants];
     const perPerson = allP.length > 0 ? total / allP.length : 0;
     return allP.map(p => {
@@ -73,15 +154,15 @@ export default function SharedExpenseDialog({
   };
 
   const addParticipant = (selectedUser) => {
-    const newParticipants = [...form.participants, {
-      email: selectedUser.email,
-      name: selectedUser.full_name || selectedUser.email
-    }];
-    setForm({
-      ...form,
+    const email = selectedUser.email || selectedUser.user_email;
+    const name = selectedUser.full_name || selectedUser.name || email;
+    if (form.participants.find(p => p.email === email)) return;
+    const newParticipants = [...form.participants, { email, name }];
+    setForm(prev => ({
+      ...prev,
       participants: newParticipants,
-      splits: buildSplitsAfterParticipantChange(newParticipants, form.splits, form.splitMethod)
-    });
+      splits: buildSplitsAfterParticipantChange(newParticipants, prev.splits, prev.splitMethod)
+    }));
     setUserSearch('');
     setSearchResults([]);
   };
@@ -101,18 +182,18 @@ export default function SharedExpenseDialog({
 
   const calculateDefaultSplits = (participants, totalAmount, method) => {
     if (!totalAmount || participants.length === 0) return [];
-    
+
     const total = parseFloat(totalAmount);
     if (method === 'equal') {
       const allParticipants = [{ email: user?.email, name: user?.full_name }, ...participants];
       const perPerson = total / allParticipants.length;
       const remainder = total - (perPerson * allParticipants.length);
-      
+
       return allParticipants.map((p, i) => ({
         userId: p.email,
         userName: p.name,
-        shareAmount: i === allParticipants.length - 1 
-          ? perPerson + remainder 
+        shareAmount: i === allParticipants.length - 1
+          ? perPerson + remainder
           : perPerson,
         sharePercent: 100 / allParticipants.length
       }));
@@ -165,7 +246,6 @@ export default function SharedExpenseDialog({
         toast.error(`סכום האחוזים (${percentSum.toFixed(1)}%) חייב להיות 100%`);
         return;
       }
-      // Convert percents to amounts — use local variable so onSubmit gets correct values
       finalSplits = form.splits.map((s, i) => ({
         ...s,
         shareAmount: i === form.splits.length - 1
@@ -299,26 +379,52 @@ export default function SharedExpenseDialog({
               />
               <Users className="absolute right-3 top-3 h-4 w-4 text-slate-400" />
             </div>
-            
+
             {searchResults.length > 0 && (
               <div className="border border-slate-200 rounded-lg max-h-40 overflow-y-auto">
-                {searchResults.map((u) => (
-                  <button
-                    key={u.email}
-                    type="button"
-                    onClick={() => addParticipant(u)}
-                    className="w-full text-start px-3 py-2 hover:bg-slate-50 flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="font-medium">{u.full_name}</div>
-                      <div className="text-sm text-slate-500">{u.email}</div>
+                {searchResults.map((u) => {
+                  const email = u.email || u.user_email;
+                  const isFav = favoriteEmails.includes(email);
+                  return (
+                    <div
+                      key={email}
+                      className="w-full text-start px-3 py-2 hover:bg-slate-50 flex items-center justify-between"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => addParticipant(u)}
+                        className="flex items-center gap-2 flex-1"
+                      >
+                        <Avatar name={u.full_name || email} size="sm" />
+                        <div>
+                          <div className="font-medium">{u.full_name}</div>
+                          <div className="text-sm text-slate-500">{email}</div>
+                        </div>
+                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleFavorite(email); }}
+                          className={`p-1.5 rounded-full hover:bg-slate-100 transition-colors ${isFav ? 'text-amber-400' : 'text-slate-400 hover:text-amber-400'}`}
+                          title={isFav ? 'הסר מהמועדפים' : 'הוסף למועדפים'}
+                        >
+                          <Star className="h-4 w-4" fill={isFav ? 'currentColor' : 'none'} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => addParticipant(u)}
+                          className="p-1.5 text-slate-400 hover:text-slate-700"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
-                    <Plus className="h-4 w-4 text-slate-400" />
-                  </button>
-                ))}
+                  );
+                })}
               </div>
             )}
 
+            {/* Current participants chips */}
             <div className="flex flex-wrap gap-2">
               <div className="px-3 py-1 bg-slate-900 text-white rounded-full text-sm">
                 אתה
@@ -336,6 +442,42 @@ export default function SharedExpenseDialog({
                 </div>
               ))}
             </div>
+
+            {/* Favorites quick-add row */}
+            {favoriteUsers.length > 0 && (
+              <div className="pt-1">
+                <p className="text-xs text-slate-400 mb-1.5">מועדפים</p>
+                <TooltipProvider delayDuration={300}>
+                  <div className="flex flex-wrap gap-2">
+                    {favoriteUsers.map((fav) => {
+                      const alreadyAdded = form.participants.some(p => p.email === fav.email);
+                      return (
+                        <Tooltip key={fav.email}>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={() => !alreadyAdded && addParticipant(fav)}
+                              className={`relative transition-all ${alreadyAdded ? 'opacity-40 cursor-default' : 'hover:scale-110 active:scale-95'}`}
+                            >
+                              <Avatar name={fav.name} size="sm" />
+                              {alreadyAdded && (
+                                <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center">
+                                  <span className="text-white text-[8px] font-bold">✓</span>
+                                </span>
+                              )}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom">
+                            <p className="text-xs">{fav.name}</p>
+                            {alreadyAdded && <p className="text-xs text-slate-400">כבר נוסף</p>}
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </TooltipProvider>
+              </div>
+            )}
           </div>
 
           {/* Who Paid */}
@@ -365,7 +507,6 @@ export default function SharedExpenseDialog({
               if (v === 'equal') {
                 newSplits = calculateDefaultSplits(form.participants, form.amount, 'equal');
               } else if (v === 'custom_amount') {
-                // Seed with equal amounts so each row is editable
                 const perPerson = allP.length > 0 ? total / allP.length : 0;
                 newSplits = allP.map(p => ({
                   userId: p.email,
@@ -374,7 +515,6 @@ export default function SharedExpenseDialog({
                   sharePercent: allP.length > 0 ? 100 / allP.length : 0
                 }));
               } else if (v === 'custom_percent') {
-                // Seed with equal percents
                 newSplits = allP.map(p => ({
                   userId: p.email,
                   userName: p.name,
@@ -432,8 +572,8 @@ export default function SharedExpenseDialog({
             </div>
           )}
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="w-full h-12 text-base font-medium bg-slate-900 hover:bg-slate-800"
             disabled={isSubmitting || form.participants.length === 0}
           >
