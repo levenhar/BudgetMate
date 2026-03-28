@@ -5,9 +5,11 @@ import { Bell, Check, X, Loader2, ChevronDown, ChevronUp, Clock } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { useLanguage } from '@/components/i18n/LanguageContext';
 
 export default function NotificationsPanel({ user }) {
   const { currencySymbol } = useCurrency();
+  const { t } = useLanguage();
   const [expanded, setExpanded] = useState(false);
   const queryClient = useQueryClient();
 
@@ -265,7 +267,7 @@ export default function NotificationsPanel({ user }) {
         <div className="flex items-center gap-3">
           <Bell className="h-5 w-5 text-amber-600" />
           <span className="font-semibold text-amber-900">
-            התראות
+            {t.notifications || 'Notifications'}
             {unread.length > 0 && (
               <span className="mr-2 bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">
                 {unread.length}
@@ -319,7 +321,7 @@ export default function NotificationsPanel({ user }) {
                         onClick={() => approveMutation.mutate(notif)}
                         disabled={approveMutation.isPending || alwaysApproveMutation.isPending}
                       >
-                        {approveMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                        {approveMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Check className="h-3 w-3 ml-1" />{t.approve_action || 'Approve'}</>}
                       </Button>
                       <Button
                         size="sm"
@@ -328,7 +330,7 @@ export default function NotificationsPanel({ user }) {
                         onClick={() => rejectMutation.mutate(notif)}
                         disabled={rejectMutation.isPending}
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-3 w-3 ml-1" />{t.reject_action || 'Reject'}
                       </Button>
                     </div>
                     <Button

@@ -225,6 +225,13 @@ export default function UnifiedExpenseDialog({
   const [recurringEndDateOpen, setRecurringEndDateOpen] = useState(false);
   const [sharedDateOpen, setSharedDateOpen] = useState(false);
 
+  // Auto-select first category when dialog opens and no category is chosen yet
+  useEffect(() => {
+    if (open && categories?.length > 0 && !expenseForm.categoryId) {
+      setExpenseForm(prev => ({ ...prev, categoryId: categories[0].id }));
+    }
+  }, [open, categories]);
+
   const expenseRate  = useCurrencyRate(currencyCode);
   const recurringRate = useCurrencyRate(currencyCode);
   const sharedRate   = useCurrencyRate(currencyCode);
