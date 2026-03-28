@@ -48,4 +48,6 @@ scripts/*
 docs/*
 !docs/qa/
 !docs/qa/**
+!docs/superpowers/
+!docs/superpowers/**
 worktrees/*
