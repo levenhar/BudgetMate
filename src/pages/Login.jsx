@@ -342,7 +342,9 @@ export default function Login() {
           <ShieldCheck className="h-4 w-4" />
           <span>{t.data_encrypted}</span>
         </div>
-        <span className="text-xs font-bold bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full">STAGING</span>
+        {import.meta.env.VITE_APP_ENV === 'staging' && (
+          <span className="text-xs font-bold bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full">STAGING</span>
+        )}
       </div>
     </div>
   );
