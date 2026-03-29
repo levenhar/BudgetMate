@@ -275,7 +275,7 @@ export default function Login() {
   // ── left panel ────────────────────────────────────────────────────────────
 
   const leftPanel = (
-    <div className={`hidden lg:flex lg:w-1/2 bg-gradient-to-br ${gradientFrom} flex-col justify-between p-12 relative overflow-hidden transition-all duration-500`}>
+    <div className={`hidden lg:flex bg-gradient-to-br ${gradientFrom} flex-col justify-between p-12 relative overflow-hidden transition-all duration-500`}>
       {/* Background circles */}
       <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/5 rounded-full" />
       <div className="absolute -bottom-32 -right-16 w-[480px] h-[480px] bg-white/5 rounded-full" />
@@ -325,11 +325,11 @@ export default function Login() {
   // ── render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen flex" dir={dir}>
+    <div className="min-h-screen flex lg:grid lg:grid-cols-2" dir={dir}>
       {leftPanel}
 
       {/* Right panel — desktop white, mobile: gradient bg + floating card */}
-      <div className={`w-full lg:w-1/2 flex items-center justify-center lg:bg-white lg:bg-none relative overflow-hidden lg:p-8 p-6 bg-gradient-to-br ${gradientFrom}`}>
+      <div className={`flex items-center justify-center lg:bg-white lg:bg-none relative overflow-hidden lg:p-8 p-6 bg-gradient-to-br ${gradientFrom}`}>
 
         {/* Mobile bg circles (hidden on lg) */}
         <div className="lg:hidden absolute -top-24 -left-24 w-96 h-96 bg-white/5 rounded-full" />
