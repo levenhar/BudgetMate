@@ -349,7 +349,7 @@ export default function Login() {
       {leftPanel}
 
       {/* Right panel — desktop white + scrollable, mobile: gradient bg + floating card */}
-      <div className={`flex justify-center lg:bg-white lg:bg-none relative lg:overflow-y-auto overflow-hidden lg:p-8 p-6 bg-gradient-to-br ${gradientFrom} ${isSignUp ? 'items-start lg:items-start' : 'items-center'}`}>
+      <div className={`w-full min-h-screen lg:min-h-0 flex items-center justify-center lg:bg-white lg:bg-none relative lg:overflow-y-auto overflow-y-auto lg:p-8 p-6 bg-gradient-to-br ${gradientFrom} ${isSignUp ? 'lg:items-start' : ''}`}>
 
         {/* Mobile bg circles (hidden on lg) */}
         <div className="lg:hidden absolute -top-24 -left-24 w-96 h-96 bg-white/5 rounded-full" />
