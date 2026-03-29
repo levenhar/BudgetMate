@@ -291,55 +291,27 @@ export default function Login() {
 
       {/* Hero text */}
       <div className="relative space-y-8">
-        {isSignUp ? (
-          <>
-            <div>
-              <h2 className="text-4xl font-bold text-white leading-tight">
-                {t.signup_hero_line1}<br />{t.signup_hero_line2}
-              </h2>
-              <p className="mt-4 text-white/70 text-lg leading-relaxed max-w-sm">
-                {t.signup_hero_subtitle}
-              </p>
-            </div>
-            <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm">
-              <p className="text-white font-bold text-sm uppercase tracking-wider mb-4">{t.signup_free_title}</p>
-              <div className="space-y-2">
-                {signUpFeatures.map((feat) => (
-                  <div key={feat} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                      <span className="text-white text-xs">✓</span>
-                    </div>
-                    <p className="text-white text-sm">{feat}</p>
-                  </div>
-                ))}
+        <div>
+          <h2 className="text-4xl font-bold text-white leading-tight">
+            {t.login_hero_line1}<br />{t.login_hero_line2}
+          </h2>
+          <p className="mt-4 text-indigo-200 text-lg leading-relaxed max-w-sm">
+            {t.login_hero_subtitle}
+          </p>
+        </div>
+        <div className="space-y-5">
+          {signInFeatures.map(({ icon: Icon, label, desc }) => (
+            <div key={label} className="flex items-start gap-4">
+              <div className="w-9 h-9 bg-white/15 rounded-lg flex items-center justify-center shrink-0 backdrop-blur-sm">
+                <Icon className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">{label}</p>
+                <p className="text-indigo-200 text-sm mt-0.5">{desc}</p>
               </div>
             </div>
-          </>
-        ) : (
-          <>
-            <div>
-              <h2 className="text-4xl font-bold text-white leading-tight">
-                {t.login_hero_line1}<br />{t.login_hero_line2}
-              </h2>
-              <p className="mt-4 text-indigo-200 text-lg leading-relaxed max-w-sm">
-                {t.login_hero_subtitle}
-              </p>
-            </div>
-            <div className="space-y-5">
-              {signInFeatures.map(({ icon: Icon, label, desc }) => (
-                <div key={label} className="flex items-start gap-4">
-                  <div className="w-9 h-9 bg-white/15 rounded-lg flex items-center justify-center shrink-0 backdrop-blur-sm">
-                    <Icon className="h-4 w-4 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-white font-semibold text-sm">{label}</p>
-                    <p className="text-indigo-200 text-sm mt-0.5">{desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+          ))}
+        </div>
       </div>
 
       {/* Footer */}
