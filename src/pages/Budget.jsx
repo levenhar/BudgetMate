@@ -101,16 +101,14 @@ export default function Budget() {
   // Calculate spending by category (including recurring)
   const spendingByCategory = useMemo(() => {
     const result = {};
-    
-    // Add regular expenses
+
+    // Add regular expenses — keyed by category_name for robustness (IDs can drift)
     monthExpenses.forEach(expense => {
-      if (!result[expense.category_id]) {
-        result[expense.category_id] = {
-          spent: 0,
-          category_name: expense.category_name,
-        };
+      const key = expense.category_name || expense.category_id;
+      if (!result[key]) {
+        result[key] = { spent: 0 };
       }
-      result[expense.category_id].spent += expense.amount;
+      result[key].spent += expense.amount;
     });
 
     // Add recurring expenses (monthly equivalent) - only if active for selected month
@@ -143,13 +141,11 @@ export default function Budget() {
           break;
       }
 
-      if (!result[recurring.category_id]) {
-        result[recurring.category_id] = {
-          spent: 0,
-          category_name: recurring.category_name,
-        };
+      const key = recurring.category_name || recurring.category_id;
+      if (!result[key]) {
+        result[key] = { spent: 0 };
       }
-      result[recurring.category_id].spent += monthlyAmount;
+      result[key].spent += monthlyAmount;
     });
 
     return result;
@@ -566,11 +562,12 @@ export default function Budget() {
               </div>
               <div className="space-y-4">
                 {budgets.map(budget => {
-                  const spent = spendingByCategory[budget.category_id]?.spent || 0;
+                  const spendingKey = budget.category_name || budget.category_id;
+                  const spent = spendingByCategory[spendingKey]?.spent || 0;
                   const categoryBudget = budget.amount || 0;
                   const percentage = categoryBudget > 0 ? (spent / categoryBudget) * 100 : 0;
                   const remaining = categoryBudget - spent;
-                  const category = categories.find(c => c.id === budget.category_id);
+                  const category = categories.find(c => c.name === budget.category_name) || categories.find(c => c.id === budget.category_id);
 
                   return (
                     <ContextMenu key={budget.id}>
