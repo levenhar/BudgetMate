@@ -284,7 +284,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="space-y-1">
-              {currentMonthExpenses.slice(0, 10).map(e => {
+              {[...currentMonthExpenses].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10).map(e => {
                 const cat = categories.find(c => c.id === e.category_id || c.name === e.category_name);
                 return (
                   <div
