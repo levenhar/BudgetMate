@@ -211,13 +211,13 @@ function LayoutInner({ children, currentPageName }) {
         // but the overall expense is still pending if there are other pending users.
         // So is_pending=true (waiting for others), approval_status='approved'.
         const alreadyAutoApproved = !isParticipantPending && s.userId !== user.email;
-        const participantCategory = s.userId !== user.email
-          ? allCategoriesData.find(c => c.name === data.category_name && c.user_email === s.userId)
-          : null;
+        const participantCategoryId = s.userId === user.email
+          ? data.category_id
+          : (allCategoriesData.find(c => c.name === data.category_name && c.user_email === s.userId)?.id || null);
         expenseRecords.push({
           amount: s.shareAmount,
           date: data.date,
-          category_id: participantCategory?.id || data.category_id,
+          category_id: participantCategoryId,
           category_name: data.category_name,
           description: data.description,
           user_email: s.userId,

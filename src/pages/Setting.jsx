@@ -87,9 +87,9 @@ export default function Settings() {
     queryKey: ['categories', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      
+
       const cats = await base44.entities.Category.filter({ user_email: user.email });
-      
+
       if (cats.length === 0) {
         // Create default categories
         const defaultCats = getDefaultCategories(t);
@@ -101,6 +101,23 @@ export default function Settings() {
         );
         return newCats;
       }
+
+      // Deduplicate: keep the first category per name, delete the rest
+      const seen = new Map();
+      const duplicates = [];
+      for (const cat of cats) {
+        const key = cat.name?.toLowerCase().trim();
+        if (seen.has(key)) {
+          duplicates.push(cat.id);
+        } else {
+          seen.set(key, cat);
+        }
+      }
+      if (duplicates.length > 0) {
+        await Promise.all(duplicates.map(id => base44.entities.Category.delete(id)));
+        return cats.filter(c => !duplicates.includes(c.id));
+      }
+
       return cats;
     },
     enabled: !!user?.email,
@@ -110,6 +127,13 @@ export default function Settings() {
 
   // Category mutations
   const handleAddCategory = async (data) => {
+    const nameExists = categories.some(
+      c => c.name?.toLowerCase().trim() === data.name?.toLowerCase().trim()
+    );
+    if (nameExists) {
+      toast.error(t.category_name_exists || 'Category name already exists');
+      return;
+    }
     setIsLoading(true);
     const newCategory = await base44.entities.Category.create({
       ...data,
@@ -139,6 +163,13 @@ export default function Settings() {
   };
 
   const handleEditCategory = async (id, data) => {
+    const nameExists = categories.some(
+      c => c.id !== id && c.name?.toLowerCase().trim() === data.name?.toLowerCase().trim()
+    );
+    if (nameExists) {
+      toast.error(t.category_name_exists || 'Category name already exists');
+      return;
+    }
     setIsLoading(true);
     await base44.entities.Category.update(id, data);
     queryClient.invalidateQueries({ queryKey: ['categories'] });

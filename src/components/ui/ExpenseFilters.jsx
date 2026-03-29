@@ -16,7 +16,7 @@ export default function ExpenseFilters({
   t = {},
   dir = 'rtl',
 }) {
-  const hasFilters = filters.search || filters.categoryId || filters.dateFrom || filters.dateTo || filters.sharedWithUser;
+  const hasFilters = filters.search || filters.categoryName || filters.dateFrom || filters.dateTo || filters.sharedWithUser;
   const [showPicker, setShowPicker] = useState(false);
   const [pickerView, setPickerView] = useState('month');
   const [selectedMonth, setSelectedMonth] = useState(null);
@@ -79,9 +79,9 @@ export default function ExpenseFilters({
           />
         </div>
         
-        <Select 
-          value={filters.categoryId} 
-          onValueChange={(v) => onFilterChange({ ...filters, categoryId: v })}
+        <Select
+          value={filters.categoryName}
+          onValueChange={(v) => onFilterChange({ ...filters, categoryName: v })}
         >
           <SelectTrigger className="w-40 h-11 bg-white">
             <SelectValue placeholder={t.category || 'קטגוריה'} />
@@ -89,7 +89,7 @@ export default function ExpenseFilters({
           <SelectContent>
             <SelectItem value="all">{t.all_categories || 'כל הקטגוריות'}</SelectItem>
             {categories.map((cat) => (
-              <SelectItem key={cat.id} value={cat.id}>
+              <SelectItem key={cat.id} value={cat.name}>
                 <span className="flex items-center gap-2">
                   <span 
                     className="w-2.5 h-2.5 rounded-full" 

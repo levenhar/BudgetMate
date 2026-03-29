@@ -446,15 +446,11 @@ export default function Debts() {
           user_email: split.userId,
         });
 
-        let categoryIdForParticipant = data.category_id;
-        if (split.userId !== shared?.created_by_user_id) {
-          const participantCategory = allCategoriesForUpdate.find(
-            (c: any) => c.name === data.category_name && c.user_email === split.userId,
-          );
-          if (participantCategory) {
-            categoryIdForParticipant = participantCategory.id;
-          }
-        }
+        const categoryIdForParticipant = split.userId === shared?.created_by_user_id
+          ? data.category_id
+          : (allCategoriesForUpdate.find(
+              (c: any) => c.name === data.category_name && c.user_email === split.userId,
+            )?.id || null);
 
         const isParticipantPending = newPendingWithUsers.includes(split.userId);
         const isThisUserCreator = split.userId === shared?.created_by_user_id;

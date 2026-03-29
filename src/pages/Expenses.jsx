@@ -47,7 +47,7 @@ export default function Expenses() {
   
   const [filters, setFilters] = useState({
     search: '',
-    categoryId: '',
+    categoryName: '',
     dateFrom: defaultDateFrom,
     dateTo: defaultDateTo,
     sortBy: 'date_desc',
@@ -82,14 +82,13 @@ export default function Expenses() {
   });
 
   // Apply category filter from URL when categories are loaded.
-  // Uses functional setFilters to avoid stale-closure on filters.categoryId.
   React.useEffect(() => {
     if (categoryFromUrl && categories.length > 0) {
       const category = categories.find(c => c.name === categoryFromUrl);
       if (category) {
         setFilters(prev => {
-          if (prev.categoryId === category.id) return prev;
-          return { ...prev, categoryId: category.id };
+          if (prev.categoryName === category.name) return prev;
+          return { ...prev, categoryName: category.name };
         });
       }
     }
@@ -367,16 +366,9 @@ export default function Expenses() {
         });
 
         // Find category with matching name for this participant
-        let categoryIdForParticipant = data.category_id;
-        if (split.userId !== shared.created_by_user_id) {
-          const participantCategory = allCategoriesForUpdate.find(c => 
-            c.name === data.category_name && 
-            c.user_email === split.userId
-          );
-          if (participantCategory) {
-            categoryIdForParticipant = participantCategory.id;
-          }
-        }
+        let categoryIdForParticipant = split.userId === shared.created_by_user_id
+          ? data.category_id
+          : (allCategoriesForUpdate.find(c => c.name === data.category_name && c.user_email === split.userId)?.id || null);
 
         const isParticipantPending = newPendingWithUsers.includes(split.userId);
         const isThisUserCreator = split.userId === shared.created_by_user_id;
@@ -740,14 +732,14 @@ export default function Expenses() {
          ? isPending
          : isParticipantPending;
 
-       const participantCategory = s.userId !== user.email
-         ? allCategoriesData.find(c => c.name === data.category_name && c.user_email === s.userId)
-         : null;
+       const participantCategoryId = s.userId === user.email
+         ? data.category_id
+         : (allCategoriesData.find(c => c.name === data.category_name && c.user_email === s.userId)?.id || null);
 
        expenseRecords.push({
          amount: s.shareAmount,
          date: data.date,
-         category_id: participantCategory?.id || data.category_id,
+         category_id: participantCategoryId,
          category_name: data.category_name,
          description: data.description,
          user_email: s.userId,
@@ -869,8 +861,8 @@ export default function Expenses() {
     }
 
     // Category filter
-    if (filters.categoryId && filters.categoryId !== 'all') {
-      result = result.filter(e => e.category_id === filters.categoryId);
+    if (filters.categoryName && filters.categoryName !== 'all') {
+      result = result.filter(e => e.category_name === filters.categoryName);
     }
 
     // Date filters
@@ -916,7 +908,7 @@ export default function Expenses() {
   const clearFilters = () => {
     setFilters({
       search: '',
-      categoryId: '',
+      categoryName: '',
       dateFrom: '',
       dateTo: '',
       sortBy: 'date_desc',
@@ -962,8 +954,8 @@ export default function Expenses() {
     if (rangeEnd && startDate > rangeEnd) return false;
     if (rangeStart && endDate && endDate < rangeStart) return false;
     
-    if (filters.categoryId && filters.categoryId !== 'all') {
-      return r.category_id === filters.categoryId;
+    if (filters.categoryName && filters.categoryName !== 'all') {
+      return r.category_name === filters.categoryName;
     }
     return true;
   });
@@ -971,7 +963,7 @@ export default function Expenses() {
   const recurringTotal = activeRecurring.reduce((sum, r) => sum + r.amount, 0);
 
   // Check if only category filter is active (and optional date range)
-  const isCategoryOnlyFilter = filters.categoryId && filters.categoryId !== 'all' && !filters.search;
+  const isCategoryOnlyFilter = filters.categoryName && filters.categoryName !== 'all' && !filters.search;
 
   // Calculate monthly statistics for filtered category
   const monthlyStats = useMemo(() => {
@@ -983,7 +975,7 @@ export default function Expenses() {
     
     expenses
       .filter(e => {
-        if (e.category_id !== filters.categoryId) return false;
+        if (e.category_name !== filters.categoryName) return false;
         if (e.is_pending) return false;
         const expenseDate = new Date(e.date);
         return expenseDate <= today; // Only past and current expenses
@@ -1006,7 +998,7 @@ export default function Expenses() {
     return Object.values(monthlyData)
       .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
       .slice(-12); // Last 12 months
-  }, [expenses, filters.categoryId, isCategoryOnlyFilter]);
+  }, [expenses, filters.categoryName, isCategoryOnlyFilter]);
 
   return (
     <div className="min-h-screen bg-slate-50" dir={dir}>
@@ -1189,7 +1181,7 @@ export default function Expenses() {
           <div className="mt-6">
             <CategoryMonthlyChart 
               data={monthlyStats} 
-              categoryName={categories.find(c => c.id === filters.categoryId)?.name || ''}
+              categoryName={filters.categoryName || ''}
             />
           </div>
         )}
