@@ -325,11 +325,11 @@ export default function Login() {
   // ── render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen flex lg:grid lg:grid-cols-2" dir={dir}>
+    <div className="min-h-screen lg:h-screen flex lg:grid lg:grid-cols-2" dir={dir}>
       {leftPanel}
 
-      {/* Right panel — desktop white, mobile: gradient bg + floating card */}
-      <div className={`flex items-center justify-center lg:bg-white lg:bg-none relative overflow-hidden lg:p-8 p-6 bg-gradient-to-br ${gradientFrom}`}>
+      {/* Right panel — desktop white + scrollable, mobile: gradient bg + floating card */}
+      <div className={`flex justify-center lg:bg-white lg:bg-none relative lg:overflow-y-auto overflow-hidden lg:p-8 p-6 bg-gradient-to-br ${gradientFrom} ${isSignUp ? 'items-start lg:items-start' : 'items-center'}`}>
 
         {/* Mobile bg circles (hidden on lg) */}
         <div className="lg:hidden absolute -top-24 -left-24 w-96 h-96 bg-white/5 rounded-full" />
