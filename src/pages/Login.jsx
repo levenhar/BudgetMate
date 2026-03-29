@@ -11,10 +11,30 @@ import { useLanguage } from '@/components/i18n/LanguageContext';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
+/** Resize + compress an image file to max 256×256 JPEG at 80% quality (~10–30 KB) */
+function compressAvatar(file) {
+  return new Promise((resolve) => {
+    const MAX = 256;
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(MAX / img.width, MAX / img.height, 1);
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.8);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 async function uploadAvatar(file) {
-  const ext = file.name.split('.').pop();
-  const path = `${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from('avatars').upload(path, file);
+  const compressed = await compressAvatar(file);
+  const path = `${crypto.randomUUID()}.jpg`;
+  const { error } = await supabase.storage.from('avatars').upload(path, compressed, { contentType: 'image/jpeg' });
   if (error) return null;
   const { data } = supabase.storage.from('avatars').getPublicUrl(path);
   return data.publicUrl;
