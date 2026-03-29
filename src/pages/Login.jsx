@@ -234,6 +234,9 @@ export default function Login() {
           className="h-11 rounded-xl border-slate-200 focus-visible:ring-violet-400" />
       </div>
 
+      {googleButton}
+      {divider}
+
       {alertError}
       {alertMessage}
 
@@ -387,12 +390,14 @@ export default function Login() {
                 </p>
               </div>
 
-              {/* Google button */}
-              {googleButton}
-              {divider}
-
               {/* Form */}
-              {isSignUp ? signUpForm : signInForm}
+              {isSignUp ? signUpForm : (
+                <>
+                  {googleButton}
+                  {divider}
+                  {signInForm}
+                </>
+              )}
             </div>
           </div>
         </div>
