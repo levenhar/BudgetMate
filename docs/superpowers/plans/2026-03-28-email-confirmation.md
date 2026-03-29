@@ -104,7 +104,7 @@
 
 - [ ] **Step 4: Click the confirmation link**
 
-  Click the link inside the email. You should be redirected to `http://localhost:5173/` (or your dev URL) and logged in automatically.
+  Click the link inside the email. You should be redirected to `http://localhost:5173/` (or your I updan automatically.
 
 - [ ] **Step 5: Verify in Resend dashboard**
 
