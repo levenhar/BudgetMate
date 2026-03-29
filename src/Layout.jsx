@@ -481,7 +481,12 @@ function LayoutInner({ children, currentPageName }) {
       <main className={`pb-20 lg:pb-0 transition-all duration-300 ${mainPaddingClass}`}>
         {/* Sticky Page Header */}
         <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 lg:px-8 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-slate-900">{pageTitle}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-bold text-slate-900">{pageTitle}</h1>
+            {import.meta.env.VITE_APP_ENV === 'staging' && (
+              <span className="text-[11px] font-bold bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full leading-none">STAGING</span>
+            )}
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="focus:outline-none rounded-full">

@@ -337,9 +337,14 @@ export default function Login() {
       </div>
 
       {/* Footer */}
-      <div className="relative flex items-center gap-2 text-white/60 text-sm">
-        <ShieldCheck className="h-4 w-4" />
-        <span>{t.data_encrypted}</span>
+      <div className="relative flex items-center justify-between">
+        <div className="flex items-center gap-2 text-white/60 text-sm">
+          <ShieldCheck className="h-4 w-4" />
+          <span>{t.data_encrypted}</span>
+        </div>
+        {import.meta.env.VITE_APP_ENV === 'staging' && (
+          <span className="text-xs font-bold bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full">STAGING</span>
+        )}
       </div>
     </div>
   );
