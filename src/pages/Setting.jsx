@@ -87,9 +87,9 @@ export default function Settings() {
     queryKey: ['categories', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      
-      const cats = await base44.entities.Category.filter({ user_email: user.email, household_id: null });
-      
+
+      const cats = await base44.entities.Category.filter({ user_email: user.email });
+
       if (cats.length === 0) {
         // Create default categories
         const defaultCats = getDefaultCategories(t);
@@ -97,11 +97,27 @@ export default function Settings() {
           defaultCats.map(cat => ({
             ...cat,
             user_email: user.email,
-            household_id: null,
           }))
         );
         return newCats;
       }
+
+      // Deduplicate: keep the first category per name, delete the rest
+      const seen = new Map();
+      const duplicates = [];
+      for (const cat of cats) {
+        const key = cat.name?.toLowerCase().trim();
+        if (seen.has(key)) {
+          duplicates.push(cat.id);
+        } else {
+          seen.set(key, cat);
+        }
+      }
+      if (duplicates.length > 0) {
+        await Promise.all(duplicates.map(id => base44.entities.Category.delete(id)));
+        return cats.filter(c => !duplicates.includes(c.id));
+      }
+
       return cats;
     },
     enabled: !!user?.email,
@@ -111,15 +127,21 @@ export default function Settings() {
 
   // Category mutations
   const handleAddCategory = async (data) => {
+    const nameExists = categories.some(
+      c => c.name?.toLowerCase().trim() === data.name?.toLowerCase().trim()
+    );
+    if (nameExists) {
+      toast.error(t.category_name_exists || 'Category name already exists');
+      return;
+    }
     setIsLoading(true);
     const newCategory = await base44.entities.Category.create({
       ...data,
       user_email: user.email,
-      household_id: null,
     });
-    
+
     // Reconnect orphaned expenses with this category name
-    const allExpenses = await base44.entities.Expense.filter({ user_email: user.email, household_id: null });
+    const allExpenses = await base44.entities.Expense.filter({ user_email: user.email });
     
     const expensesToUpdate = allExpenses.filter(expense => 
       expense.category_name === newCategory.name && expense.category_id !== newCategory.id
@@ -141,6 +163,13 @@ export default function Settings() {
   };
 
   const handleEditCategory = async (id, data) => {
+    const nameExists = categories.some(
+      c => c.id !== id && c.name?.toLowerCase().trim() === data.name?.toLowerCase().trim()
+    );
+    if (nameExists) {
+      toast.error(t.category_name_exists || 'Category name already exists');
+      return;
+    }
     setIsLoading(true);
     await base44.entities.Category.update(id, data);
     queryClient.invalidateQueries({ queryKey: ['categories'] });
@@ -158,7 +187,7 @@ export default function Settings() {
 
   const reconnectOrphanedExpenses = async (updatedCategories) => {
     // Get all expenses
-    const allExpenses = await base44.entities.Expense.filter({ user_email: user.email, household_id: null });
+    const allExpenses = await base44.entities.Expense.filter({ user_email: user.email });
     
     // Find expenses where category_id doesn't match any existing category but category_name matches
     const categoryMap = new Map(updatedCategories.map(c => [c.name, c.id]));
@@ -203,13 +232,12 @@ export default function Settings() {
         missingCategories.map(cat => ({
           ...cat,
           user_email: user.email,
-          household_id: null,
         }))
       );
     }
     
     // Get updated categories and reconnect orphaned expenses
-    const updatedCategories = await base44.entities.Category.filter({ user_email: user.email, household_id: null });
+    const updatedCategories = await base44.entities.Category.filter({ user_email: user.email });
     
     await reconnectOrphanedExpenses(updatedCategories);
     

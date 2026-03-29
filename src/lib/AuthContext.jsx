@@ -27,7 +27,6 @@ export const AuthProvider = ({ children }) => {
           role: u.role || 'user',
           data: {
             picture: u.user_metadata?.picture || u.user_metadata?.avatar_url || null,
-            current_household_id: u.user_metadata?.current_household_id || null,
           },
         });
         setIsAuthenticated(true);
@@ -55,7 +54,6 @@ export const AuthProvider = ({ children }) => {
           role: u.role || 'user',
           data: {
             picture: u.user_metadata?.picture || u.user_metadata?.avatar_url || null,
-            current_household_id: u.user_metadata?.current_household_id || null,
           },
         });
         setIsAuthenticated(true);

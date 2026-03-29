@@ -28,52 +28,39 @@ export default function Dashboard() {
     enabled: !!user?.email,
   });
 
-  const isHouseholdMode = settings?.mode === 'household' && settings?.current_household_id;
-
   const { data: expenses = [], isLoading: expensesLoading } = useQuery({
-    queryKey: ['expenses', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['expenses', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.Expense.filter({ household_id: settings.current_household_id });
-      }
-      return base44.entities.Expense.filter({ user_email: user.email, household_id: null });
+      return base44.entities.Expense.filter({ user_email: user.email });
     },
     enabled: !!user?.email,
   });
 
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
-    queryKey: ['categories', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['categories', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.Category.filter({ household_id: settings.current_household_id });
-      }
-      return base44.entities.Category.filter({ user_email: user.email, household_id: null });
+      return base44.entities.Category.filter({ user_email: user.email });
     },
+    select: (cats) => cats.filter((c, i, arr) => arr.findIndex(x => x.name === c.name) === i),
     enabled: !!user?.email,
   });
 
   const { data: budgets = [], isLoading: budgetsLoading } = useQuery({
-    queryKey: ['budgets', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['budgets', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.Budget.filter({ household_id: settings.current_household_id });
-      }
-      return base44.entities.Budget.filter({ created_by: user.email, household_id: null });
+      return base44.entities.Budget.filter({ created_by: user.email });
     },
     enabled: !!user?.email,
   });
 
   const { data: recurringExpenses = [], isLoading: recurringLoading } = useQuery({
-    queryKey: ['recurringExpenses', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['recurringExpenses', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.RecurringExpense.filter({ household_id: settings.current_household_id, is_active: true });
-      }
-      return base44.entities.RecurringExpense.filter({ user_email: user.email, household_id: null, is_active: true });
+      return base44.entities.RecurringExpense.filter({ user_email: user.email, is_active: true });
     },
     enabled: !!user?.email,
   });

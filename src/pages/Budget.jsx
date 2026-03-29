@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Progress } from "@/components/ui/progress";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { Plus, TrendingUp, TrendingDown, AlertCircle, Pencil, Trash2, DollarSign, Receipt } from 'lucide-react';
-import { format, endOfMonth } from 'date-fns';
+import { format, endOfMonth, startOfMonth, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 
 import { useLanguage } from '@/components/i18n/LanguageContext';
@@ -43,85 +43,79 @@ export default function Budget() {
 
   const { data: settings } = useQuery({
     queryKey: ['settings', user?.email],
-    queryFn: () => base44.entities.UserSettings.filter({ user_email: user.email }),
-    enabled: !!user,
+    queryFn: async () => {
+      if (!user?.email) return null;
+      const list = await base44.entities.UserSettings.filter({ user_email: user.email });
+      return list[0] || null;
+    },
+    enabled: !!user?.email,
   });
 
-  const mode = settings?.[0]?.mode || 'personal';
-  const householdId = settings?.[0]?.current_household_id;
-
   const { data: categories = [] } = useQuery({
-    queryKey: ['categories', mode, householdId],
+    queryKey: ['categories', user?.email],
     queryFn: async () => {
-      if (mode === 'household' && householdId) {
-        return base44.entities.Category.filter({ household_id: householdId });
-      }
-      return base44.entities.Category.filter({ user_email: user.email, household_id: null });
+      if (!user?.email) return [];
+      return base44.entities.Category.filter({ user_email: user.email });
     },
-    enabled: !!user,
+    select: (cats) => cats.filter((c, i, arr) => arr.findIndex(x => x.name === c.name) === i),
+    enabled: !!user?.email,
   });
 
   const { data: budgets = [] } = useQuery({
-    queryKey: ['budgets', mode, householdId],
+    queryKey: ['budgets', user?.email],
     queryFn: async () => {
-      if (mode === 'household' && householdId) {
-        return base44.entities.Budget.filter({ household_id: householdId });
-      }
-      return base44.entities.Budget.filter({ created_by: user.email, household_id: null });
+      if (!user?.email) return [];
+      return base44.entities.Budget.filter({ created_by: user.email });
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: expenses = [] } = useQuery({
-    queryKey: ['expenses-budget', selectedMonth, mode, householdId],
+    queryKey: ['expenses-budget', selectedMonth, user?.email],
     queryFn: async () => {
-      const monthStart = format(new Date(selectedMonth), 'yyyy-MM-dd');
-      const monthEnd = format(endOfMonth(new Date(selectedMonth)), 'yyyy-MM-dd');
-      
-      if (mode === 'household' && householdId) {
-        return base44.entities.Expense.filter({ household_id: householdId });
-      }
-      return base44.entities.Expense.filter({ user_email: user.email, household_id: null });
+      if (!user?.email) return [];
+      return base44.entities.Expense.filter({ user_email: user.email });
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: recurringExpenses = [] } = useQuery({
-    queryKey: ['recurring-budget', mode, householdId],
+    queryKey: ['recurring-budget', user?.email],
     queryFn: async () => {
-      if (mode === 'household' && householdId) {
-        return base44.entities.RecurringExpense.filter({ household_id: householdId, is_active: true });
-      }
-      return base44.entities.RecurringExpense.filter({ user_email: user.email, household_id: null, is_active: true });
+      if (!user?.email) return [];
+      return base44.entities.RecurringExpense.filter({ user_email: user.email, is_active: true });
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   // Filter expenses for selected month
   const monthExpenses = useMemo(() => {
-    const monthStart = format(new Date(selectedMonth), 'yyyy-MM-dd');
-    const monthEnd = format(endOfMonth(new Date(selectedMonth)), 'yyyy-MM-dd');
-    return expenses.filter(e => e.date >= monthStart && e.date <= monthEnd);
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const monthStart = startOfMonth(new Date(year, month - 1));
+    const monthEnd = endOfMonth(new Date(year, month - 1));
+    return expenses.filter(e => {
+      const date = parseISO(e.date);
+      return date >= monthStart && date <= monthEnd && !e.is_pending;
+    });
   }, [expenses, selectedMonth]);
 
   // Calculate spending by category (including recurring)
   const spendingByCategory = useMemo(() => {
     const result = {};
-    
-    // Add regular expenses
+
+    // Add regular expenses — keyed by category_name for robustness (IDs can drift)
     monthExpenses.forEach(expense => {
-      if (!result[expense.category_id]) {
-        result[expense.category_id] = {
-          spent: 0,
-          category_name: expense.category_name,
-        };
+      const key = expense.category_name || expense.category_id;
+      if (!result[key]) {
+        result[key] = { spent: 0 };
       }
-      result[expense.category_id].spent += expense.amount;
+      result[key].spent += expense.amount;
     });
 
     // Add recurring expenses (monthly equivalent) - only if active for selected month
-    const monthStart = new Date(selectedMonth);
-    const monthEnd = endOfMonth(new Date(selectedMonth));
+    const [yearR, monthR] = selectedMonth.split('-').map(Number);
+    const monthStart = startOfMonth(new Date(yearR, monthR - 1));
+    const monthEnd = endOfMonth(new Date(yearR, monthR - 1));
     
     recurringExpenses.forEach(recurring => {
       if (!recurring.is_active) return;
@@ -148,13 +142,11 @@ export default function Budget() {
           break;
       }
 
-      if (!result[recurring.category_id]) {
-        result[recurring.category_id] = {
-          spent: 0,
-          category_name: recurring.category_name,
-        };
+      const key = recurring.category_name || recurring.category_id;
+      if (!result[key]) {
+        result[key] = { spent: 0 };
       }
-      result[recurring.category_id].spent += monthlyAmount;
+      result[key].spent += monthlyAmount;
     });
 
     return result;
@@ -164,8 +156,9 @@ export default function Budget() {
     let total = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
     
     // Add recurring expenses - only if active for selected month
-    const monthStart = new Date(selectedMonth);
-    const monthEnd = endOfMonth(new Date(selectedMonth));
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const monthStart = startOfMonth(new Date(year, month - 1));
+    const monthEnd = endOfMonth(new Date(year, month - 1));
     
     recurringExpenses.forEach(recurring => {
       if (!recurring.is_active) return;
@@ -330,7 +323,6 @@ export default function Budget() {
             category_id: categoryId,
             category_name: category?.name,
             amount: parseFloat(amount),
-            household_id: mode === 'household' ? householdId : null,
             user_email: user.email,
           };
         });
@@ -351,7 +343,6 @@ export default function Budget() {
             category_name: category?.name,
             percentage: parseFloat(percentage),
             amount: (total * parseFloat(percentage)) / 100,
-            household_id: mode === 'household' ? householdId : null,
             user_email: user.email,
           };
         });
@@ -572,11 +563,12 @@ export default function Budget() {
               </div>
               <div className="space-y-4">
                 {budgets.map(budget => {
-                  const spent = spendingByCategory[budget.category_id]?.spent || 0;
+                  const spendingKey = budget.category_name || budget.category_id;
+                  const spent = spendingByCategory[spendingKey]?.spent || 0;
                   const categoryBudget = budget.amount || 0;
                   const percentage = categoryBudget > 0 ? (spent / categoryBudget) * 100 : 0;
                   const remaining = categoryBudget - spent;
-                  const category = categories.find(c => c.id === budget.category_id);
+                  const category = categories.find(c => c.name === budget.category_name) || categories.find(c => c.id === budget.category_id);
 
                   return (
                     <ContextMenu key={budget.id}>

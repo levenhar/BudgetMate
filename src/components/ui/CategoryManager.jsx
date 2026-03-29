@@ -104,7 +104,7 @@ export default function CategoryManager({
       </div>
 
       <div className="grid gap-2 max-h-64 overflow-y-auto pr-1">
-        {categories.map((cat) => (
+        {categories.filter((c, i, arr) => arr.findIndex(x => x.name === c.name) === i).map((cat) => (
           <div 
             key={cat.id}
             className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100"

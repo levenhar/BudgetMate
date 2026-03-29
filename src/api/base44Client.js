@@ -16,7 +16,6 @@ const tableMap = {
   Notification: 'notifications',
   AlwaysApprovedUser: 'always_approved_users',
   SavingsGoal: 'savings_goals',
-  Household: 'households',
   User: 'user_profiles', // base44 built-in User maps to user_profiles
 };
 
@@ -120,8 +119,7 @@ const auth = {
       role: user.role || 'user',
       data: {
         picture: user.user_metadata?.picture || user.user_metadata?.avatar_url || null,
-        current_household_id: user.user_metadata?.current_household_id || null,
-      },
+        },
     };
   },
 

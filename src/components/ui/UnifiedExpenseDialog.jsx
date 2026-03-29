@@ -118,8 +118,6 @@ export default function UnifiedExpenseDialog({
   isSubmittingShared = false,
   defaultTab = "expense",
   user,
-  isHouseholdMode,
-  householdId
 }) {
   const { t, dir } = useLanguage();
   const { currencySymbol, currencyCode } = useCurrency();
@@ -372,21 +370,7 @@ export default function UnifiedExpenseDialog({
             .forEach(r => alwaysApprovedSet.add(r.user_id));
         } catch (e) {}
 
-        if (isHouseholdMode && householdId) {
-          // Get household members
-          const households = await base44.entities.Household.list();
-          const household = households.find(h => h.id === householdId);
-          if (household) {
-            const members = household.member_emails
-              .filter(email => email !== user.email)
-              .map(email => ({
-                email,
-                name: email,
-                alwaysApproved: alwaysApprovedSet.has(email),
-              }));
-            setAvailableUsers(members);
-          }
-        } else {
+        {
           // Fetch all registered users from UserProfile (public read)
           const profiles = await base44.entities.UserProfile.list();
 
@@ -411,7 +395,7 @@ export default function UnifiedExpenseDialog({
         }));
       }
     }
-  }, [user?.email, open, activeTab, isHouseholdMode, householdId]);
+  }, [user?.email, open, activeTab]);
 
   const updateSplit = (index, field, value) => {
     const newSplits = [...sharedForm.splits];
@@ -574,7 +558,6 @@ export default function UnifiedExpenseDialog({
         description: sharedForm.description,
         paid_by_user_id: sharedForm.paidByUserId,
         split_method: sharedForm.splitMethod,
-        household_id: isHouseholdMode ? householdId : null,
         splits: finalSplits,
         participants: sharedForm.participants,
         ...(isForeign && {

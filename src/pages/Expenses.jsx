@@ -47,7 +47,7 @@ export default function Expenses() {
   
   const [filters, setFilters] = useState({
     search: '',
-    categoryId: '',
+    categoryName: '',
     dateFrom: defaultDateFrom,
     dateTo: defaultDateTo,
     sortBy: 'date_desc',
@@ -71,31 +71,25 @@ export default function Expenses() {
     enabled: !!user?.email,
   });
 
-  const isHouseholdMode = settings?.mode === 'household' && settings?.current_household_id;
-
   // Fetch categories
   const { data: categories = [] } = useQuery({
-    queryKey: ['categories', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['categories', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.Category.filter({ household_id: settings.current_household_id });
-      } else {
-        return base44.entities.Category.filter({ user_email: user.email, household_id: null });
-      }
+      return base44.entities.Category.filter({ user_email: user.email });
     },
+    select: (cats) => cats.filter((c, i, arr) => arr.findIndex(x => x.name === c.name) === i),
     enabled: !!user?.email,
   });
 
   // Apply category filter from URL when categories are loaded.
-  // Uses functional setFilters to avoid stale-closure on filters.categoryId.
   React.useEffect(() => {
     if (categoryFromUrl && categories.length > 0) {
       const category = categories.find(c => c.name === categoryFromUrl);
       if (category) {
         setFilters(prev => {
-          if (prev.categoryId === category.id) return prev;
-          return { ...prev, categoryId: category.id };
+          if (prev.categoryName === category.name) return prev;
+          return { ...prev, categoryName: category.name };
         });
       }
     }
@@ -103,20 +97,10 @@ export default function Expenses() {
 
   // Fetch all expenses
   const { data: expenses = [], isLoading } = useQuery({
-    queryKey: ['expenses', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['expenses', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.Expense.filter(
-          { household_id: settings.current_household_id },
-          '-date'
-        );
-      } else {
-        return base44.entities.Expense.filter(
-          { user_email: user.email, household_id: null },
-          '-date'
-        );
-      }
+      return base44.entities.Expense.filter({ user_email: user.email });
     },
     enabled: !!user?.email,
   });
@@ -199,20 +183,10 @@ export default function Expenses() {
 
   // Fetch recurring expenses
   const { data: recurringExpenses = [] } = useQuery({
-    queryKey: ['recurringExpenses', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['recurringExpenses', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.RecurringExpense.filter(
-          { household_id: settings.current_household_id },
-          '-created_date'
-        );
-      } else {
-        return base44.entities.RecurringExpense.filter(
-          { user_email: user.email, household_id: null },
-          '-created_date'
-        );
-      }
+      return base44.entities.RecurringExpense.filter({ user_email: user.email });
     },
     enabled: !!user?.email,
   });
@@ -224,7 +198,6 @@ export default function Expenses() {
       const baseData = {
         ...expenseData,
         user_email: user.email,
-        household_id: isHouseholdMode ? settings.current_household_id : null,
       };
 
       if (installments <= 1) {
@@ -261,7 +234,6 @@ export default function Expenses() {
   const createRecurringMutation = useMutation({
     mutationFn: (data) => base44.entities.RecurringExpense.create({
       ...data,
-      household_id: isHouseholdMode ? settings.current_household_id : null,
       user_email: user.email
     }),
     onSuccess: () => {
@@ -386,6 +358,7 @@ export default function Expenses() {
 
       // Get all available categories for matching
       const allCategoriesForUpdate = await base44.entities.Category.list();
+      const senderCategoryForUpdate = allCategoriesForUpdate.find(c => c.id === data.category_id);
 
       // Update/create participant expenses
       for (const split of data.splits) {
@@ -394,16 +367,22 @@ export default function Expenses() {
           user_email: split.userId
         });
 
-        // Find category with matching name for this participant
-        let categoryIdForParticipant = data.category_id;
-        if (split.userId !== shared.created_by_user_id) {
-          const participantCategory = allCategoriesForUpdate.find(c => 
-            c.name === data.category_name && 
-            c.user_email === split.userId
-          );
-          if (participantCategory) {
-            categoryIdForParticipant = participantCategory.id;
+        // Find category with matching name for this participant, creating it if missing
+        let categoryIdForParticipant;
+        if (split.userId === shared.created_by_user_id) {
+          categoryIdForParticipant = data.category_id;
+        } else {
+          let cat = allCategoriesForUpdate.find(c => c.name === data.category_name && c.user_email === split.userId);
+          if (!cat && senderCategoryForUpdate) {
+            cat = await base44.entities.Category.create({
+              name: senderCategoryForUpdate.name,
+              color: senderCategoryForUpdate.color,
+              icon: senderCategoryForUpdate.icon,
+              user_email: split.userId,
+            });
+            allCategoriesForUpdate.push(cat);
           }
+          categoryIdForParticipant = cat?.id || null;
         }
 
         const isParticipantPending = newPendingWithUsers.includes(split.userId);
@@ -431,7 +410,6 @@ export default function Expenses() {
             category_name: data.category_name,
             description: data.description,
             user_email: split.userId,
-            household_id: shared.household_id,
             source_shared_expense_id: sharedExpenseId,
             paid_by_user_id: data.paid_by_user_id,
             is_shared: true,
@@ -576,7 +554,6 @@ export default function Expenses() {
                 description: t.reversed_from_deleted || 'Return of cancelled settled expense',
                 paid_by_user_id: splitUserIdTrimmed,
                 split_method: 'custom_amount',
-                household_id: freshShared.household_id || null,
                 is_settled: false,
                 is_pending: false,
                 pending_with_users: [],
@@ -720,7 +697,6 @@ export default function Expenses() {
         description: data.description,
         paid_by_user_id: data.paid_by_user_id,
         split_method: data.split_method,
-        household_id: data.household_id,
         is_pending: isPending,
         pending_with_users: pendingWithUsers,
       });
@@ -758,6 +734,7 @@ export default function Expenses() {
 
       // Get all available categories for matching
      const allCategoriesData = await base44.entities.Category.list();
+     const senderCategoryData = allCategoriesData.find(c => c.id === data.category_id);
 
      // Create expense records for ALL participants:
      // - Creator: marked is_pending=true if there are pending participants
@@ -771,19 +748,31 @@ export default function Expenses() {
          ? isPending
          : isParticipantPending;
 
-       const participantCategory = s.userId !== user.email
-         ? allCategoriesData.find(c => c.name === data.category_name && c.user_email === s.userId)
-         : null;
+       let participantCategoryId;
+       if (s.userId === user.email) {
+         participantCategoryId = data.category_id;
+       } else {
+         let cat = allCategoriesData.find(c => c.name === data.category_name && c.user_email === s.userId);
+         if (!cat && senderCategoryData) {
+           cat = await base44.entities.Category.create({
+             name: senderCategoryData.name,
+             color: senderCategoryData.color,
+             icon: senderCategoryData.icon,
+             user_email: s.userId,
+           });
+           allCategoriesData.push(cat);
+         }
+         participantCategoryId = cat?.id || null;
+       }
 
        expenseRecords.push({
          amount: s.shareAmount,
          date: data.date,
-         category_id: participantCategory?.id || data.category_id,
+         category_id: participantCategoryId,
          category_name: data.category_name,
          description: data.description,
          user_email: s.userId,
-         household_id: data.household_id,
-         source_shared_expense_id: sharedExpense.id,
+          source_shared_expense_id: sharedExpense.id,
          paid_by_user_id: data.paid_by_user_id,
          is_shared: true,
          is_pending: isPendingForThisUser,
@@ -901,8 +890,8 @@ export default function Expenses() {
     }
 
     // Category filter
-    if (filters.categoryId && filters.categoryId !== 'all') {
-      result = result.filter(e => e.category_id === filters.categoryId);
+    if (filters.categoryName && filters.categoryName !== 'all') {
+      result = result.filter(e => e.category_name === filters.categoryName);
     }
 
     // Date filters
@@ -948,7 +937,7 @@ export default function Expenses() {
   const clearFilters = () => {
     setFilters({
       search: '',
-      categoryId: '',
+      categoryName: '',
       dateFrom: '',
       dateTo: '',
       sortBy: 'date_desc',
@@ -994,8 +983,8 @@ export default function Expenses() {
     if (rangeEnd && startDate > rangeEnd) return false;
     if (rangeStart && endDate && endDate < rangeStart) return false;
     
-    if (filters.categoryId && filters.categoryId !== 'all') {
-      return r.category_id === filters.categoryId;
+    if (filters.categoryName && filters.categoryName !== 'all') {
+      return r.category_name === filters.categoryName;
     }
     return true;
   });
@@ -1003,7 +992,7 @@ export default function Expenses() {
   const recurringTotal = activeRecurring.reduce((sum, r) => sum + r.amount, 0);
 
   // Check if only category filter is active (and optional date range)
-  const isCategoryOnlyFilter = filters.categoryId && filters.categoryId !== 'all' && !filters.search;
+  const isCategoryOnlyFilter = filters.categoryName && filters.categoryName !== 'all' && !filters.search;
 
   // Calculate monthly statistics for filtered category
   const monthlyStats = useMemo(() => {
@@ -1015,7 +1004,7 @@ export default function Expenses() {
     
     expenses
       .filter(e => {
-        if (e.category_id !== filters.categoryId) return false;
+        if (e.category_name !== filters.categoryName) return false;
         if (e.is_pending) return false;
         const expenseDate = new Date(e.date);
         return expenseDate <= today; // Only past and current expenses
@@ -1038,7 +1027,7 @@ export default function Expenses() {
     return Object.values(monthlyData)
       .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
       .slice(-12); // Last 12 months
-  }, [expenses, filters.categoryId, isCategoryOnlyFilter]);
+  }, [expenses, filters.categoryName, isCategoryOnlyFilter]);
 
   return (
     <div className="min-h-screen bg-slate-50" dir={dir}>
@@ -1221,7 +1210,7 @@ export default function Expenses() {
           <div className="mt-6">
             <CategoryMonthlyChart 
               data={monthlyStats} 
-              categoryName={categories.find(c => c.id === filters.categoryId)?.name || ''}
+              categoryName={filters.categoryName || ''}
             />
           </div>
         )}
@@ -1243,8 +1232,6 @@ export default function Expenses() {
         isSubmittingShared={createSharedExpenseMutation.isPending}
         defaultTab={dialogDefaultTab}
         user={user}
-        isHouseholdMode={isHouseholdMode}
-        householdId={settings?.current_household_id}
       />
 
       {/* Edit Expense Dialog */}

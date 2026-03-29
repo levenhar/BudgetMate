@@ -203,7 +203,6 @@ export default function Debts() {
               description: shared.description,
               paid_by_user_id: splitUserIdTrimmed,
               split_method: 'custom_amount',
-              household_id: shared.household_id || null,
               is_settled: false,
               is_pending: false,
               pending_with_users: [],
@@ -255,7 +254,6 @@ export default function Debts() {
               category_name: shared.category_name,
               description: shared.description,
               user_email: paidByUserIdTrimmed,
-              household_id: shared.household_id || null,
               source_shared_expense_id: reverseExpense.id,
               paid_by_user_id: splitUserIdTrimmed,
               is_shared: true,
@@ -442,20 +440,30 @@ export default function Debts() {
 
       // Update/create participant expenses
       const allCategoriesForUpdate = await base44.entities.Category.list();
+      const senderCategoryForUpdate = allCategoriesForUpdate.find((c: any) => c.id === data.category_id);
       for (const split of data.splits) {
         const existingExpense = await base44.entities.Expense.filter({
           source_shared_expense_id: sharedExpenseId,
           user_email: split.userId,
         });
 
-        let categoryIdForParticipant = data.category_id;
-        if (split.userId !== shared?.created_by_user_id) {
-          const participantCategory = allCategoriesForUpdate.find(
+        let categoryIdForParticipant: string | null;
+        if (split.userId === shared?.created_by_user_id) {
+          categoryIdForParticipant = data.category_id;
+        } else {
+          let cat: any = allCategoriesForUpdate.find(
             (c: any) => c.name === data.category_name && c.user_email === split.userId,
           );
-          if (participantCategory) {
-            categoryIdForParticipant = participantCategory.id;
+          if (!cat && senderCategoryForUpdate) {
+            cat = await base44.entities.Category.create({
+              name: senderCategoryForUpdate.name,
+              color: senderCategoryForUpdate.color,
+              icon: senderCategoryForUpdate.icon,
+              user_email: split.userId,
+            });
+            (allCategoriesForUpdate as any[]).push(cat);
           }
+          categoryIdForParticipant = cat?.id || null;
         }
 
         const isParticipantPending = newPendingWithUsers.includes(split.userId);
@@ -481,7 +489,6 @@ export default function Debts() {
             category_name: data.category_name,
             description: data.description,
             user_email: split.userId,
-            household_id: shared?.household_id,
             source_shared_expense_id: sharedExpenseId,
             paid_by_user_id: data.paid_by_user_id,
             is_shared: true,
