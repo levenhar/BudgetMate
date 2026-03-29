@@ -59,6 +59,7 @@ export default function Login() {
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
   };
