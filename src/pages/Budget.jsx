@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Progress } from "@/components/ui/progress";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { Plus, TrendingUp, TrendingDown, AlertCircle, Pencil, Trash2, DollarSign, Receipt } from 'lucide-react';
-import { format, endOfMonth } from 'date-fns';
+import { format, endOfMonth, startOfMonth, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 
 import { useLanguage } from '@/components/i18n/LanguageContext';
@@ -89,9 +89,13 @@ export default function Budget() {
 
   // Filter expenses for selected month
   const monthExpenses = useMemo(() => {
-    const monthStart = format(new Date(selectedMonth), 'yyyy-MM-dd');
-    const monthEnd = format(endOfMonth(new Date(selectedMonth)), 'yyyy-MM-dd');
-    return expenses.filter(e => e.date >= monthStart && e.date <= monthEnd);
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const monthStart = startOfMonth(new Date(year, month - 1));
+    const monthEnd = endOfMonth(new Date(year, month - 1));
+    return expenses.filter(e => {
+      const date = parseISO(e.date);
+      return date >= monthStart && date <= monthEnd && !e.is_pending;
+    });
   }, [expenses, selectedMonth]);
 
   // Calculate spending by category (including recurring)
@@ -110,8 +114,9 @@ export default function Budget() {
     });
 
     // Add recurring expenses (monthly equivalent) - only if active for selected month
-    const monthStart = new Date(selectedMonth);
-    const monthEnd = endOfMonth(new Date(selectedMonth));
+    const [yearR, monthR] = selectedMonth.split('-').map(Number);
+    const monthStart = startOfMonth(new Date(yearR, monthR - 1));
+    const monthEnd = endOfMonth(new Date(yearR, monthR - 1));
     
     recurringExpenses.forEach(recurring => {
       if (!recurring.is_active) return;
@@ -154,8 +159,9 @@ export default function Budget() {
     let total = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
     
     // Add recurring expenses - only if active for selected month
-    const monthStart = new Date(selectedMonth);
-    const monthEnd = endOfMonth(new Date(selectedMonth));
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const monthStart = startOfMonth(new Date(year, month - 1));
+    const monthEnd = endOfMonth(new Date(year, month - 1));
     
     recurringExpenses.forEach(recurring => {
       if (!recurring.is_active) return;
