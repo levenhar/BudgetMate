@@ -1,0 +1,573 @@
+# Login Panel Redesign Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Redesign the login panel with a tab switcher (Sign In / Sign Up), distinct gradients per mode, mobile gradient background, full name + optional photo upload on sign-up.
+
+**Architecture:** Single-file rewrite of `Login.jsx` — tabs replace the `isSignUp` toggle, the left panel gradient and content shift based on active tab, mobile gets the full gradient bg with a floating white card. Profile photo uploads to Supabase Storage pre-auth using a random UUID path, then the public URL is passed into `signUp()` metadata.
+
+**Tech Stack:** React 18, Supabase JS (`supabase.storage`, `supabase.auth`), Tailwind CSS, Lucide React, i18n via `useLanguage()`
+
+---
+
+## File Map
+
+| File | Action | What changes |
+|------|--------|-------------|
+| `src/components/i18n/translations.jsx` | Modify | Add 11 new keys to both `he` and `en` blocks |
+| `src/pages/Login.jsx` | Rewrite | Tab switcher, gradient shift, mobile M1, full name field, photo upload |
+
+---
+
+### Task 1: Add i18n translation keys
+
+**Files:**
+- Modify: `src/components/i18n/translations.jsx`
+
+- [ ] **Step 1: Add Hebrew keys**
+
+In `translations.jsx`, find the Hebrew `sign_up: 'הירשם',` line (around line 408) and add after it (before the `// Always-approved users` comment):
+
+```js
+      signin_tab: 'כניסה',
+      signup_tab: 'הרשמה',
+      full_name_label: 'שם מלא',
+      full_name_placeholder: 'ישראל ישראלי',
+      add_photo_optional: 'הוסף תמונה (אופציונלי)',
+      tap_to_upload: 'לחץ להעלאה',
+      signup_free_title: 'חינם לתמיד',
+      signup_feature_1: 'הוצאות ללא הגבלה',
+      signup_feature_2: 'מעקב תקציב',
+      signup_feature_3: 'יעדי חיסכון',
+      signup_feature_4: 'הוצאות משותפות',
+      signup_hero_line1: 'התחל את המסע',
+      signup_hero_line2: 'הפיננסי שלך.',
+      signup_hero_subtitle: 'הצטרף לאלפים שבונים הרגלי כסף טובים יותר.',
+```
+
+- [ ] **Step 2: Add English keys**
+
+Find the English `sign_up: 'Sign Up',` line (around line 824) and add after it (before the `// Always-approved users` comment):
+
+```js
+      signin_tab: 'Sign In',
+      signup_tab: 'Sign Up',
+      full_name_label: 'Full Name',
+      full_name_placeholder: 'Your full name',
+      add_photo_optional: 'Add photo (optional)',
+      tap_to_upload: 'Tap to upload',
+      signup_free_title: 'Free Forever',
+      signup_feature_1: 'Unlimited expenses',
+      signup_feature_2: 'Budget tracking',
+      signup_feature_3: 'Savings goals',
+      signup_feature_4: 'Shared expenses',
+      signup_hero_line1: 'Start your',
+      signup_hero_line2: 'financial journey.',
+      signup_hero_subtitle: 'Join thousands building better money habits.',
+```
+
+- [ ] **Step 3: Verify build**
+
+```bash
+npm run build
+```
+
+Expected: no errors. If TypeScript complains about missing keys, it won't — translations are plain JS objects.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/components/i18n/translations.jsx
+git commit -m "feat: add login panel i18n keys for sign-up redesign"
+```
+
+---
+
+### Task 2: Rewrite Login.jsx
+
+**Files:**
+- Modify: `src/pages/Login.jsx`
+
+- [ ] **Step 1: Replace the entire file contents**
+
+Replace `src/pages/Login.jsx` with:
+
+```jsx
+import React, { useState, useRef } from 'react';
+import { supabase } from '@/api/supabaseClient';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Wallet, Loader2, AlertCircle, CheckCircle2,
+  TrendingDown, Target, PieChart, ShieldCheck, Camera,
+} from 'lucide-react';
+import { useLanguage } from '@/components/i18n/LanguageContext';
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+async function uploadAvatar(file) {
+  const ext = file.name.split('.').pop();
+  const path = `${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from('avatars').upload(path, file);
+  if (error) return null;
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+// ─── component ──────────────────────────────────────────────────────────────
+
+export default function Login() {
+  const { t, dir } = useLanguage();
+
+  const [isSignUp, setIsSignUp]         = useState(false);
+  const [email, setEmail]               = useState('');
+  const [password, setPassword]         = useState('');
+  const [fullName, setFullName]         = useState('');
+  const [avatarFile, setAvatarFile]     = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState(null);
+  const [message, setMessage]           = useState(null);
+  const fileInputRef                    = useRef(null);
+
+  // Gradient changes per mode
+  const gradientFrom = isSignUp
+    ? 'from-violet-600 via-purple-500 to-pink-600'
+    : 'from-indigo-600 via-violet-600 to-purple-700';
+
+  const signInFeatures = [
+    { icon: TrendingDown, label: t.feature_track_title,    desc: t.feature_track_desc },
+    { icon: Target,       label: t.feature_goals_title,    desc: t.feature_goals_desc },
+    { icon: PieChart,     label: t.feature_insights_title, desc: t.feature_insights_desc },
+  ];
+
+  const signUpFeatures = [
+    t.signup_feature_1,
+    t.signup_feature_2,
+    t.signup_feature_3,
+    t.signup_feature_4,
+  ];
+
+  // ── handlers ──────────────────────────────────────────────────────────────
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const handleEmailAuth = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    if (isSignUp) {
+      let avatarUrl = null;
+      if (avatarFile) {
+        avatarUrl = await uploadAvatar(avatarFile); // non-blocking failure — null = no photo
+      }
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            full_name: fullName,
+            ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+          },
+        },
+      });
+      if (error) setError(error.message);
+      else setMessage(t.check_email_confirm);
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) setError(error.message);
+      else window.location.href = '/';
+    }
+    setLoading(false);
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) { setError(error.message); setLoading(false); }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) { setError(t.enter_email_first); return; }
+    await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+    setMessage(t.password_reset_sent);
+  };
+
+  const switchMode = (toSignUp) => {
+    setIsSignUp(toSignUp);
+    setError(null);
+    setMessage(null);
+  };
+
+  // ── shared form elements ───────────────────────────────────────────────────
+
+  const alertError = error && (
+    <div className="flex items-start gap-2.5 text-sm text-red-700 bg-red-50 border border-red-100 p-3 rounded-xl">
+      <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+      <span>{error}</span>
+    </div>
+  );
+
+  const alertMessage = message && (
+    <div className="flex items-start gap-2.5 text-sm text-green-700 bg-green-50 border border-green-100 p-3 rounded-xl">
+      <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+      <span>{message}</span>
+    </div>
+  );
+
+  const googleButton = (
+    <button
+      type="button"
+      onClick={handleGoogleLogin}
+      disabled={loading}
+      className="w-full flex items-center justify-center gap-3 h-11 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700 disabled:opacity-60"
+    >
+      <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+      </svg>
+      {t.continue_with_google}
+    </button>
+  );
+
+  const divider = (
+    <div className="relative">
+      <div className="absolute inset-0 flex items-center">
+        <span className="w-full border-t border-slate-100" />
+      </div>
+      <div className="relative flex justify-center text-xs uppercase tracking-wide">
+        <span className="bg-white px-3 text-slate-400 font-medium">{t.or_separator}</span>
+      </div>
+    </div>
+  );
+
+  // ── sub-views ─────────────────────────────────────────────────────────────
+
+  const signInForm = (
+    <form onSubmit={handleEmailAuth} className="space-y-4">
+      <div className="space-y-1.5">
+        <Label htmlFor="email-si" className="text-sm font-medium text-slate-700">{t.email_label}</Label>
+        <Input id="email-si" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+          placeholder={t.email_placeholder} required
+          className="h-11 rounded-xl border-slate-200 focus-visible:ring-indigo-400" />
+      </div>
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password-si" className="text-sm font-medium text-slate-700">{t.password_label}</Label>
+          <button type="button" onClick={handleForgotPassword}
+            className="text-xs text-indigo-600 hover:underline font-medium">
+            {t.forgot_password}
+          </button>
+        </div>
+        <Input id="password-si" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+          placeholder={t.password_label} required minLength={6}
+          className="h-11 rounded-xl border-slate-200 focus-visible:ring-indigo-400" />
+      </div>
+      {alertError}
+      {alertMessage}
+      <Button type="submit" disabled={loading}
+        className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-semibold text-sm">
+        {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+        {t.sign_in}
+      </Button>
+    </form>
+  );
+
+  const signUpForm = (
+    <form onSubmit={handleEmailAuth} className="space-y-4">
+      {/* Photo upload */}
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+      <button type="button" onClick={() => fileInputRef.current?.click()}
+        className="w-full flex items-center gap-3 p-3 rounded-xl border border-dashed border-violet-300 bg-violet-50 hover:bg-violet-100 transition-colors">
+        <div className="w-10 h-10 rounded-full bg-violet-100 border-2 border-violet-300 flex items-center justify-center overflow-hidden shrink-0">
+          {avatarPreview
+            ? <img src={avatarPreview} alt="preview" className="w-full h-full object-cover" />
+            : <Camera className="h-4 w-4 text-violet-400" />}
+        </div>
+        <div className="text-start">
+          <p className="text-sm font-medium text-violet-700">{t.add_photo_optional}</p>
+          <p className="text-xs text-violet-400">{t.tap_to_upload}</p>
+        </div>
+      </button>
+
+      {/* Full name */}
+      <div className="space-y-1.5">
+        <Label htmlFor="fullname" className="text-sm font-medium text-slate-700">{t.full_name_label}</Label>
+        <Input id="fullname" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)}
+          placeholder={t.full_name_placeholder} required
+          className="h-11 rounded-xl border-slate-200 focus-visible:ring-violet-400" />
+      </div>
+
+      {/* Email */}
+      <div className="space-y-1.5">
+        <Label htmlFor="email-su" className="text-sm font-medium text-slate-700">{t.email_label}</Label>
+        <Input id="email-su" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+          placeholder={t.email_placeholder} required
+          className="h-11 rounded-xl border-slate-200 focus-visible:ring-violet-400" />
+      </div>
+
+      {/* Password */}
+      <div className="space-y-1.5">
+        <Label htmlFor="password-su" className="text-sm font-medium text-slate-700">{t.password_label}</Label>
+        <Input id="password-su" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+          placeholder={t.password_min_chars} required minLength={6}
+          className="h-11 rounded-xl border-slate-200 focus-visible:ring-violet-400" />
+      </div>
+
+      {alertError}
+      {alertMessage}
+
+      <Button type="submit" disabled={loading}
+        className="w-full h-11 rounded-xl bg-violet-600 hover:bg-violet-700 font-semibold text-sm">
+        {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+        {t.create_account}
+      </Button>
+    </form>
+  );
+
+  // ── tabs ──────────────────────────────────────────────────────────────────
+
+  const tabs = (
+    <div className="flex border-b-2 border-slate-100">
+      <button type="button" onClick={() => switchMode(false)}
+        className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+          !isSignUp
+            ? 'text-indigo-600 border-b-2 border-indigo-600 -mb-0.5'
+            : 'text-slate-400 hover:text-slate-600'
+        }`}>
+        {t.signin_tab}
+      </button>
+      <button type="button" onClick={() => switchMode(true)}
+        className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+          isSignUp
+            ? 'text-violet-600 border-b-2 border-violet-600 -mb-0.5'
+            : 'text-slate-400 hover:text-slate-600'
+        }`}>
+        {t.signup_tab}
+      </button>
+    </div>
+  );
+
+  // ── left panel ────────────────────────────────────────────────────────────
+
+  const leftPanel = (
+    <div className={`hidden lg:flex lg:w-1/2 bg-gradient-to-br ${gradientFrom} flex-col justify-between p-12 relative overflow-hidden transition-all duration-500`}>
+      {/* Background circles */}
+      <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/5 rounded-full" />
+      <div className="absolute -bottom-32 -right-16 w-[480px] h-[480px] bg-white/5 rounded-full" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/5 rounded-full" />
+
+      {/* Logo */}
+      <div className="relative flex items-center gap-3">
+        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+          <Wallet className="h-5 w-5 text-white" />
+        </div>
+        <span className="text-white font-bold text-xl tracking-tight">BudgetMate</span>
+      </div>
+
+      {/* Hero text */}
+      <div className="relative space-y-8">
+        {isSignUp ? (
+          <>
+            <div>
+              <h2 className="text-4xl font-bold text-white leading-tight">
+                {t.signup_hero_line1}<br />{t.signup_hero_line2}
+              </h2>
+              <p className="mt-4 text-white/70 text-lg leading-relaxed max-w-sm">
+                {t.signup_hero_subtitle}
+              </p>
+            </div>
+            <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm">
+              <p className="text-white font-bold text-sm uppercase tracking-wider mb-4">{t.signup_free_title}</p>
+              <div className="space-y-2">
+                {signUpFeatures.map((feat) => (
+                  <div key={feat} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                      <span className="text-white text-xs">✓</span>
+                    </div>
+                    <p className="text-white text-sm">{feat}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <h2 className="text-4xl font-bold text-white leading-tight">
+                {t.login_hero_line1}<br />{t.login_hero_line2}
+              </h2>
+              <p className="mt-4 text-indigo-200 text-lg leading-relaxed max-w-sm">
+                {t.login_hero_subtitle}
+              </p>
+            </div>
+            <div className="space-y-5">
+              {signInFeatures.map(({ icon: Icon, label, desc }) => (
+                <div key={label} className="flex items-start gap-4">
+                  <div className="w-9 h-9 bg-white/15 rounded-lg flex items-center justify-center shrink-0 backdrop-blur-sm">
+                    <Icon className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm">{label}</p>
+                    <p className="text-indigo-200 text-sm mt-0.5">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="relative flex items-center gap-2 text-white/60 text-sm">
+        <ShieldCheck className="h-4 w-4" />
+        <span>{t.data_encrypted}</span>
+      </div>
+    </div>
+  );
+
+  // ── render ────────────────────────────────────────────────────────────────
+
+  return (
+    <div className="min-h-screen flex" dir={dir}>
+      {leftPanel}
+
+      {/* Right panel — desktop white, mobile: gradient bg + floating card */}
+      <div className={`w-full lg:w-1/2 flex items-center justify-center lg:bg-white relative overflow-hidden
+        lg:p-8 p-6
+        bg-gradient-to-br ${gradientFrom}`}>
+
+        {/* Mobile bg circles (hidden on lg) */}
+        <div className="lg:hidden absolute -top-24 -left-24 w-96 h-96 bg-white/5 rounded-full" />
+        <div className="lg:hidden absolute -bottom-32 -right-16 w-[480px] h-[480px] bg-white/5 rounded-full" />
+
+        {/* Inner wrapper — white card on mobile, plain on desktop */}
+        <div className="relative w-full max-w-sm">
+
+          {/* Mobile logo (shown above card on gradient) */}
+          <div className="lg:hidden flex items-center gap-2.5 justify-center mb-6">
+            <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <Wallet className="h-4 w-4 text-white" />
+            </div>
+            <span className="text-white font-bold text-lg">BudgetMate</span>
+          </div>
+
+          {/* Card — white on mobile, transparent on desktop */}
+          <div className="bg-white rounded-2xl lg:rounded-none lg:bg-transparent shadow-2xl lg:shadow-none overflow-hidden">
+
+            {/* Tabs */}
+            {tabs}
+
+            <div className="p-6 lg:p-0 lg:pt-6 space-y-5">
+              {/* Heading */}
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                  {isSignUp ? t.create_account : t.welcome_back}
+                </h1>
+                <p className="text-slate-500 text-sm mt-1">
+                  {isSignUp ? t.signup_subtitle : t.signin_subtitle}
+                </p>
+              </div>
+
+              {/* Google button */}
+              {googleButton}
+              {divider}
+
+              {/* Form */}
+              {isSignUp ? signUpForm : signInForm}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: Verify build**
+
+```bash
+npm run build
+```
+
+Expected: no TypeScript or build errors. If you see "Property 'signin_tab' does not exist", confirm the translation keys from Task 1 are in place.
+
+- [ ] **Step 3: Smoke-test in dev**
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173` (or whichever port Vite uses). Verify:
+- Desktop: split panel visible, tabs switch between Sign In / Sign Up
+- Desktop Sign In: indigo→violet gradient, feature bullets
+- Desktop Sign Up: violet→pink gradient, "Free Forever" box
+- Mobile (resize to < 1024px): gradient fills screen, white card floats, mobile logo visible above card
+- Sign Up tab: photo upload row, full name field, email, password, violet button
+- Sign In tab: email, password, forgot password link, indigo button
+- Clicking photo row opens file picker; selected image previews in avatar circle
+- Google button present on both tabs
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/pages/Login.jsx
+git commit -m "feat: redesign login panel with tabs, gradient shift, mobile bg, full name + photo upload"
+```
+
+---
+
+### Task 3: Final build verification
+
+- [ ] **Step 1: Clean build**
+
+```bash
+npm run build
+```
+
+Expected output ends with something like:
+```
+✓ built in Xs
+dist/index.html  ...
+```
+No warnings about missing modules or undefined variables.
+
+- [ ] **Step 2: Lint check**
+
+```bash
+npm run lint
+```
+
+Fix any reported errors before moving on. Common issues: unused imports, missing `key` props.
+
+- [ ] **Step 3: Commit if any lint fixes were needed**
+
+```bash
+git add -p
+git commit -m "fix: lint issues in login redesign"
+```
+
+---
+
+## Manual Step (post-deploy)
+
+Before testing photo upload in production, create the `avatars` bucket in the Supabase dashboard:
+1. Go to Storage → New Bucket → name: `avatars`, public: ✓
+2. In bucket policies, add: allow anon INSERT (so pre-auth uploads work)
+
+In development this can be skipped — photo upload will silently fail and sign-up will proceed without a photo.
