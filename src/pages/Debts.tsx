@@ -440,17 +440,31 @@ export default function Debts() {
 
       // Update/create participant expenses
       const allCategoriesForUpdate = await base44.entities.Category.list();
+      const senderCategoryForUpdate = allCategoriesForUpdate.find((c: any) => c.id === data.category_id);
       for (const split of data.splits) {
         const existingExpense = await base44.entities.Expense.filter({
           source_shared_expense_id: sharedExpenseId,
           user_email: split.userId,
         });
 
-        const categoryIdForParticipant = split.userId === shared?.created_by_user_id
-          ? data.category_id
-          : (allCategoriesForUpdate.find(
-              (c: any) => c.name === data.category_name && c.user_email === split.userId,
-            )?.id || null);
+        let categoryIdForParticipant: string | null;
+        if (split.userId === shared?.created_by_user_id) {
+          categoryIdForParticipant = data.category_id;
+        } else {
+          let cat: any = allCategoriesForUpdate.find(
+            (c: any) => c.name === data.category_name && c.user_email === split.userId,
+          );
+          if (!cat && senderCategoryForUpdate) {
+            cat = await base44.entities.Category.create({
+              name: senderCategoryForUpdate.name,
+              color: senderCategoryForUpdate.color,
+              icon: senderCategoryForUpdate.icon,
+              user_email: split.userId,
+            });
+            (allCategoriesForUpdate as any[]).push(cat);
+          }
+          categoryIdForParticipant = cat?.id || null;
+        }
 
         const isParticipantPending = newPendingWithUsers.includes(split.userId);
         const isThisUserCreator = split.userId === shared?.created_by_user_id;

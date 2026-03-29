@@ -78,6 +78,7 @@ export default function Expenses() {
       if (!user?.email) return [];
       return base44.entities.Category.filter({ user_email: user.email });
     },
+    select: (cats) => cats.filter((c, i, arr) => arr.findIndex(x => x.name === c.name) === i),
     enabled: !!user?.email,
   });
 
@@ -357,6 +358,7 @@ export default function Expenses() {
 
       // Get all available categories for matching
       const allCategoriesForUpdate = await base44.entities.Category.list();
+      const senderCategoryForUpdate = allCategoriesForUpdate.find(c => c.id === data.category_id);
 
       // Update/create participant expenses
       for (const split of data.splits) {
@@ -365,10 +367,23 @@ export default function Expenses() {
           user_email: split.userId
         });
 
-        // Find category with matching name for this participant
-        let categoryIdForParticipant = split.userId === shared.created_by_user_id
-          ? data.category_id
-          : (allCategoriesForUpdate.find(c => c.name === data.category_name && c.user_email === split.userId)?.id || null);
+        // Find category with matching name for this participant, creating it if missing
+        let categoryIdForParticipant;
+        if (split.userId === shared.created_by_user_id) {
+          categoryIdForParticipant = data.category_id;
+        } else {
+          let cat = allCategoriesForUpdate.find(c => c.name === data.category_name && c.user_email === split.userId);
+          if (!cat && senderCategoryForUpdate) {
+            cat = await base44.entities.Category.create({
+              name: senderCategoryForUpdate.name,
+              color: senderCategoryForUpdate.color,
+              icon: senderCategoryForUpdate.icon,
+              user_email: split.userId,
+            });
+            allCategoriesForUpdate.push(cat);
+          }
+          categoryIdForParticipant = cat?.id || null;
+        }
 
         const isParticipantPending = newPendingWithUsers.includes(split.userId);
         const isThisUserCreator = split.userId === shared.created_by_user_id;
@@ -719,6 +734,7 @@ export default function Expenses() {
 
       // Get all available categories for matching
      const allCategoriesData = await base44.entities.Category.list();
+     const senderCategoryData = allCategoriesData.find(c => c.id === data.category_id);
 
      // Create expense records for ALL participants:
      // - Creator: marked is_pending=true if there are pending participants
@@ -732,9 +748,22 @@ export default function Expenses() {
          ? isPending
          : isParticipantPending;
 
-       const participantCategoryId = s.userId === user.email
-         ? data.category_id
-         : (allCategoriesData.find(c => c.name === data.category_name && c.user_email === s.userId)?.id || null);
+       let participantCategoryId;
+       if (s.userId === user.email) {
+         participantCategoryId = data.category_id;
+       } else {
+         let cat = allCategoriesData.find(c => c.name === data.category_name && c.user_email === s.userId);
+         if (!cat && senderCategoryData) {
+           cat = await base44.entities.Category.create({
+             name: senderCategoryData.name,
+             color: senderCategoryData.color,
+             icon: senderCategoryData.icon,
+             user_email: s.userId,
+           });
+           allCategoriesData.push(cat);
+         }
+         participantCategoryId = cat?.id || null;
+       }
 
        expenseRecords.push({
          amount: s.shareAmount,

@@ -88,7 +88,7 @@ export default function ExpenseFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t.all_categories || 'כל הקטגוריות'}</SelectItem>
-            {categories.map((cat) => (
+            {categories.filter((c, i, arr) => arr.findIndex(x => x.name === c.name) === i).map((cat) => (
               <SelectItem key={cat.id} value={cat.name}>
                 <span className="flex items-center gap-2">
                   <span 

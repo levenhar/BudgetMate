@@ -57,6 +57,7 @@ export default function Budget() {
       if (!user?.email) return [];
       return base44.entities.Category.filter({ user_email: user.email });
     },
+    select: (cats) => cats.filter((c, i, arr) => arr.findIndex(x => x.name === c.name) === i),
     enabled: !!user?.email,
   });
 

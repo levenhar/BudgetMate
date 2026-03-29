@@ -99,6 +99,7 @@ function LayoutInner({ children, currentPageName }) {
       if (!user?.email) return [];
       return base44.entities.Category.filter({ user_email: user.email });
     },
+    select: (cats) => cats.filter((c, i, arr) => arr.findIndex(x => x.name === c.name) === i),
     enabled: !!user?.email,
   });
 
@@ -203,6 +204,7 @@ function LayoutInner({ children, currentPageName }) {
       );
 
       const allCategoriesData = await base44.entities.Category.list();
+      const senderCategory = allCategoriesData.find(c => c.id === data.category_id);
       const expenseRecords = [];
       for (const s of data.splits) {
         // A user is "pending" (needs to explicitly approve) if they are in pendingWithUsers
@@ -211,9 +213,22 @@ function LayoutInner({ children, currentPageName }) {
         // but the overall expense is still pending if there are other pending users.
         // So is_pending=true (waiting for others), approval_status='approved'.
         const alreadyAutoApproved = !isParticipantPending && s.userId !== user.email;
-        const participantCategoryId = s.userId === user.email
-          ? data.category_id
-          : (allCategoriesData.find(c => c.name === data.category_name && c.user_email === s.userId)?.id || null);
+        let participantCategoryId;
+        if (s.userId === user.email) {
+          participantCategoryId = data.category_id;
+        } else {
+          let cat = allCategoriesData.find(c => c.name === data.category_name && c.user_email === s.userId);
+          if (!cat && senderCategory) {
+            cat = await base44.entities.Category.create({
+              name: senderCategory.name,
+              color: senderCategory.color,
+              icon: senderCategory.icon,
+              user_email: s.userId,
+            });
+            allCategoriesData.push(cat);
+          }
+          participantCategoryId = cat?.id || null;
+        }
         expenseRecords.push({
           amount: s.shareAmount,
           date: data.date,
