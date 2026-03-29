@@ -10,6 +10,7 @@ import { CurrencyProvider } from '@/lib/CurrencyContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Login from '@/pages/Login';
 import AuthCallback from '@/pages/AuthCallback';
+import ResetPassword from '@/pages/ResetPassword';
 import { LanguageProvider } from '@/components/i18n/LanguageContext';
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -84,6 +85,7 @@ function App() {
             <Routes>
               <Route path="/login" element={<LanguageProvider><Login /></LanguageProvider>} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/*" element={<AuthenticatedApp />} />
             </Routes>
           </Router>

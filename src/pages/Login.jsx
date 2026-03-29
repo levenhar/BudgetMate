@@ -128,7 +128,9 @@ export default function Login() {
 
   const handleForgotPassword = async () => {
     if (!email) { setError(t.enter_email_first); return; }
-    await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
     setMessage(t.password_reset_sent);
   };
 
