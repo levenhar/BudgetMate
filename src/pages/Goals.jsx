@@ -86,15 +86,10 @@ export default function Goals() {
     enabled: !!user?.email,
   });
 
-  const isHouseholdMode = settings?.mode === 'household' && settings?.current_household_id;
-
   const { data: goals = [], isLoading } = useQuery({
-    queryKey: ['savingsGoals', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['savingsGoals', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.SavingsGoal.filter({ household_id: settings.current_household_id });
-      }
       return base44.entities.SavingsGoal.filter({ user_email: user.email });
     },
     enabled: !!user?.email,
@@ -105,7 +100,6 @@ export default function Goals() {
       base44.entities.SavingsGoal.create({
         ...data,
         user_email: user.email,
-        household_id: isHouseholdMode ? settings.current_household_id : null,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savingsGoals'] });

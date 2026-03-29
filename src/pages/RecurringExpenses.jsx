@@ -55,55 +55,29 @@ export default function RecurringExpenses() {
     enabled: !!user?.email,
   });
 
-  const isHouseholdMode = settings?.mode === 'household' && settings?.current_household_id;
-
   const { data: categories = [] } = useQuery({
-    queryKey: ['categories', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['categories', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.Category.filter({ household_id: settings.current_household_id });
-      } else {
-        return base44.entities.Category.filter({ user_email: user.email, household_id: null });
-      }
+      return base44.entities.Category.filter({ user_email: user.email });
     },
     enabled: !!user?.email,
   });
 
   const { data: recurringExpenses = [], isLoading } = useQuery({
-    queryKey: ['recurringExpenses', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['recurringExpenses', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.RecurringExpense.filter(
-          { household_id: settings.current_household_id },
-          '-created_date'
-        );
-      } else {
-        return base44.entities.RecurringExpense.filter(
-          { user_email: user.email, household_id: null },
-          '-created_date'
-        );
-      }
+      return base44.entities.RecurringExpense.filter({ user_email: user.email });
     },
     enabled: !!user?.email,
   });
 
   const { data: expenses = [] } = useQuery({
-    queryKey: ['expenses', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['expenses', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.Expense.filter(
-          { household_id: settings.current_household_id },
-          '-date'
-        );
-      } else {
-        return base44.entities.Expense.filter(
-          { user_email: user.email, household_id: null },
-          '-date'
-        );
-      }
+      return base44.entities.Expense.filter({ user_email: user.email });
     },
     enabled: !!user?.email,
   });
@@ -172,7 +146,6 @@ export default function RecurringExpenses() {
       const baseData = {
         ...expenseData,
         user_email: user.email,
-        household_id: isHouseholdMode ? settings.current_household_id : null,
       };
 
       if (installments <= 1) {
@@ -301,7 +274,6 @@ export default function RecurringExpenses() {
       end_date: formData.end_date ? format(formData.end_date, 'yyyy-MM-dd') : null,
       description: formData.description || undefined,
       is_active: formData.is_active,
-      household_id: settings?.mode === 'household' ? settings.current_household_id : null,
       user_email: user.email
     };
 

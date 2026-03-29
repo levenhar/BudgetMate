@@ -25,7 +25,13 @@
       "mcp__plugin_playwright_playwright__browser_run_code",
       "mcp__plugin_playwright_playwright__browser_wait_for",
       "WebFetch(domain:api.github.com)",
-      "Skill(update-config)"
+      "Skill(update-config)",
+      "mcp__vercel__list_teams",
+      "mcp__vercel__get_project",
+      "mcp__vercel__list_deployments",
+      "mcp__vercel__get_deployment_build_logs",
+      "mcp__vercel__get_runtime_logs",
+      "mcp__vercel__get_deployment"
     ],
     "ask": [
       "Bash(git push:*)",
@@ -52,9 +58,9 @@
           {
             "type": "command",
             "command": "f=$(jq -r '.tool_input.file_path // empty' 2>/dev/null); [ -n \"$f\" ] && echo \"$f\" | grep -qE '\\.(ts|tsx)$' && { npm run typecheck 2>&1 | tail -20 || exit 2; }; true",
-            "asyncRewake": true,
             "timeout": 60,
-            "statusMessage": "Type-checking..."
+            "statusMessage": "Type-checking...",
+            "asyncRewake": true
           }
         ]
       }

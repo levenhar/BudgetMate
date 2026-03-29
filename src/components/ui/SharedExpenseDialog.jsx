@@ -51,8 +51,6 @@ export default function SharedExpenseDialog({
   onSubmit,
   isSubmitting = false,
   user,
-  isHouseholdMode,
-  householdId
 }) {
   const { currencySymbol } = useCurrency();
   const { t, dir } = useLanguage();
@@ -267,7 +265,6 @@ export default function SharedExpenseDialog({
       description: form.description,
       paid_by_user_id: form.paidByUserId,
       split_method: form.splitMethod,
-      household_id: isHouseholdMode ? householdId : null,
       splits: finalSplits
     });
 

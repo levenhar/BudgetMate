@@ -43,58 +43,48 @@ export default function Budget() {
 
   const { data: settings } = useQuery({
     queryKey: ['settings', user?.email],
-    queryFn: () => base44.entities.UserSettings.filter({ user_email: user.email }),
-    enabled: !!user,
+    queryFn: async () => {
+      if (!user?.email) return null;
+      const list = await base44.entities.UserSettings.filter({ user_email: user.email });
+      return list[0] || null;
+    },
+    enabled: !!user?.email,
   });
 
-  const mode = settings?.[0]?.mode || 'personal';
-  const householdId = settings?.[0]?.current_household_id;
-
   const { data: categories = [] } = useQuery({
-    queryKey: ['categories', mode, householdId],
+    queryKey: ['categories', user?.email],
     queryFn: async () => {
-      if (mode === 'household' && householdId) {
-        return base44.entities.Category.filter({ household_id: householdId });
-      }
-      return base44.entities.Category.filter({ user_email: user.email, household_id: null });
+      if (!user?.email) return [];
+      return base44.entities.Category.filter({ user_email: user.email });
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: budgets = [] } = useQuery({
-    queryKey: ['budgets', mode, householdId],
+    queryKey: ['budgets', user?.email],
     queryFn: async () => {
-      if (mode === 'household' && householdId) {
-        return base44.entities.Budget.filter({ household_id: householdId });
-      }
-      return base44.entities.Budget.filter({ created_by: user.email, household_id: null });
+      if (!user?.email) return [];
+      return base44.entities.Budget.filter({ created_by: user.email });
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: expenses = [] } = useQuery({
-    queryKey: ['expenses-budget', selectedMonth, mode, householdId],
+    queryKey: ['expenses-budget', selectedMonth, user?.email],
     queryFn: async () => {
-      const monthStart = format(new Date(selectedMonth), 'yyyy-MM-dd');
-      const monthEnd = format(endOfMonth(new Date(selectedMonth)), 'yyyy-MM-dd');
-      
-      if (mode === 'household' && householdId) {
-        return base44.entities.Expense.filter({ household_id: householdId });
-      }
-      return base44.entities.Expense.filter({ user_email: user.email, household_id: null });
+      if (!user?.email) return [];
+      return base44.entities.Expense.filter({ user_email: user.email });
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   const { data: recurringExpenses = [] } = useQuery({
-    queryKey: ['recurring-budget', mode, householdId],
+    queryKey: ['recurring-budget', user?.email],
     queryFn: async () => {
-      if (mode === 'household' && householdId) {
-        return base44.entities.RecurringExpense.filter({ household_id: householdId, is_active: true });
-      }
-      return base44.entities.RecurringExpense.filter({ user_email: user.email, household_id: null, is_active: true });
+      if (!user?.email) return [];
+      return base44.entities.RecurringExpense.filter({ user_email: user.email, is_active: true });
     },
-    enabled: !!user,
+    enabled: !!user?.email,
   });
 
   // Filter expenses for selected month
@@ -330,7 +320,6 @@ export default function Budget() {
             category_id: categoryId,
             category_name: category?.name,
             amount: parseFloat(amount),
-            household_id: mode === 'household' ? householdId : null,
             user_email: user.email,
           };
         });
@@ -351,7 +340,6 @@ export default function Budget() {
             category_name: category?.name,
             percentage: parseFloat(percentage),
             amount: (total * parseFloat(percentage)) / 100,
-            household_id: mode === 'household' ? householdId : null,
             user_email: user.email,
           };
         });

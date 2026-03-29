@@ -88,7 +88,7 @@ export default function Settings() {
     queryFn: async () => {
       if (!user?.email) return [];
       
-      const cats = await base44.entities.Category.filter({ user_email: user.email, household_id: null });
+      const cats = await base44.entities.Category.filter({ user_email: user.email });
       
       if (cats.length === 0) {
         // Create default categories
@@ -97,7 +97,6 @@ export default function Settings() {
           defaultCats.map(cat => ({
             ...cat,
             user_email: user.email,
-            household_id: null,
           }))
         );
         return newCats;
@@ -115,11 +114,10 @@ export default function Settings() {
     const newCategory = await base44.entities.Category.create({
       ...data,
       user_email: user.email,
-      household_id: null,
     });
-    
+
     // Reconnect orphaned expenses with this category name
-    const allExpenses = await base44.entities.Expense.filter({ user_email: user.email, household_id: null });
+    const allExpenses = await base44.entities.Expense.filter({ user_email: user.email });
     
     const expensesToUpdate = allExpenses.filter(expense => 
       expense.category_name === newCategory.name && expense.category_id !== newCategory.id
@@ -158,7 +156,7 @@ export default function Settings() {
 
   const reconnectOrphanedExpenses = async (updatedCategories) => {
     // Get all expenses
-    const allExpenses = await base44.entities.Expense.filter({ user_email: user.email, household_id: null });
+    const allExpenses = await base44.entities.Expense.filter({ user_email: user.email });
     
     // Find expenses where category_id doesn't match any existing category but category_name matches
     const categoryMap = new Map(updatedCategories.map(c => [c.name, c.id]));
@@ -203,13 +201,12 @@ export default function Settings() {
         missingCategories.map(cat => ({
           ...cat,
           user_email: user.email,
-          household_id: null,
         }))
       );
     }
     
     // Get updated categories and reconnect orphaned expenses
-    const updatedCategories = await base44.entities.Category.filter({ user_email: user.email, household_id: null });
+    const updatedCategories = await base44.entities.Category.filter({ user_email: user.email });
     
     await reconnectOrphanedExpenses(updatedCategories);
     

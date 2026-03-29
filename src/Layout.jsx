@@ -78,8 +78,6 @@ function LayoutInner({ children, currentPageName }) {
     enabled: !!user?.email,
   });
 
-  const isHouseholdMode = settings?.mode === 'household' && settings?.current_household_id;
-
   const { data: pendingCount = 0 } = useQuery({
     queryKey: ['pendingApprovalCount', user?.email],
     queryFn: async () => {
@@ -96,14 +94,10 @@ function LayoutInner({ children, currentPageName }) {
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ['categories', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['categories', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.Category.filter({ household_id: settings.current_household_id });
-      } else {
-        return base44.entities.Category.filter({ user_email: user.email, household_id: null });
-      }
+      return base44.entities.Category.filter({ user_email: user.email });
     },
     enabled: !!user?.email,
   });
@@ -114,7 +108,6 @@ function LayoutInner({ children, currentPageName }) {
       const baseData = {
         ...expenseData,
         user_email: user.email,
-        household_id: isHouseholdMode ? settings.current_household_id : null,
       };
       if (installments <= 1) return base44.entities.Expense.create(baseData);
       const installmentAmount = baseData.amount / installments;
@@ -145,7 +138,6 @@ function LayoutInner({ children, currentPageName }) {
   const createRecurringMutation = useMutation({
     mutationFn: (data) => base44.entities.RecurringExpense.create({
       ...data,
-      household_id: isHouseholdMode ? settings.current_household_id : null,
       user_email: user.email,
     }),
     onSuccess: () => {
@@ -177,7 +169,6 @@ function LayoutInner({ children, currentPageName }) {
         description: data.description,
         paid_by_user_id: data.paid_by_user_id,
         split_method: data.split_method,
-        household_id: data.household_id,
         is_pending: isPending,
         pending_with_users: pendingWithUsers,
       });
@@ -230,8 +221,7 @@ function LayoutInner({ children, currentPageName }) {
           category_name: data.category_name,
           description: data.description,
           user_email: s.userId,
-          household_id: data.household_id,
-          source_shared_expense_id: sharedExpense.id,
+            source_shared_expense_id: sharedExpense.id,
           paid_by_user_id: data.paid_by_user_id,
           is_shared: true,
           // Everyone's expense stays pending until ALL pending users approve
@@ -563,8 +553,6 @@ function LayoutInner({ children, currentPageName }) {
         isSubmittingShared={createSharedExpenseMutation.isPending}
         defaultTab={addExpenseTab}
         user={user}
-        isHouseholdMode={isHouseholdMode}
-        householdId={settings?.current_household_id}
       />
     </div>
   );

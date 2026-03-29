@@ -71,18 +71,12 @@ export default function Expenses() {
     enabled: !!user?.email,
   });
 
-  const isHouseholdMode = settings?.mode === 'household' && settings?.current_household_id;
-
   // Fetch categories
   const { data: categories = [] } = useQuery({
-    queryKey: ['categories', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['categories', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.Category.filter({ household_id: settings.current_household_id });
-      } else {
-        return base44.entities.Category.filter({ user_email: user.email, household_id: null });
-      }
+      return base44.entities.Category.filter({ user_email: user.email });
     },
     enabled: !!user?.email,
   });
@@ -103,20 +97,10 @@ export default function Expenses() {
 
   // Fetch all expenses
   const { data: expenses = [], isLoading } = useQuery({
-    queryKey: ['expenses', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['expenses', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.Expense.filter(
-          { household_id: settings.current_household_id },
-          '-date'
-        );
-      } else {
-        return base44.entities.Expense.filter(
-          { user_email: user.email, household_id: null },
-          '-date'
-        );
-      }
+      return base44.entities.Expense.filter({ user_email: user.email });
     },
     enabled: !!user?.email,
   });
@@ -199,20 +183,10 @@ export default function Expenses() {
 
   // Fetch recurring expenses
   const { data: recurringExpenses = [] } = useQuery({
-    queryKey: ['recurringExpenses', user?.email, settings?.current_household_id, isHouseholdMode],
+    queryKey: ['recurringExpenses', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      if (isHouseholdMode) {
-        return base44.entities.RecurringExpense.filter(
-          { household_id: settings.current_household_id },
-          '-created_date'
-        );
-      } else {
-        return base44.entities.RecurringExpense.filter(
-          { user_email: user.email, household_id: null },
-          '-created_date'
-        );
-      }
+      return base44.entities.RecurringExpense.filter({ user_email: user.email });
     },
     enabled: !!user?.email,
   });
@@ -224,7 +198,6 @@ export default function Expenses() {
       const baseData = {
         ...expenseData,
         user_email: user.email,
-        household_id: isHouseholdMode ? settings.current_household_id : null,
       };
 
       if (installments <= 1) {
@@ -261,7 +234,6 @@ export default function Expenses() {
   const createRecurringMutation = useMutation({
     mutationFn: (data) => base44.entities.RecurringExpense.create({
       ...data,
-      household_id: isHouseholdMode ? settings.current_household_id : null,
       user_email: user.email
     }),
     onSuccess: () => {
@@ -431,7 +403,6 @@ export default function Expenses() {
             category_name: data.category_name,
             description: data.description,
             user_email: split.userId,
-            household_id: shared.household_id,
             source_shared_expense_id: sharedExpenseId,
             paid_by_user_id: data.paid_by_user_id,
             is_shared: true,
@@ -576,7 +547,6 @@ export default function Expenses() {
                 description: t.reversed_from_deleted || 'Return of cancelled settled expense',
                 paid_by_user_id: splitUserIdTrimmed,
                 split_method: 'custom_amount',
-                household_id: freshShared.household_id || null,
                 is_settled: false,
                 is_pending: false,
                 pending_with_users: [],
@@ -720,7 +690,6 @@ export default function Expenses() {
         description: data.description,
         paid_by_user_id: data.paid_by_user_id,
         split_method: data.split_method,
-        household_id: data.household_id,
         is_pending: isPending,
         pending_with_users: pendingWithUsers,
       });
@@ -782,8 +751,7 @@ export default function Expenses() {
          category_name: data.category_name,
          description: data.description,
          user_email: s.userId,
-         household_id: data.household_id,
-         source_shared_expense_id: sharedExpense.id,
+          source_shared_expense_id: sharedExpense.id,
          paid_by_user_id: data.paid_by_user_id,
          is_shared: true,
          is_pending: isPendingForThisUser,
@@ -1243,8 +1211,6 @@ export default function Expenses() {
         isSubmittingShared={createSharedExpenseMutation.isPending}
         defaultTab={dialogDefaultTab}
         user={user}
-        isHouseholdMode={isHouseholdMode}
-        householdId={settings?.current_household_id}
       />
 
       {/* Edit Expense Dialog */}

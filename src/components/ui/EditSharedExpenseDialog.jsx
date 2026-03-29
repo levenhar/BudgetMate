@@ -54,29 +54,7 @@ export default function EditSharedExpenseDialog({
     enabled: !!user?.email,
   });
 
-  const isHouseholdMode = settings?.mode === 'household' && settings?.current_household_id;
-
-  const { data: household } = useQuery({
-    queryKey: ['household', settings?.current_household_id],
-    queryFn: async () => {
-      if (!settings?.current_household_id) return null;
-      const households = await base44.entities.Household.filter({ id: settings.current_household_id });
-      return households[0] || null;
-    },
-    enabled: !!settings?.current_household_id && isHouseholdMode,
-  });
-
-  const availableUsers = React.useMemo(() => {
-    if (!isHouseholdMode || !household) return [];
-    
-    const allUsers = [
-      { email: household.owner_email, name: household.owner_email },
-      ...(household.member_emails || []).map(email => ({ email, name: email }))
-    ];
-    
-    const currentUserIds = form.splits.map(s => s.userId);
-    return allUsers.filter(u => !currentUserIds.includes(u.email));
-  }, [isHouseholdMode, household, form.splits]);
+  const availableUsers = [];
 
   useEffect(() => {
     if (sharedExpense && splits) {
