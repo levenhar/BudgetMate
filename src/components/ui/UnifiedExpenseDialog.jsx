@@ -568,7 +568,8 @@ export default function UnifiedExpenseDialog({
       });
       resetSharedForm();
     } catch (err) {
-      // error handled by caller; do not reset form
+      console.error('Error creating shared expense:', err);
+      toast.error(err?.message || 'שגיאה ביצירת הוצאה משותפת');
     }
   };
 

@@ -732,10 +732,6 @@ export default function Expenses() {
         }))
       );
 
-      // Get all available categories for matching
-     const allCategoriesData = await base44.entities.Category.list();
-     const senderCategoryData = allCategoriesData.find(c => c.id === data.category_id);
-
      // Create expense records for ALL participants:
      // - Creator: marked is_pending=true if there are pending participants
      // - Pending participants: created immediately with is_pending=true so they see it in their list
@@ -748,22 +744,12 @@ export default function Expenses() {
          ? isPending
          : isParticipantPending;
 
-       let participantCategoryId;
-       if (s.userId === user.email) {
-         participantCategoryId = data.category_id;
-       } else {
-         let cat = allCategoriesData.find(c => c.name === data.category_name && c.user_email === s.userId);
-         if (!cat && senderCategoryData) {
-           cat = await base44.entities.Category.create({
-             name: senderCategoryData.name,
-             color: senderCategoryData.color,
-             icon: senderCategoryData.icon,
-             user_email: s.userId,
-           });
-           allCategoriesData.push(cat);
-         }
-         participantCategoryId = cat?.id || null;
-       }
+       // Only use the category_id for the current user's own expense.
+       // Creating categories for other users' accounts fails RLS (categories_read
+       // policy blocks reading another user's row after insert, causing .single() to throw).
+       // Other participants' expenses carry category_name (text) for display; they
+       // can assign their own category when they log in.
+       const participantCategoryId = s.userId === user.email ? data.category_id : null;
 
        expenseRecords.push({
          amount: s.shareAmount,
@@ -861,6 +847,8 @@ export default function Expenses() {
     onSuccess: () => {
      queryClient.invalidateQueries({ queryKey: ['expenses'] });
      queryClient.invalidateQueries({ queryKey: ['debts'] });
+     queryClient.invalidateQueries({ queryKey: ['sharedExpenses'] });
+     queryClient.invalidateQueries({ queryKey: ['sharedExpenseSplits'] });
      toast.success('הוצאה משותפת נוצרה בהצלחה!');
      setShowAddExpense(false);
     },
@@ -1226,7 +1214,7 @@ export default function Expenses() {
         categories={categories}
         onSubmitExpense={(data) => createExpenseMutation.mutate(data)}
         onSubmitRecurring={(data) => createRecurringMutation.mutate(data)}
-        onSubmitShared={(data) => createSharedExpenseMutation.mutate(data)}
+        onSubmitShared={(data) => createSharedExpenseMutation.mutateAsync(data)}
         isSubmittingExpense={createExpenseMutation.isPending}
         isSubmittingRecurring={createRecurringMutation.isPending}
         isSubmittingShared={createSharedExpenseMutation.isPending}

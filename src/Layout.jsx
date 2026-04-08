@@ -203,32 +203,18 @@ function LayoutInner({ children, currentPageName }) {
         }))
       );
 
-      const allCategoriesData = await base44.entities.Category.list();
-      const senderCategory = allCategoriesData.find(c => c.id === data.category_id);
       const expenseRecords = [];
       for (const s of data.splits) {
-        // A user is "pending" (needs to explicitly approve) if they are in pendingWithUsers
         const isParticipantPending = pendingWithUsers.includes(s.userId);
-        // Always-approved users have already "approved" (not in pendingWithUsers),
-        // but the overall expense is still pending if there are other pending users.
-        // So is_pending=true (waiting for others), approval_status='approved'.
-        const alreadyAutoApproved = !isParticipantPending && s.userId !== user.email;
-        let participantCategoryId;
-        if (s.userId === user.email) {
-          participantCategoryId = data.category_id;
-        } else {
-          let cat = allCategoriesData.find(c => c.name === data.category_name && c.user_email === s.userId);
-          if (!cat && senderCategory) {
-            cat = await base44.entities.Category.create({
-              name: senderCategory.name,
-              color: senderCategory.color,
-              icon: senderCategory.icon,
-              user_email: s.userId,
-            });
-            allCategoriesData.push(cat);
-          }
-          participantCategoryId = cat?.id || null;
-        }
+        const isPendingForThisUser = s.userId === user.email
+          ? isPending
+          : isParticipantPending;
+
+        // Only use the category_id for the current user's own expense.
+        // Creating categories for other users' accounts fails RLS.
+        // Other participants' expenses carry category_name (text) for display.
+        const participantCategoryId = s.userId === user.email ? data.category_id : null;
+
         expenseRecords.push({
           amount: s.shareAmount,
           date: data.date,
@@ -236,12 +222,10 @@ function LayoutInner({ children, currentPageName }) {
           category_name: data.category_name,
           description: data.description,
           user_email: s.userId,
-            source_shared_expense_id: sharedExpense.id,
+          source_shared_expense_id: sharedExpense.id,
           paid_by_user_id: data.paid_by_user_id,
           is_shared: true,
-          // Everyone's expense stays pending until ALL pending users approve
-          is_pending: isPending,
-          // Auto-approved users & creator are already 'approved'; others are 'pending'
+          is_pending: isPendingForThisUser,
           approval_status: isParticipantPending ? 'pending' : 'approved',
         });
       }
@@ -276,6 +260,8 @@ function LayoutInner({ children, currentPageName }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['debts'] });
+      queryClient.invalidateQueries({ queryKey: ['sharedExpenses'] });
+      queryClient.invalidateQueries({ queryKey: ['sharedExpenseSplits'] });
       toast.success('הוצאה משותפת נוצרה בהצלחה!');
       setShowAddExpense(false);
     },
